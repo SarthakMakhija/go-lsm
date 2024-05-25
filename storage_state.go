@@ -7,13 +7,13 @@ type StorageOptions struct {
 // StorageState TODO: Support concurrency
 type StorageState struct {
 	currentMemTable    *MemTable
-	immutableMemtables []*MemTable
+	immutableMemTables []*MemTable
 	options            StorageOptions
 }
 
 func NewStorageState() *StorageState {
 	return &StorageState{
-		currentMemTable: NewMemtable(1),
+		currentMemTable: NewMemTable(1),
 		options: StorageOptions{
 			memTableSizeInBytes: 1 << 20,
 		},
@@ -22,7 +22,7 @@ func NewStorageState() *StorageState {
 
 func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	return &StorageState{
-		currentMemTable: NewMemtable(1),
+		currentMemTable: NewMemTable(1),
 		options:         options,
 	}
 }
@@ -32,8 +32,8 @@ func (storageState *StorageState) Get(key Key) (Value, bool) {
 	if ok {
 		return value, ok
 	}
-	for index := len(storageState.immutableMemtables) - 1; index >= 0; index-- {
-		memTable := storageState.immutableMemtables[index]
+	for index := len(storageState.immutableMemTables) - 1; index >= 0; index-- {
+		memTable := storageState.immutableMemTables[index]
 		if value, ok := memTable.Get(key); ok {
 			return value, ok
 		}
@@ -55,7 +55,7 @@ func (storageState *StorageState) Set(batch *Batch) {
 }
 
 func (storageState *StorageState) hasImmutableMemTables() bool {
-	return len(storageState.immutableMemtables) > 0
+	return len(storageState.immutableMemTables) > 0
 }
 
 // TODO: Generate new id
@@ -64,8 +64,8 @@ func (storageState *StorageState) hasImmutableMemTables() bool {
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
 func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
 	if storageState.currentMemTable.Size() >= storageState.options.memTableSizeInBytes {
-		memtable := NewMemtable(1)
-		storageState.immutableMemtables = append(storageState.immutableMemtables, memtable)
-		storageState.currentMemTable = memtable
+		memTable := NewMemTable(1)
+		storageState.immutableMemTables = append(storageState.immutableMemTables, memTable)
+		storageState.currentMemTable = memTable
 	}
 }

@@ -46,7 +46,7 @@ type MemTable struct {
 	entries *skiplist.SkipList
 }
 
-func NewMemtable(id uint) *MemTable {
+func NewMemTable(id uint) *MemTable {
 	return &MemTable{
 		id: id,
 		entries: skiplist.New(skiplist.GreaterThanFunc(func(key, otherKey interface{}) int {

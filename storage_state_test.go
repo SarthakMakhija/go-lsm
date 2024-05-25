@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestStorageStateWithASinglePutAndHasNotImmutableMemtables(t *testing.T) {
+func TestStorageStateWithASinglePutAndHasNotImmutableMemTables(t *testing.T) {
 	storageState := NewStorageState()
 	storageState.Set(NewBatch().Put(NewStringKey("consensus"), NewStringValue("raft")))
 
@@ -52,7 +52,7 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 	assert.Equal(t, emptyValue, value)
 }
 
-func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
+func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemTable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(StorageOptions{memTableSizeInBytes: 10})
 	storageState.Set(NewBatch().Put(NewStringKey("consensus"), NewStringValue("raft")))
 	storageState.Set(NewBatch().Put(NewStringKey("storage"), NewStringValue("NVMe")))
