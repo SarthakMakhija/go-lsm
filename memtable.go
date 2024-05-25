@@ -22,12 +22,18 @@ type Value struct {
 	value []byte
 }
 
+var emptyValue = Value{value: nil}
+
 func NewValue(value []byte) Value {
 	return Value{value: value}
 }
 
 func NewStringValue(value string) Value {
 	return Value{value: []byte(value)}
+}
+
+func (value Value) IsEmpty() bool {
+	return value.value == nil
 }
 
 type MemTable struct {
@@ -50,8 +56,8 @@ func NewMemtable(id uint) *MemTable {
 
 func (memTable *MemTable) Get(key Key) (Value, bool) {
 	value, ok := memTable.entries.GetValue(key)
-	if !ok {
-		return Value{}, false
+	if !ok || value.(Value).IsEmpty() {
+		return emptyValue, false
 	}
 	return value.(Value), true
 }
@@ -60,6 +66,10 @@ func (memTable *MemTable) Set(key Key, value Value) {
 	size := len(key.key) + len(value.value)
 	memTable.size.Add(uint64(size))
 	memTable.entries.Set(key, value)
+}
+
+func (memTable *MemTable) Delete(key Key) {
+	memTable.Set(key, emptyValue)
 }
 
 func (memTable *MemTable) IsEmpty() bool {

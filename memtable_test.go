@@ -25,7 +25,7 @@ func TestMemtableWithNonExistingKey(t *testing.T) {
 
 	value, ok := memtable.Get(NewStringKey("storage"))
 	assert.False(t, ok)
-	assert.Equal(t, Value{}, value)
+	assert.Equal(t, emptyValue, value)
 }
 
 func TestMemtableWithMultipleKeys(t *testing.T) {
@@ -48,4 +48,14 @@ func TestTheSizeOfMemtableWithASingleKey(t *testing.T) {
 
 	size := memtable.Size()
 	assert.Equal(t, uint64(13), size)
+}
+
+func TestMemtableWithADelete(t *testing.T) {
+	memtable := NewMemtable(1)
+	memtable.Set(NewStringKey("consensus"), NewStringValue("raft"))
+	memtable.Delete(NewStringKey("consensus"))
+
+	value, ok := memtable.Get(NewStringKey("consensus"))
+	assert.False(t, ok)
+	assert.Equal(t, emptyValue, value)
 }
