@@ -59,3 +59,35 @@ func TestMemtableWithADelete(t *testing.T) {
 	assert.False(t, ok)
 	assert.Equal(t, emptyValue, value)
 }
+
+func TestMemtableScanInclusive1(t *testing.T) {
+	memtable := NewMemtable(1)
+	memtable.Set(NewStringKey("consensus"), NewStringValue("raft"))
+	memtable.Set(NewStringKey("epoch"), NewStringValue("time"))
+	memtable.Set(NewStringKey("distributed"), NewStringValue("Db"))
+
+	iterator := memtable.ScanInclusive(NewStringKey("epoch"), NewStringKey("epoch"))
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, NewStringValue("time"), iterator.Value())
+
+	iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestMemtableScanInclusive2(t *testing.T) {
+	memtable := NewMemtable(1)
+	memtable.Set(NewStringKey("consensus"), NewStringValue("raft"))
+	memtable.Set(NewStringKey("epoch"), NewStringValue("time"))
+	memtable.Set(NewStringKey("distributed"), NewStringValue("Db"))
+
+	iterator := memtable.ScanInclusive(NewStringKey("distributed"), NewStringKey("zen"))
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, NewStringValue("Db"), iterator.Value())
+
+	iterator.Next()
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, NewStringValue("time"), iterator.Value())
+
+	iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
