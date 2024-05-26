@@ -6,14 +6,14 @@ import (
 	"sync/atomic"
 )
 
-type MemTable struct {
+type Memtable struct {
 	id      uint
 	size    atomic.Uint64
 	entries *skiplist.SkipList
 }
 
-func NewMemTable(id uint) *MemTable {
-	return &MemTable{
+func NewMemtable(id uint) *Memtable {
+	return &Memtable{
 		id: id,
 		entries: skiplist.New(skiplist.GreaterThanFunc(func(key, otherKey interface{}) int {
 			left := key.(txn.Key)
@@ -24,56 +24,56 @@ func NewMemTable(id uint) *MemTable {
 	}
 }
 
-func (memTable *MemTable) Get(key txn.Key) (txn.Value, bool) {
-	value, ok := memTable.entries.GetValue(key)
+func (memtable *Memtable) Get(key txn.Key) (txn.Value, bool) {
+	value, ok := memtable.entries.GetValue(key)
 	if !ok || value.(txn.Value).IsEmpty() {
 		return txn.EmptyValue, false
 	}
 	return value.(txn.Value), true
 }
 
-func (memTable *MemTable) Set(key txn.Key, value txn.Value) {
-	memTable.size.Add(uint64(key.Size() + value.Size()))
-	memTable.entries.Set(key, value)
+func (memtable *Memtable) Set(key txn.Key, value txn.Value) {
+	memtable.size.Add(uint64(key.Size() + value.Size()))
+	memtable.entries.Set(key, value)
 }
 
-func (memTable *MemTable) Delete(key txn.Key) {
-	memTable.Set(key, txn.EmptyValue)
+func (memtable *Memtable) Delete(key txn.Key) {
+	memtable.Set(key, txn.EmptyValue)
 }
 
-func (memTable *MemTable) Scan(inclusiveRange txn.InclusiveRange) *MemTableIterator {
-	return &MemTableIterator{
-		element: memTable.entries.Find(inclusiveRange.Start()),
+func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveRange) *MemtableIterator {
+	return &MemtableIterator{
+		element: memtable.entries.Find(inclusiveRange.Start()),
 		endKey:  inclusiveRange.End(),
 	}
 }
 
-func (memTable *MemTable) IsEmpty() bool {
-	return memTable.entries.Len() == 0
+func (memtable *Memtable) IsEmpty() bool {
+	return memtable.entries.Len() == 0
 }
 
-func (memTable *MemTable) Size() uint64 {
-	return memTable.size.Load()
+func (memtable *Memtable) Size() uint64 {
+	return memtable.size.Load()
 }
 
-type MemTableIterator struct {
+type MemtableIterator struct {
 	element *skiplist.Element
 	endKey  txn.Key
 }
 
-func (iterator *MemTableIterator) Key() txn.Key {
+func (iterator *MemtableIterator) Key() txn.Key {
 	return iterator.element.Key().(txn.Key)
 }
 
-func (iterator *MemTableIterator) Value() txn.Value {
+func (iterator *MemtableIterator) Value() txn.Value {
 	return iterator.element.Value.(txn.Value)
 }
 
-func (iterator *MemTableIterator) Next() error {
+func (iterator *MemtableIterator) Next() error {
 	iterator.element = iterator.element.Next()
 	return nil
 }
 
-func (iterator *MemTableIterator) IsValid() bool {
+func (iterator *MemtableIterator) IsValid() bool {
 	return iterator.element != nil && iterator.element.Key().(txn.Key).IsLessThanOrEqualTo(iterator.endKey)
 }

@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-func TestStorageStateWithASinglePutAndHasNotImmutableMemTables(t *testing.T) {
+func TestStorageStateWithASinglePutAndHasNotImmutableMemtables(t *testing.T) {
 	storageState := NewStorageState()
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 
-	assert.False(t, storageState.hasImmutableMemTables())
+	assert.False(t, storageState.hasImmutableMemtables())
 }
 
 func TestStorageStateWithASinglePutAndGet(t *testing.T) {
@@ -53,13 +53,13 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 	assert.Equal(t, txn.EmptyValue, value)
 }
 
-func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemTable(t *testing.T) {
+func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(StorageOptions{memTableSizeInBytes: 10})
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
 
-	assert.True(t, storageState.hasImmutableMemTables())
+	assert.True(t, storageState.hasImmutableMemtables())
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
