@@ -15,7 +15,7 @@ func NewStringValue(value string) Value {
 }
 
 func (value Value) IsEmpty() bool {
-	return value.value == nil
+	return len(value.value) == 0
 }
 
 func (value Value) String() string {

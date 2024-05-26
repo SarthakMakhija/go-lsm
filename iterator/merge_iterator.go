@@ -76,9 +76,22 @@ func (iterator *MergeIterator) IsValid() bool {
 
 func (iterator *MergeIterator) Next() error {
 	current := iterator.current
+	if err := iterator.advanceOtherIteratorsOnSameKey(current); err != nil {
+		return err
+	}
+	if err := iterator.advance(current); err != nil {
+		return err
+	}
+	if iterator.maybePopNew(current) {
+		return nil
+	}
+	return iterator.maybeSwapCurrent(current)
+}
+
+func (iterator *MergeIterator) advanceOtherIteratorsOnSameKey(current IndexedIterator) error {
 	for _, anIterator := range *iterator.iterators {
 		if current.Key().IsEqualTo(anIterator.Key()) {
-			if err := anIterator.Next(); err != nil {
+			if err := iterator.advance(anIterator); err != nil {
 				heap.Pop(iterator.iterators)
 				return err
 			}
@@ -89,15 +102,20 @@ func (iterator *MergeIterator) Next() error {
 			break
 		}
 	}
-	if err := current.Next(); err != nil {
-		return err
-	}
+	return nil
+}
+
+func (iterator *MergeIterator) maybePopNew(current IndexedIterator) bool {
 	if !current.IsValid() {
 		if iterator.iterators.Len() > 0 {
 			iterator.current = heap.Pop(iterator.iterators).(IndexedIterator)
 		}
-		return nil
+		return true
 	}
+	return false
+}
+
+func (iterator *MergeIterator) maybeSwapCurrent(current IndexedIterator) error {
 	if iterator.iterators.Len() > 0 {
 		iterators := *iterator.iterators
 		if !current.IsPrioritizedOver(iterators[0]) {
@@ -107,4 +125,8 @@ func (iterator *MergeIterator) Next() error {
 		}
 	}
 	return nil
+}
+
+func (iterator *MergeIterator) advance(indexedIterator IndexedIterator) error {
+	return indexedIterator.Next()
 }
