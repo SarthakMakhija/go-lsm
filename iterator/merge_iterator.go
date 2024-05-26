@@ -80,20 +80,20 @@ func (iterator *MergeIterator) IsValid() bool {
 }
 
 func (iterator *MergeIterator) Next() error {
-	current := iterator.current
-	if err := iterator.advanceOtherIteratorsOnSameKey(current); err != nil {
+	if err := iterator.advanceOtherIteratorsOnSameKey(); err != nil {
 		return err
 	}
-	if err := iterator.advance(current); err != nil {
+	if err := iterator.advanceCurrent(); err != nil {
 		return err
 	}
-	if iterator.maybePopNew(current) {
+	if iterator.maybePopNewCurrent() {
 		return nil
 	}
-	return iterator.maybeSwapCurrent(current)
+	return iterator.maybeSwapCurrent()
 }
 
-func (iterator *MergeIterator) advanceOtherIteratorsOnSameKey(current IndexedIterator) error {
+func (iterator *MergeIterator) advanceOtherIteratorsOnSameKey() error {
+	current := iterator.current
 	for _, anIterator := range *iterator.iterators {
 		if current.Key().IsEqualTo(anIterator.Key()) {
 			if err := iterator.advance(anIterator); err != nil {
@@ -110,8 +110,8 @@ func (iterator *MergeIterator) advanceOtherIteratorsOnSameKey(current IndexedIte
 	return nil
 }
 
-func (iterator *MergeIterator) maybePopNew(current IndexedIterator) bool {
-	if !current.IsValid() {
+func (iterator *MergeIterator) maybePopNewCurrent() bool {
+	if !iterator.current.IsValid() {
 		if iterator.iterators.Len() > 0 {
 			iterator.current = heap.Pop(iterator.iterators).(IndexedIterator)
 		}
@@ -120,9 +120,11 @@ func (iterator *MergeIterator) maybePopNew(current IndexedIterator) bool {
 	return false
 }
 
-func (iterator *MergeIterator) maybeSwapCurrent(current IndexedIterator) error {
+func (iterator *MergeIterator) maybeSwapCurrent() error {
 	if iterator.iterators.Len() > 0 {
+		current := iterator.current
 		iterators := *iterator.iterators
+
 		if !current.IsPrioritizedOver(iterators[0]) {
 			current, iterators[0] = iterators[0], current
 			iterator.current = current
@@ -130,6 +132,10 @@ func (iterator *MergeIterator) maybeSwapCurrent(current IndexedIterator) error {
 		}
 	}
 	return nil
+}
+
+func (iterator *MergeIterator) advanceCurrent() error {
+	return iterator.current.Next()
 }
 
 func (iterator *MergeIterator) advance(indexedIterator IndexedIterator) error {
