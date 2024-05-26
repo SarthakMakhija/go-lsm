@@ -1,10 +1,12 @@
 package iterator
 
-import "go-lsm"
+import (
+	"go-lsm/txn"
+)
 
 type Iterator interface {
-	Key() go_lsm.Key
-	Value() go_lsm.Value
+	Key() txn.Key
+	Value() txn.Value
 	Next() error
 	IsValid() bool
 }

@@ -1,4 +1,4 @@
-package go_lsm
+package txn
 
 type EntryKind int
 
@@ -36,7 +36,7 @@ func (batch *Batch) Put(key Key, value Value) *Batch {
 }
 
 func (batch *Batch) Delete(key Key) *Batch {
-	batch.entries = append(batch.entries, Entry{key, emptyValue, EntryKindDelete})
+	batch.entries = append(batch.entries, Entry{key, EmptyValue, EntryKindDelete})
 	return batch
 }
 

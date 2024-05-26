@@ -2,17 +2,17 @@ package iterator
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm"
+	"go-lsm/txn"
 	"testing"
 )
 
 type testIteratorNoEndKey struct {
-	keys         []go_lsm.Key
-	values       []go_lsm.Value
+	keys         []txn.Key
+	values       []txn.Value
 	currentIndex int
 }
 
-func newTestIteratorNoEndKey(keys []go_lsm.Key, values []go_lsm.Value) *testIteratorNoEndKey {
+func newTestIteratorNoEndKey(keys []txn.Key, values []txn.Value) *testIteratorNoEndKey {
 	return &testIteratorNoEndKey{
 		keys:         keys,
 		values:       values,
@@ -20,11 +20,11 @@ func newTestIteratorNoEndKey(keys []go_lsm.Key, values []go_lsm.Value) *testIter
 	}
 }
 
-func (iterator *testIteratorNoEndKey) Key() go_lsm.Key {
+func (iterator *testIteratorNoEndKey) Key() txn.Key {
 	return iterator.keys[iterator.currentIndex]
 }
 
-func (iterator *testIteratorNoEndKey) Value() go_lsm.Value {
+func (iterator *testIteratorNoEndKey) Value() txn.Value {
 	return iterator.values[iterator.currentIndex]
 }
 
@@ -39,17 +39,17 @@ func (iterator *testIteratorNoEndKey) IsValid() bool {
 
 func TestMergeIteratorWithASingleIterator(t *testing.T) {
 	iterator := newTestIteratorNoEndKey(
-		[]go_lsm.Key{go_lsm.NewStringKey("consensus"), go_lsm.NewStringKey("storage")},
-		[]go_lsm.Value{go_lsm.NewStringValue("raft"), go_lsm.NewStringValue("NVMe")},
+		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iterator})
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringValue("raft"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringValue("raft"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringValue("NVMe"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringValue("NVMe"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 	assert.False(t, mergeIterator.IsValid())
@@ -57,36 +57,36 @@ func TestMergeIteratorWithASingleIterator(t *testing.T) {
 
 func TestMergeIteratorWithATwoIterators(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]go_lsm.Key{go_lsm.NewStringKey("consensus"), go_lsm.NewStringKey("storage")},
-		[]go_lsm.Value{go_lsm.NewStringValue("raft"), go_lsm.NewStringValue("NVMe")},
+		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]go_lsm.Key{go_lsm.NewStringKey("diskType"), go_lsm.NewStringKey("distributed-db")},
-		[]go_lsm.Value{go_lsm.NewStringValue("SSD"), go_lsm.NewStringValue("etcd")},
+		[]txn.Key{txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Value{txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("consensus"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("raft"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("diskType"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("SSD"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("diskType"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("SSD"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("distributed-db"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("etcd"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("distributed-db"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("etcd"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("storage"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("NVMe"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("storage"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("NVMe"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
@@ -95,37 +95,37 @@ func TestMergeIteratorWithATwoIterators(t *testing.T) {
 
 func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]go_lsm.Key{go_lsm.NewStringKey("consensus"), go_lsm.NewStringKey("diskType"), go_lsm.NewStringKey("distributed-db")},
-		[]go_lsm.Value{go_lsm.NewStringValue("paxos"), go_lsm.NewStringValue("SSD"), go_lsm.NewStringValue("etcd")},
+		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Value{txn.NewStringValue("paxos"), txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]go_lsm.Key{go_lsm.NewStringKey("consensus"), go_lsm.NewStringKey("storage")},
-		[]go_lsm.Value{go_lsm.NewStringValue("raft"), go_lsm.NewStringValue("NVMe")},
+		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	//iterator with the higher index has higher priority
 	mergeIterator := NewMergeIterator([]Iterator{iteratorTwo, iteratorOne})
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("consensus"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("paxos"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("paxos"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("diskType"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("SSD"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("diskType"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("SSD"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("distributed-db"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("etcd"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("distributed-db"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("etcd"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("storage"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("NVMe"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("storage"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("NVMe"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
@@ -134,43 +134,43 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 
 func TestMergeIteratorWithATwoIteratorsHavingSameKey2(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]go_lsm.Key{go_lsm.NewStringKey("consensus"), go_lsm.NewStringKey("diskType"), go_lsm.NewStringKey("distributed-db")},
-		[]go_lsm.Value{go_lsm.NewStringValue("paxos"), go_lsm.NewStringValue("SSD"), go_lsm.NewStringValue("etcd")},
+		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Value{txn.NewStringValue("paxos"), txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]go_lsm.Key{go_lsm.NewStringKey("accurate"), go_lsm.NewStringKey("consensus"), go_lsm.NewStringKey("storage")},
-		[]go_lsm.Value{go_lsm.NewStringValue("consistency"), go_lsm.NewStringValue("raft"), go_lsm.NewStringValue("NVMe")},
+		[]txn.Key{txn.NewStringKey("accurate"), txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Value{txn.NewStringValue("consistency"), txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	//iterator with the higher index has higher priority
 	mergeIterator := NewMergeIterator([]Iterator{iteratorTwo, iteratorOne})
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("accurate"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("consistency"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("accurate"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("consistency"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("consensus"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("paxos"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("paxos"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("diskType"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("SSD"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("diskType"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("SSD"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("distributed-db"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("etcd"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("distributed-db"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("etcd"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, go_lsm.NewStringKey("storage"), mergeIterator.Key())
-	assert.Equal(t, go_lsm.NewStringValue("NVMe"), mergeIterator.Value())
+	assert.Equal(t, txn.NewStringKey("storage"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("NVMe"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 

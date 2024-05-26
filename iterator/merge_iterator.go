@@ -2,7 +2,7 @@ package iterator
 
 import (
 	"container/heap"
-	"go-lsm"
+	"go-lsm/txn"
 )
 
 // An MinHeapIndexedIterator is a min-heap of IndexedIterator.
@@ -62,11 +62,11 @@ func NewMergeIterator(iterators []Iterator) *MergeIterator {
 	}
 }
 
-func (iterator *MergeIterator) Key() go_lsm.Key {
+func (iterator *MergeIterator) Key() txn.Key {
 	return iterator.current.Key()
 }
 
-func (iterator *MergeIterator) Value() go_lsm.Value {
+func (iterator *MergeIterator) Value() txn.Value {
 	return iterator.current.Value()
 }
 

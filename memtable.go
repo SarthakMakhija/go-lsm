@@ -1,60 +1,10 @@
 package go_lsm
 
 import (
-	"bytes"
 	"github.com/huandu/skiplist"
+	"go-lsm/txn"
 	"sync/atomic"
 )
-
-type Key struct {
-	key []byte
-}
-
-func NewKey(key []byte) Key {
-	return Key{key: key}
-}
-
-func NewStringKey(key string) Key {
-	return Key{key: []byte(key)}
-}
-
-func (key Key) IsLessThanOrEqualTo(other Key) bool {
-	return bytes.Compare(key.key, other.key) <= 0
-}
-
-func (key Key) IsEqualTo(other Key) bool {
-	return bytes.Compare(key.key, other.key) == 0
-}
-
-func (key Key) Compare(other Key) int {
-	return bytes.Compare(key.key, other.key)
-}
-
-func (key Key) String() string {
-	return string(key.key)
-}
-
-type Value struct {
-	value []byte
-}
-
-var emptyValue = Value{value: nil}
-
-func NewValue(value []byte) Value {
-	return Value{value: value}
-}
-
-func NewStringValue(value string) Value {
-	return Value{value: []byte(value)}
-}
-
-func (value Value) IsEmpty() bool {
-	return value.value == nil
-}
-
-func (value Value) String() string {
-	return string(value.value)
-}
 
 type MemTable struct {
 	id      uint
@@ -66,33 +16,32 @@ func NewMemTable(id uint) *MemTable {
 	return &MemTable{
 		id: id,
 		entries: skiplist.New(skiplist.GreaterThanFunc(func(key, otherKey interface{}) int {
-			left := key.(Key)
-			right := otherKey.(Key)
+			left := key.(txn.Key)
+			right := otherKey.(txn.Key)
 
-			return bytes.Compare(left.key, right.key)
+			return left.Compare(right)
 		})),
 	}
 }
 
-func (memTable *MemTable) Get(key Key) (Value, bool) {
+func (memTable *MemTable) Get(key txn.Key) (txn.Value, bool) {
 	value, ok := memTable.entries.GetValue(key)
-	if !ok || value.(Value).IsEmpty() {
-		return emptyValue, false
+	if !ok || value.(txn.Value).IsEmpty() {
+		return txn.EmptyValue, false
 	}
-	return value.(Value), true
+	return value.(txn.Value), true
 }
 
-func (memTable *MemTable) Set(key Key, value Value) {
-	size := len(key.key) + len(value.value)
-	memTable.size.Add(uint64(size))
+func (memTable *MemTable) Set(key txn.Key, value txn.Value) {
+	memTable.size.Add(uint64(key.Size() + value.Size()))
 	memTable.entries.Set(key, value)
 }
 
-func (memTable *MemTable) Delete(key Key) {
-	memTable.Set(key, emptyValue)
+func (memTable *MemTable) Delete(key txn.Key) {
+	memTable.Set(key, txn.EmptyValue)
 }
 
-func (memTable *MemTable) ScanInclusive(start, end Key) *MemTableIterator {
+func (memTable *MemTable) ScanInclusive(start, end txn.Key) *MemTableIterator {
 	return &MemTableIterator{
 		element: memTable.entries.Find(start),
 		endKey:  end,
@@ -109,20 +58,20 @@ func (memTable *MemTable) Size() uint64 {
 
 type MemTableIterator struct {
 	element *skiplist.Element
-	endKey  Key
+	endKey  txn.Key
 }
 
-func (iterator *MemTableIterator) Key() Key {
-	return iterator.element.Key().(Key)
+func (iterator *MemTableIterator) Key() txn.Key {
+	return iterator.element.Key().(txn.Key)
 }
 
-func (iterator *MemTableIterator) Value() Value {
-	return iterator.element.Value.(Value)
+func (iterator *MemTableIterator) Value() txn.Value {
+	return iterator.element.Value.(txn.Value)
 }
 
 func (iterator *MemTableIterator) Next() error {
 	element := iterator.element.Next()
-	if element != nil && element.Key().(Key).IsLessThanOrEqualTo(iterator.endKey) {
+	if element != nil && element.Key().(txn.Key).IsLessThanOrEqualTo(iterator.endKey) {
 		iterator.element = element
 		return nil
 	}

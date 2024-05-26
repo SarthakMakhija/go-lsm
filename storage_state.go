@@ -1,5 +1,7 @@
 package go_lsm
 
+import "go-lsm/txn"
+
 type StorageOptions struct {
 	memTableSizeInBytes uint64
 }
@@ -27,7 +29,7 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	}
 }
 
-func (storageState *StorageState) Get(key Key) (Value, bool) {
+func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 	value, ok := storageState.currentMemTable.Get(key)
 	if ok {
 		return value, ok
@@ -38,11 +40,11 @@ func (storageState *StorageState) Get(key Key) (Value, bool) {
 			return value, ok
 		}
 	}
-	return emptyValue, false
+	return txn.EmptyValue, false
 }
 
-func (storageState *StorageState) Set(batch *Batch) {
-	for _, entry := range batch.entries {
+func (storageState *StorageState) Set(batch *txn.Batch) {
+	for _, entry := range batch.AllEntries() {
 		if entry.IsKindPut() {
 			storageState.currentMemTable.Set(entry.Key, entry.Value)
 		} else if entry.IsKindDelete() {
