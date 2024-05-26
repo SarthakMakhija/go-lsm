@@ -70,15 +70,10 @@ func (iterator *MemTableIterator) Value() txn.Value {
 }
 
 func (iterator *MemTableIterator) Next() error {
-	element := iterator.element.Next()
-	if element != nil && element.Key().(txn.Key).IsLessThanOrEqualTo(iterator.endKey) {
-		iterator.element = element
-		return nil
-	}
-	iterator.element = nil
+	iterator.element = iterator.element.Next()
 	return nil
 }
 
 func (iterator *MemTableIterator) IsValid() bool {
-	return iterator.element != nil
+	return iterator.element != nil && iterator.element.Key().(txn.Key).IsLessThanOrEqualTo(iterator.endKey)
 }

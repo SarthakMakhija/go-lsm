@@ -51,6 +51,7 @@ func NewMergeIterator(iterators []Iterator) *MergeIterator {
 	prioritizedIterators := &MinHeapIndexedIterator{}
 	heap.Init(prioritizedIterators)
 
+	//TODO: What if non are valid..
 	for index, iterator := range iterators {
 		if iterator.IsValid() {
 			heap.Push(prioritizedIterators, NewIndexedIterator(index, iterator))

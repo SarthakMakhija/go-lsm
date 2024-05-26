@@ -1,6 +1,9 @@
 package go_lsm
 
-import "go-lsm/txn"
+import (
+	"go-lsm/iterator"
+	"go-lsm/txn"
+)
 
 type StorageOptions struct {
 	memTableSizeInBytes uint64
@@ -56,6 +59,20 @@ func (storageState *StorageState) Set(batch *txn.Batch) {
 	}
 }
 
+func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveRange) iterator.Iterator {
+	iterators := make([]iterator.Iterator, len(storageState.immutableMemTables)+1)
+
+	index := 0
+	iterators[index] = storageState.currentMemTable.Scan(inclusiveRange)
+
+	index += 1
+	for immutableMemTableIndex := len(storageState.immutableMemTables) - 1; immutableMemTableIndex >= 0; immutableMemTableIndex-- {
+		iterators[index] = storageState.immutableMemTables[immutableMemTableIndex].Scan(inclusiveRange)
+		index += 1
+	}
+	return iterator.NewMergeIterator(iterators)
+}
+
 func (storageState *StorageState) hasImmutableMemTables() bool {
 	return len(storageState.immutableMemTables) > 0
 }
@@ -66,8 +83,13 @@ func (storageState *StorageState) hasImmutableMemTables() bool {
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
 func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
 	if storageState.currentMemTable.Size() >= storageState.options.memTableSizeInBytes {
-		memTable := NewMemTable(1)
-		storageState.immutableMemTables = append(storageState.immutableMemTables, memTable)
-		storageState.currentMemTable = memTable
+		storageState.immutableMemTables = append(storageState.immutableMemTables, storageState.currentMemTable)
+		storageState.currentMemTable = NewMemTable(1)
 	}
+}
+
+// forceFreezeCurrentMemtable only for testing.
+func (storageState *StorageState) forceFreezeCurrentMemtable() {
+	storageState.immutableMemTables = append(storageState.immutableMemTables, storageState.currentMemTable)
+	storageState.currentMemTable = NewMemTable(1)
 }

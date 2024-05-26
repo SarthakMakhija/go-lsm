@@ -73,3 +73,55 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("B+Tree"), value)
 }
+
+func TestStorageStateScan(t *testing.T) {
+	storageState := NewStorageState()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	iterator := storageState.Scan(txn.NewInclusiveRange(txn.NewStringKey("accurate"), txn.NewStringKey("etcd")))
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("data-structure"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("LSM"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateScanWithMultipleIterators(t *testing.T) {
+	storageState := NewStorageState()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.forceFreezeCurrentMemtable()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.forceFreezeCurrentMemtable()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	iterator := storageState.Scan(txn.NewInclusiveRange(txn.NewStringKey("accurate"), txn.NewStringKey("etcd")))
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("data-structure"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("LSM"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
