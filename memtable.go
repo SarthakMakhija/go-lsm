@@ -22,6 +22,18 @@ func (key Key) IsLessThanOrEqualTo(other Key) bool {
 	return bytes.Compare(key.key, other.key) <= 0
 }
 
+func (key Key) IsEqualTo(other Key) bool {
+	return bytes.Compare(key.key, other.key) == 0
+}
+
+func (key Key) Compare(other Key) int {
+	return bytes.Compare(key.key, other.key)
+}
+
+func (key Key) String() string {
+	return string(key.key)
+}
+
 type Value struct {
 	value []byte
 }
@@ -38,6 +50,10 @@ func NewStringValue(value string) Value {
 
 func (value Value) IsEmpty() bool {
 	return value.value == nil
+}
+
+func (value Value) String() string {
+	return string(value.value)
 }
 
 type MemTable struct {
@@ -104,13 +120,14 @@ func (iterator *MemTableIterator) Value() Value {
 	return iterator.element.Value.(Value)
 }
 
-func (iterator *MemTableIterator) Next() {
+func (iterator *MemTableIterator) Next() error {
 	element := iterator.element.Next()
 	if element != nil && element.Key().(Key).IsLessThanOrEqualTo(iterator.endKey) {
 		iterator.element = element
-		return
+		return nil
 	}
 	iterator.element = nil
+	return nil
 }
 
 func (iterator *MemTableIterator) IsValid() bool {

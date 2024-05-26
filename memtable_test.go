@@ -70,7 +70,7 @@ func TestMemtableScanInclusive1(t *testing.T) {
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, NewStringValue("time"), iterator.Value())
 
-	iterator.Next()
+	_ = iterator.Next()
 	assert.False(t, iterator.IsValid())
 }
 
@@ -84,10 +84,10 @@ func TestMemtableScanInclusive2(t *testing.T) {
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, NewStringValue("Db"), iterator.Value())
 
-	iterator.Next()
+	_ = iterator.Next()
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, NewStringValue("time"), iterator.Value())
 
-	iterator.Next()
+	_ = iterator.Next()
 	assert.False(t, iterator.IsValid())
 }
