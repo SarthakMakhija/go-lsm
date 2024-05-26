@@ -29,5 +29,5 @@ func TestAnIndexedIteratorBasedOnSameKeyWithDifferentIteratorIndex(t *testing.T)
 		[]txn.Value{txn.NewStringValue("db")},
 	))
 
-	assert.False(t, indexedIteratorOne.IsPrioritizedOver(indexedIteratorOther))
+	assert.True(t, indexedIteratorOne.IsPrioritizedOver(indexedIteratorOther))
 }
