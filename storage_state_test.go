@@ -125,3 +125,18 @@ func TestStorageStateScanWithMultipleIterators(t *testing.T) {
 
 	assert.False(t, iterator.IsValid())
 }
+
+func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
+	storageState := NewStorageState()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.forceFreezeCurrentMemtable()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.forceFreezeCurrentMemtable()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	iterator := storageState.Scan(txn.NewInclusiveRange(txn.NewStringKey("zen"), txn.NewStringKey("zen")))
+	assert.False(t, iterator.IsValid())
+}

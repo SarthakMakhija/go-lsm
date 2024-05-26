@@ -55,6 +55,17 @@ func TestMergeIteratorWithASingleIterator(t *testing.T) {
 	assert.False(t, mergeIterator.IsValid())
 }
 
+func TestMergeIteratorWithASingleInvalidIterator(t *testing.T) {
+	iterator := newTestIteratorNoEndKey(
+		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
+	)
+	iterator.currentIndex = 2
+	mergeIterator := NewMergeIterator([]Iterator{iterator})
+
+	assert.False(t, mergeIterator.IsValid())
+}
+
 func TestMergeIteratorWithATwoIterators(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
 		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
