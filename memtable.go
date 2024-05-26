@@ -41,10 +41,10 @@ func (memTable *MemTable) Delete(key txn.Key) {
 	memTable.Set(key, txn.EmptyValue)
 }
 
-func (memTable *MemTable) ScanInclusive(start, end txn.Key) *MemTableIterator {
+func (memTable *MemTable) Scan(inclusiveRange txn.InclusiveRange) *MemTableIterator {
 	return &MemTableIterator{
-		element: memTable.entries.Find(start),
-		endKey:  end,
+		element: memTable.entries.Find(inclusiveRange.Start()),
+		endKey:  inclusiveRange.End(),
 	}
 }
 
