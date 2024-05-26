@@ -92,3 +92,21 @@ func TestMemtableScanInclusive2(t *testing.T) {
 	_ = iterator.Next()
 	assert.False(t, iterator.IsValid())
 }
+
+func TestMemtableScanInclusive3(t *testing.T) {
+	memTable := NewMemTable(1)
+	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	memTable.Set(txn.NewStringKey("epoch"), txn.NewStringValue("time"))
+	memTable.Set(txn.NewStringKey("distributed"), txn.NewStringValue("Db"))
+
+	iterator := memTable.Scan(txn.NewInclusiveRange(txn.NewStringKey("consensus"), txn.NewStringKey("distributed")))
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("Db"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
