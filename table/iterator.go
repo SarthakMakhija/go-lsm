@@ -5,18 +5,6 @@ import (
 	"go-lsm/txn"
 )
 
-type Block struct {
-	data    []byte
-	offsets []uint16
-}
-
-func NewBlock(data []byte, offsets []uint16) Block {
-	return Block{
-		data:    data,
-		offsets: offsets,
-	}
-}
-
 type BlockIterator struct {
 	key         txn.Key
 	value       txn.Value

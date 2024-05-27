@@ -1,7 +1,6 @@
 package table
 
 import (
-	"bytes"
 	"encoding/binary"
 	"go-lsm/txn"
 	"unsafe"
@@ -12,20 +11,18 @@ var reservedValueSize = int(unsafe.Sizeof(uint16(0)))
 var uint16Size = int(unsafe.Sizeof(uint16(0)))
 
 type BlockBuilder struct {
-	offsets   []uint16
-	firstKey  txn.Key
-	blockSize uint
-	data      *bytes.Buffer
+	offsets          []uint16
+	firstKey         txn.Key
+	blockSize        uint
+	data             []byte
+	currentDataIndex int
 }
 
 // NewBlockBuilder TODO: blockSize should be a multiple of 4096
 func NewBlockBuilder(blockSize uint) *BlockBuilder {
-	data := new(bytes.Buffer)
-	data.Grow(int(blockSize))
-
 	return &BlockBuilder{
 		blockSize: blockSize,
-		data:      data,
+		data:      make([]byte, 0, blockSize),
 	}
 }
 
@@ -37,7 +34,7 @@ func (builder *BlockBuilder) add(key txn.Key, value txn.Value) bool {
 	if builder.firstKey.IsEmpty() {
 		builder.firstKey = key
 	}
-	builder.offsets = append(builder.offsets, uint16(builder.data.Len()))
+	builder.offsets = append(builder.offsets, uint16(len(builder.data)))
 	buffer := make([]byte, reservedKeySize+reservedValueSize+key.Size()+value.Size())
 
 	binary.LittleEndian.PutUint16(buffer[:], uint16(key.Size()))
@@ -46,7 +43,9 @@ func (builder *BlockBuilder) add(key txn.Key, value txn.Value) bool {
 	binary.LittleEndian.PutUint16(buffer[reservedKeySize+key.Size():], uint16(value.Size()))
 	copy(buffer[reservedKeySize+key.Size()+reservedValueSize:], value.Bytes())
 
-	builder.data.Write(buffer)
+	builder.data = append(builder.data, buffer...)
+	builder.currentDataIndex += len(buffer)
+
 	return true
 }
 
@@ -58,9 +57,9 @@ func (builder *BlockBuilder) build() Block {
 	if builder.isEmpty() {
 		panic("cannot build an empty Block")
 	}
-	return NewBlock(builder.data.Bytes(), builder.offsets)
+	return NewBlock(builder.data, builder.offsets)
 }
 
 func (builder *BlockBuilder) size() int {
-	return builder.data.Len() + len(builder.offsets)*uint16Size
+	return len(builder.data) + len(builder.offsets)*uint16Size
 }
