@@ -59,7 +59,7 @@ func (storageState *StorageState) Set(batch *txn.Batch) {
 	}
 }
 
-func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveRange) iterator.Iterator {
+func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange) iterator.Iterator {
 	iterators := make([]iterator.Iterator, len(storageState.immutableMemtables)+1)
 
 	index := 0

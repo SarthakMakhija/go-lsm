@@ -6,6 +6,8 @@ type Key struct {
 	key []byte
 }
 
+var EmptyKey = Key{key: nil}
+
 func NewKey(key []byte) Key {
 	return Key{key: key}
 }
@@ -32,4 +34,12 @@ func (key Key) String() string {
 
 func (key Key) Size() int {
 	return len(key.key)
+}
+
+func (key Key) IsEmpty() bool {
+	return key.Size() == 0
+}
+
+func (key Key) Bytes() []byte {
+	return key.key
 }

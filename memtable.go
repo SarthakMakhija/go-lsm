@@ -41,7 +41,7 @@ func (memtable *Memtable) Delete(key txn.Key) {
 	memtable.Set(key, txn.EmptyValue)
 }
 
-func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveRange) *MemtableIterator {
+func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveKeyRange) *MemtableIterator {
 	return &MemtableIterator{
 		element: memtable.entries.Find(inclusiveRange.Start()),
 		endKey:  inclusiveRange.End(),

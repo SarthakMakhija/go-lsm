@@ -25,3 +25,7 @@ func (value Value) String() string {
 func (value Value) Size() int {
 	return len(value.value)
 }
+
+func (value Value) Bytes() []byte {
+	return value.value
+}
