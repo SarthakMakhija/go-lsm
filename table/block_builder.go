@@ -9,6 +9,7 @@ import (
 var reservedKeySize = int(unsafe.Sizeof(uint16(0)))
 var reservedValueSize = int(unsafe.Sizeof(uint16(0)))
 var uint16Size = int(unsafe.Sizeof(uint16(0)))
+var uint32Size = int(unsafe.Sizeof(uint32(0)))
 
 type BlockBuilder struct {
 	offsets          []uint16
