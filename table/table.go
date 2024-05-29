@@ -15,6 +15,18 @@ type SSTable struct {
 	blockSize       uint
 }
 
+func (table SSTable) SeekToFirst() (*Iterator, error) {
+	readBlock, err := table.readBlock(0)
+	if err != nil {
+		return nil, err
+	}
+	return &Iterator{
+		table:         table,
+		blockIndex:    0,
+		blockIterator: readBlock.SeekToFirst(),
+	}, nil
+}
+
 func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
 	startingOffset, endOffset := table.offsetRangeOfBlockAt(blockIndex)
 	buffer := make([]byte, endOffset-startingOffset)
@@ -23,6 +35,10 @@ func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
 		return block.Block{}, err
 	}
 	return block.DecodeToBlock(buffer[:n]), nil
+}
+
+func (table SSTable) noOfBlocks() int {
+	return len(table.blockMetaList.list)
 }
 
 func (table SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
