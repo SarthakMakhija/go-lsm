@@ -56,6 +56,7 @@ func (metaList *MetaList) Length() int {
 
 func (metaList *MetaList) MaybeBlockMetaContaining(key txn.Key) (Meta, int) {
 	low, high := 0, metaList.Length()
+	previousLow := low
 	for low < high {
 		mid := low + (high-low)/2
 		meta := metaList.list[mid]
@@ -69,6 +70,9 @@ func (metaList *MetaList) MaybeBlockMetaContaining(key txn.Key) (Meta, int) {
 			low = mid
 			if next < metaList.Length() && key.Compare(metaList.list[next].StartingKey) >= 0 {
 				low = mid + 1
+			}
+			if low == previousLow {
+				return metaList.list[low], low
 			}
 		}
 	}

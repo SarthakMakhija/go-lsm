@@ -2,6 +2,7 @@ package table
 
 import (
 	"go-lsm/table/block"
+	"go-lsm/txn"
 )
 
 type SSTable struct {
@@ -21,6 +22,30 @@ func (table SSTable) SeekToFirst() (*Iterator, error) {
 		table:         table,
 		blockIndex:    0,
 		blockIterator: readBlock.SeekToFirst(),
+	}, nil
+}
+
+func (table SSTable) SeekToKey(key txn.Key) (*Iterator, error) {
+	_, blockIndex := table.blockMetaList.MaybeBlockMetaContaining(key)
+	readBlock, err := table.readBlock(blockIndex)
+	if err != nil {
+		return nil, err
+	}
+	blockIterator := readBlock.SeekToKey(key)
+	if !blockIterator.IsValid() {
+		blockIndex += 1
+		if blockIndex < table.noOfBlocks() {
+			readBlock, err := table.readBlock(blockIndex)
+			if err != nil {
+				return nil, err
+			}
+			blockIterator = readBlock.SeekToKey(key)
+		}
+	}
+	return &Iterator{
+		table:         table,
+		blockIndex:    blockIndex,
+		blockIterator: blockIterator,
 	}, nil
 }
 

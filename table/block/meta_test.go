@@ -89,6 +89,26 @@ func TestBlockMetaListGetBlockWhichMayContainTheGivenKey1(t *testing.T) {
 
 func TestBlockMetaListGetBlockWhichMayContainTheGivenKey2(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("consensus")})
+	blockMetaList.Add(Meta{Offset: 20, StartingKey: txn.NewStringKey("distributed")})
+	blockMetaList.Add(Meta{Offset: 40, StartingKey: txn.NewStringKey("etcd")})
+
+	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("contribute"))
+	assert.Equal(t, "consensus", meta.StartingKey.String())
+	assert.Equal(t, 0, index)
+}
+
+func TestBlockMetaListGetBlockWhichMayContainTheGivenKey3(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("consensus")})
+
+	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("contribute"))
+	assert.Equal(t, "consensus", meta.StartingKey.String())
+	assert.Equal(t, 0, index)
+}
+
+func TestBlockMetaListGetBlockWhichMayContainTheGivenKey4(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
 	for count := 10; count <= 100; count += 10 {
 		key := fmt.Sprintf("key-%d", count)
 		blockMetaList.Add(Meta{Offset: uint32(count), StartingKey: txn.NewStringKey(key)})
