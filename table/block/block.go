@@ -1,4 +1,4 @@
-package table
+package block
 
 import (
 	"encoding/binary"
@@ -17,23 +17,23 @@ func NewBlock(data []byte, offsets []uint16) Block {
 	}
 }
 
-func (block Block) encode() []byte {
+func (block Block) Encode() []byte {
 	data := block.data
 	data = append(data, block.encodeOffsets()...)
-	numberOfOffsets := make([]byte, uint16Size)
+	numberOfOffsets := make([]byte, Uint16Size)
 	binary.LittleEndian.PutUint16(numberOfOffsets, uint16(len(block.offsets)))
 
 	data = append(data, numberOfOffsets...)
 	return data
 }
 
-func decodeToBlock(data []byte) Block {
-	numberOfOffsets := binary.LittleEndian.Uint16(data[len(data)-uint16Size:])
-	startOfOffsets := uint16(len(data)) - uint16(uint16Size) - numberOfOffsets*uint16(uint16Size)
-	offsetsBuffer := data[startOfOffsets : len(data)-uint16Size]
+func DecodeToBlock(data []byte) Block {
+	numberOfOffsets := binary.LittleEndian.Uint16(data[len(data)-Uint16Size:])
+	startOfOffsets := uint16(len(data)) - uint16(Uint16Size) - numberOfOffsets*uint16(Uint16Size)
+	offsetsBuffer := data[startOfOffsets : len(data)-Uint16Size]
 
 	offsets := make([]uint16, 0, numberOfOffsets)
-	for index := 0; index < len(offsetsBuffer); index += uint16Size {
+	for index := 0; index < len(offsetsBuffer); index += Uint16Size {
 		offsets = append(offsets, binary.LittleEndian.Uint16(offsetsBuffer[index:]))
 	}
 	return Block{
@@ -42,8 +42,8 @@ func decodeToBlock(data []byte) Block {
 	}
 }
 
-func (block Block) SeekToFirst() *BlockIterator {
-	iterator := &BlockIterator{
+func (block Block) SeekToFirst() *Iterator {
+	iterator := &Iterator{
 		block:       block,
 		offsetIndex: 0,
 	}
@@ -51,8 +51,8 @@ func (block Block) SeekToFirst() *BlockIterator {
 	return iterator
 }
 
-func (block Block) SeekToKey(key txn.Key) *BlockIterator {
-	iterator := &BlockIterator{
+func (block Block) SeekToKey(key txn.Key) *Iterator {
+	iterator := &Iterator{
 		block: block,
 	}
 	iterator.seekToGreaterOrEqual(key)
@@ -60,11 +60,11 @@ func (block Block) SeekToKey(key txn.Key) *BlockIterator {
 }
 
 func (block Block) encodeOffsets() []byte {
-	offsetBuffer := make([]byte, uint16Size*len(block.offsets))
+	offsetBuffer := make([]byte, Uint16Size*len(block.offsets))
 	offsetIndex := 0
 	for _, offset := range block.offsets {
 		binary.LittleEndian.PutUint16(offsetBuffer[offsetIndex:], offset)
-		offsetIndex += uint16Size
+		offsetIndex += Uint16Size
 	}
 	return offsetBuffer
 }

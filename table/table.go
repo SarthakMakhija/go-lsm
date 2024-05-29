@@ -3,6 +3,7 @@ package table
 import (
 	"bytes"
 	"encoding/binary"
+	"go-lsm/table/block"
 	"go-lsm/txn"
 )
 
@@ -14,14 +15,14 @@ type SSTable struct {
 	blockSize       uint
 }
 
-func (table SSTable) readBlock(blockIndex int) (Block, error) {
+func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
 	startingOffset, endOffset := table.offsetRangeOfBlockAt(blockIndex)
 	buffer := make([]byte, endOffset-startingOffset)
 	n, err := table.file.Read(int64(startingOffset), buffer)
 	if err != nil {
-		return Block{}, err
+		return block.Block{}, err
 	}
-	return decodeToBlock(buffer[:n]), nil
+	return block.DecodeToBlock(buffer[:n]), nil
 }
 
 func (table SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
@@ -57,18 +58,18 @@ func (metaList *BlockMetaList) add(block BlockMeta) {
 }
 
 func (metaList *BlockMetaList) encode() []byte {
-	numberOfBlocks := make([]byte, uint32Size)
+	numberOfBlocks := make([]byte, block.Uint32Size)
 	binary.LittleEndian.PutUint32(numberOfBlocks, uint32(len(metaList.list)))
 
 	resultingBuffer := new(bytes.Buffer)
 	resultingBuffer.Write(numberOfBlocks)
 
 	for _, blockMeta := range metaList.list {
-		buffer := make([]byte, uint32Size+reservedKeySize+blockMeta.startingKey.Size())
+		buffer := make([]byte, block.Uint32Size+block.ReservedKeySize+blockMeta.startingKey.Size())
 
 		binary.LittleEndian.PutUint32(buffer[:], blockMeta.offset)
-		binary.LittleEndian.PutUint16(buffer[uint32Size:], uint16(blockMeta.startingKey.Size()))
-		copy(buffer[uint32Size+reservedKeySize:], blockMeta.startingKey.Bytes())
+		binary.LittleEndian.PutUint16(buffer[block.Uint32Size:], uint16(blockMeta.startingKey.Size()))
+		copy(buffer[block.Uint32Size+block.ReservedKeySize:], blockMeta.startingKey.Bytes())
 
 		resultingBuffer.Write(buffer)
 	}
@@ -87,17 +88,17 @@ func decodeToBlockMetaList(buffer []byte) BlockMetaList {
 	numberOfBlocks := binary.LittleEndian.Uint32(buffer[:])
 	blockList := make([]BlockMeta, 0, numberOfBlocks)
 
-	buffer = buffer[uint32Size:]
+	buffer = buffer[block.Uint32Size:]
 	for index := 0; index < len(buffer); {
 		offset := binary.LittleEndian.Uint32(buffer[index:])
-		keySize := binary.LittleEndian.Uint16(buffer[index+uint32Size:])
-		key := buffer[index+uint32Size+reservedKeySize : index+uint32Size+reservedKeySize+int(keySize)]
+		keySize := binary.LittleEndian.Uint16(buffer[index+block.Uint32Size:])
+		key := buffer[index+block.Uint32Size+block.ReservedKeySize : index+block.Uint32Size+block.ReservedKeySize+int(keySize)]
 
 		blockList = append(blockList, BlockMeta{
 			offset:      offset,
 			startingKey: txn.NewKey(key),
 		})
-		index = index + uint32Size + reservedKeySize + int(keySize)
+		index = index + block.Uint32Size + block.ReservedKeySize + int(keySize)
 	}
 	return BlockMetaList{
 		list: blockList,

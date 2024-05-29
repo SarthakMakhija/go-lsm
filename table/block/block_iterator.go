@@ -1,11 +1,11 @@
-package table
+package block
 
 import (
 	"encoding/binary"
 	"go-lsm/txn"
 )
 
-type BlockIterator struct {
+type Iterator struct {
 	key         txn.Key
 	value       txn.Value
 	offsetIndex uint16
@@ -14,26 +14,26 @@ type BlockIterator struct {
 	// only value range can be key here and the value can be returned from the Value method.
 }
 
-func (iterator *BlockIterator) Key() txn.Key {
+func (iterator *Iterator) Key() txn.Key {
 	return iterator.key
 }
 
-func (iterator *BlockIterator) Value() txn.Value {
+func (iterator *Iterator) Value() txn.Value {
 	return iterator.value
 }
 
-func (iterator *BlockIterator) IsValid() bool {
+func (iterator *Iterator) IsValid() bool {
 	return !iterator.key.IsEmpty()
 }
 
-func (iterator *BlockIterator) Next() error {
+func (iterator *Iterator) Next() error {
 	iterator.offsetIndex++
 	iterator.seekToOffsetIndex(iterator.offsetIndex)
 
 	return nil
 }
 
-func (iterator *BlockIterator) seekToOffsetIndex(index uint16) {
+func (iterator *Iterator) seekToOffsetIndex(index uint16) {
 	if index >= uint16(len(iterator.block.offsets)) {
 		iterator.markInvalid()
 		return
@@ -43,7 +43,7 @@ func (iterator *BlockIterator) seekToOffsetIndex(index uint16) {
 	iterator.seekToOffset(offset)
 }
 
-func (iterator *BlockIterator) seekToGreaterOrEqual(key txn.Key) {
+func (iterator *Iterator) seekToGreaterOrEqual(key txn.Key) {
 	low := 0
 	high := len(iterator.block.offsets)
 
@@ -66,21 +66,21 @@ func (iterator *BlockIterator) seekToGreaterOrEqual(key txn.Key) {
 	iterator.seekToOffsetIndex(uint16(low))
 }
 
-func (iterator *BlockIterator) seekToOffset(offset uint16) {
+func (iterator *Iterator) seekToOffset(offset uint16) {
 	data := iterator.block.data[offset:]
 
 	keySize := binary.LittleEndian.Uint16(data[:])
-	key := txn.NewKey(data[reservedKeySize : uint16(reservedKeySize)+keySize])
+	key := txn.NewKey(data[ReservedKeySize : uint16(ReservedKeySize)+keySize])
 
-	valueSize := binary.LittleEndian.Uint16(data[reservedKeySize+key.Size():])
-	valueOffsetStart := uint16(reservedKeySize) + keySize + uint16(reservedValueSize)
+	valueSize := binary.LittleEndian.Uint16(data[ReservedKeySize+key.Size():])
+	valueOffsetStart := uint16(ReservedKeySize) + keySize + uint16(ReservedValueSize)
 	value := txn.NewValue(data[valueOffsetStart : valueOffsetStart+valueSize])
 
 	iterator.key = key
 	iterator.value = value
 }
 
-func (iterator *BlockIterator) markInvalid() {
+func (iterator *Iterator) markInvalid() {
 	iterator.value = txn.EmptyValue
 	iterator.key = txn.EmptyKey
 	return

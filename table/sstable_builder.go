@@ -3,11 +3,12 @@ package table
 import (
 	"bytes"
 	"encoding/binary"
+	"go-lsm/table/block"
 	"go-lsm/txn"
 )
 
 type SSTableBuilder struct {
-	blockBuilder  *BlockBuilder
+	blockBuilder  *block.Builder
 	blockMetaList *BlockMetaList
 	startingKey   txn.Key
 	data          []byte
@@ -16,7 +17,7 @@ type SSTableBuilder struct {
 
 func NewSSTableBuilder(blockSize uint) *SSTableBuilder {
 	return &SSTableBuilder{
-		blockBuilder:  NewBlockBuilder(blockSize),
+		blockBuilder:  block.NewBlockBuilder(blockSize),
 		blockMetaList: NewBlockMetaList(),
 		blockSize:     blockSize,
 	}
@@ -26,12 +27,12 @@ func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
 	if builder.startingKey.IsEmpty() {
 		builder.startingKey = key
 	}
-	if builder.blockBuilder.add(key, value) {
+	if builder.blockBuilder.Add(key, value) {
 		return
 	}
 	builder.finishBlock()
 	builder.startNewBlock(key)
-	builder.blockBuilder.add(key, value)
+	builder.blockBuilder.Add(key, value)
 }
 
 // Build
@@ -39,7 +40,7 @@ func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
 func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error) {
 	builder.finishBlock()
 
-	blockMetaOffset := make([]byte, uint32Size)
+	blockMetaOffset := make([]byte, block.Uint32Size)
 	binary.LittleEndian.PutUint32(blockMetaOffset, uint32(len(builder.data)))
 
 	buffer := new(bytes.Buffer)
@@ -62,7 +63,7 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 }
 
 func (builder *SSTableBuilder) finishBlock() {
-	encodedBlock := builder.blockBuilder.build().encode()
+	encodedBlock := builder.blockBuilder.Build().Encode()
 	builder.blockMetaList.add(BlockMeta{
 		offset:      uint32(len(builder.data)),
 		startingKey: builder.startingKey,
@@ -71,6 +72,6 @@ func (builder *SSTableBuilder) finishBlock() {
 }
 
 func (builder *SSTableBuilder) startNewBlock(key txn.Key) {
-	builder.blockBuilder = NewBlockBuilder(builder.blockSize)
+	builder.blockBuilder = block.NewBlockBuilder(builder.blockSize)
 	builder.startingKey = key
 }

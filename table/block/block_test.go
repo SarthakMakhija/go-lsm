@@ -1,4 +1,4 @@
-package table
+package block
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -8,12 +8,12 @@ import (
 
 func TestEncodeAndDecodeBlockWithASingleKeyValue(t *testing.T) {
 	blockBuilder := NewBlockBuilder(1024)
-	blockBuilder.add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	blockBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
-	block := blockBuilder.build()
-	buffer := block.encode()
+	block := blockBuilder.Build()
+	buffer := block.Encode()
 
-	decodedBlock := decodeToBlock(buffer)
+	decodedBlock := DecodeToBlock(buffer)
 	iterator := decodedBlock.SeekToFirst()
 
 	assert.True(t, iterator.IsValid())
@@ -25,13 +25,13 @@ func TestEncodeAndDecodeBlockWithASingleKeyValue(t *testing.T) {
 
 func TestEncodeAndDecodeBlockWithTwoKeyValues(t *testing.T) {
 	blockBuilder := NewBlockBuilder(1024)
-	blockBuilder.add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	blockBuilder.add(txn.NewStringKey("etcd"), txn.NewStringValue("kv"))
+	blockBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	blockBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("kv"))
 
-	block := blockBuilder.build()
-	buffer := block.encode()
+	block := blockBuilder.Build()
+	buffer := block.Encode()
 
-	decodedBlock := decodeToBlock(buffer)
+	decodedBlock := DecodeToBlock(buffer)
 	iterator := decodedBlock.SeekToFirst()
 
 	assert.True(t, iterator.IsValid())
