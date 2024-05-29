@@ -18,6 +18,21 @@ func Create(path string, data []byte) (*File, error) {
 	return openReadonly(path, data)
 }
 
+func Open(filePath string) (*File, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	return &File{
+		file: file,
+		size: stat.Size(),
+	}, nil
+}
+
 func (file *File) Read(offset int64, buffer []byte) (int, error) {
 	if _, err := file.file.Seek(offset, io.SeekStart); err != nil {
 		return 0, err

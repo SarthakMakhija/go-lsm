@@ -1,6 +1,7 @@
 package table
 
 import (
+	"encoding/binary"
 	"go-lsm/table/block"
 	"go-lsm/txn"
 )
@@ -8,9 +9,37 @@ import (
 type SSTable struct {
 	id              uint64
 	blockMetaList   *block.MetaList
-	blockMetaOffset uint32
 	file            *File
+	blockMetaOffset uint32
 	blockSize       uint
+}
+
+func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
+	file, err := Open(filePath)
+	if err != nil {
+		return SSTable{}, err
+	}
+
+	fileSize := file.Size()
+	blockMetaOffsetBuffer := make([]byte, block.Uint32Size)
+	n, err := file.Read(fileSize-int64(block.Uint32Size), blockMetaOffsetBuffer)
+	if err != nil {
+		return SSTable{}, err
+	}
+	blockMetaOffset := binary.LittleEndian.Uint32(blockMetaOffsetBuffer[:n])
+
+	blockMetaListBuffer := make([]byte, fileSize-int64(blockMetaOffset)-int64(block.Uint32Size))
+	n, err = file.Read(int64(blockMetaOffset), blockMetaListBuffer)
+	if err != nil {
+		return SSTable{}, err
+	}
+	return SSTable{
+		id:              id,
+		blockMetaList:   block.DecodeToBlockMetaList(blockMetaListBuffer),
+		blockMetaOffset: blockMetaOffset,
+		file:            file,
+		blockSize:       blockSize,
+	}, nil
 }
 
 func (table SSTable) SeekToFirst() (*Iterator, error) {

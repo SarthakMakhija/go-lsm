@@ -79,7 +79,7 @@ func (metaList *MetaList) MaybeBlockMetaContaining(key txn.Key) (Meta, int) {
 	return metaList.list[low], low
 }
 
-func DecodeToBlockMetaList(buffer []byte) MetaList {
+func DecodeToBlockMetaList(buffer []byte) *MetaList {
 	numberOfBlocks := binary.LittleEndian.Uint32(buffer[:])
 	blockList := make([]Meta, 0, numberOfBlocks)
 
@@ -95,7 +95,7 @@ func DecodeToBlockMetaList(buffer []byte) MetaList {
 		})
 		index = index + Uint32Size + ReservedKeySize + int(keySize)
 	}
-	return MetaList{
+	return &MetaList{
 		list: blockList,
 	}
 }

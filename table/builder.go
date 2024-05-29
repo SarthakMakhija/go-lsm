@@ -11,7 +11,7 @@ type SSTableBuilder struct {
 	blockBuilder  *block.Builder
 	blockMetaList *block.MetaList
 	startingKey   txn.Key
-	data          []byte
+	blocksData    []byte
 	blockSize     uint
 }
 
@@ -41,10 +41,10 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 	builder.finishBlock()
 
 	blockMetaOffset := make([]byte, block.Uint32Size)
-	binary.LittleEndian.PutUint32(blockMetaOffset, uint32(len(builder.data)))
+	binary.LittleEndian.PutUint32(blockMetaOffset, uint32(len(builder.blocksData)))
 
 	buffer := new(bytes.Buffer)
-	buffer.Write(builder.data)
+	buffer.Write(builder.blocksData)
 	buffer.Write(builder.blockMetaList.Encode())
 	buffer.Write(blockMetaOffset)
 
@@ -57,7 +57,7 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 		id:              id,
 		file:            file,
 		blockMetaList:   builder.blockMetaList,
-		blockMetaOffset: uint32(len(builder.data)),
+		blockMetaOffset: uint32(len(builder.blocksData)),
 		blockSize:       builder.blockSize,
 	}, nil
 }
@@ -65,10 +65,10 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 func (builder *SSTableBuilder) finishBlock() {
 	encodedBlock := builder.blockBuilder.Build().Encode()
 	builder.blockMetaList.Add(block.Meta{
-		Offset:      uint32(len(builder.data)),
+		Offset:      uint32(len(builder.blocksData)),
 		StartingKey: builder.startingKey,
 	})
-	builder.data = append(builder.data, encodedBlock...)
+	builder.blocksData = append(builder.blocksData, encodedBlock...)
 }
 
 func (builder *SSTableBuilder) startNewBlock(key txn.Key) {
