@@ -54,6 +54,27 @@ func (metaList *MetaList) Length() int {
 	return len(metaList.list)
 }
 
+func (metaList *MetaList) MaybeBlockContaining(key txn.Key) Meta {
+	low, high := 0, metaList.Length()
+	for low < high {
+		mid := low + (high-low)/2
+		meta := metaList.list[mid]
+		switch key.Compare(meta.StartingKey) {
+		case -1:
+			high = mid - 1
+		case 0:
+			return meta
+		case 1:
+			next := mid + 1
+			low = mid
+			if next < metaList.Length() && key.Compare(metaList.list[next].StartingKey) >= 0 {
+				low = mid + 1
+			}
+		}
+	}
+	return metaList.list[low]
+}
+
 func DecodeToBlockMetaList(buffer []byte) MetaList {
 	numberOfBlocks := binary.LittleEndian.Uint32(buffer[:])
 	blockList := make([]Meta, 0, numberOfBlocks)

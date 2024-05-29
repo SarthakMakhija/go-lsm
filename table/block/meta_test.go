@@ -1,6 +1,7 @@
 package block
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"go-lsm/txn"
 	"testing"
@@ -38,4 +39,57 @@ func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
 
 	meta, _ = decodedBlockMetaList.GetAt(2)
 	assert.Equal(t, "consensus", meta.StartingKey.String())
+}
+
+func TestBlockMetaListGetBlockContainingTheKey1(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{Offset: 20, StartingKey: txn.NewStringKey("bolt")})
+
+	meta := blockMetaList.MaybeBlockContaining(txn.NewStringKey("bolt"))
+	assert.Equal(t, "bolt", meta.StartingKey.String())
+}
+
+func TestBlockMetaListGetBlockContainingTheKey2(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{Offset: 20, StartingKey: txn.NewStringKey("bolt")})
+	blockMetaList.Add(Meta{Offset: 40, StartingKey: txn.NewStringKey("db")})
+	blockMetaList.Add(Meta{Offset: 60, StartingKey: txn.NewStringKey("exact")})
+
+	meta := blockMetaList.MaybeBlockContaining(txn.NewStringKey("accurate"))
+	assert.Equal(t, "accurate", meta.StartingKey.String())
+}
+
+func TestBlockMetaListGetBlockContainingTheKey3(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{Offset: 20, StartingKey: txn.NewStringKey("bolt")})
+	blockMetaList.Add(Meta{Offset: 40, StartingKey: txn.NewStringKey("db")})
+	blockMetaList.Add(Meta{Offset: 60, StartingKey: txn.NewStringKey("exact")})
+
+	meta := blockMetaList.MaybeBlockContaining(txn.NewStringKey("exact"))
+	assert.Equal(t, "exact", meta.StartingKey.String())
+}
+
+func TestBlockMetaListGetBlockWhichMayContainTheGivenKey1(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{Offset: 20, StartingKey: txn.NewStringKey("bolt")})
+	blockMetaList.Add(Meta{Offset: 40, StartingKey: txn.NewStringKey("db")})
+	blockMetaList.Add(Meta{Offset: 60, StartingKey: txn.NewStringKey("exact")})
+
+	meta := blockMetaList.MaybeBlockContaining(txn.NewStringKey("consensus"))
+	assert.Equal(t, "bolt", meta.StartingKey.String())
+}
+
+func TestBlockMetaListGetBlockWhichMayContainTheGivenKey2(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	for count := 10; count <= 100; count += 10 {
+		key := fmt.Sprintf("key-%d", count)
+		blockMetaList.Add(Meta{Offset: uint32(count), StartingKey: txn.NewStringKey(key)})
+	}
+
+	meta := blockMetaList.MaybeBlockContaining(txn.NewStringKey("key-55"))
+	assert.Equal(t, "key-50", meta.StartingKey.String())
 }
