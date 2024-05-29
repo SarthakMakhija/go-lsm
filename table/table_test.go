@@ -3,31 +3,43 @@ package table
 import (
 	"github.com/stretchr/testify/assert"
 	"go-lsm/txn"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
-	blockMetaList := NewBlockMetaList()
-	blockMetaList.add(BlockMeta{offset: 0, startingKey: txn.NewStringKey("accurate")})
+func TestSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
-	encoded := blockMetaList.encode()
-	decodedBlockMetaList := decodeToBlockMetaList(encoded)
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
 
-	assert.Equal(t, 1, len(decodedBlockMetaList.list))
-	assert.Equal(t, "accurate", decodedBlockMetaList.list[0].startingKey.String())
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	block, err := ssTable.readBlock(0)
+	assert.Nil(t, err)
+
+	blockIterator := block.SeekToFirst()
+
+	assert.True(t, blockIterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("raft"), blockIterator.Value())
+
+	_ = blockIterator.Next()
+	assert.False(t, blockIterator.IsValid())
 }
 
-func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
-	blockMetaList := NewBlockMetaList()
-	blockMetaList.add(BlockMeta{offset: 0, startingKey: txn.NewStringKey("accurate")})
-	blockMetaList.add(BlockMeta{offset: 4096, startingKey: txn.NewStringKey("bolt")})
-	blockMetaList.add(BlockMeta{offset: 8192, startingKey: txn.NewStringKey("consensus")})
+func TestSSTableWithATwoBlocks(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 
-	encoded := blockMetaList.encode()
-	decodedBlockMetaList := decodeToBlockMetaList(encoded)
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
 
-	assert.Equal(t, 3, len(decodedBlockMetaList.list))
-	assert.Equal(t, "accurate", decodedBlockMetaList.list[0].startingKey.String())
-	assert.Equal(t, "bolt", decodedBlockMetaList.list[1].startingKey.String())
-	assert.Equal(t, "consensus", decodedBlockMetaList.list[2].startingKey.String())
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 2, ssTable.noOfBlocks())
 }

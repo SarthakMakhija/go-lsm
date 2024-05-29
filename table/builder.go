@@ -9,7 +9,7 @@ import (
 
 type SSTableBuilder struct {
 	blockBuilder  *block.Builder
-	blockMetaList *BlockMetaList
+	blockMetaList *block.MetaList
 	startingKey   txn.Key
 	data          []byte
 	blockSize     uint
@@ -18,7 +18,7 @@ type SSTableBuilder struct {
 func NewSSTableBuilder(blockSize uint) *SSTableBuilder {
 	return &SSTableBuilder{
 		blockBuilder:  block.NewBlockBuilder(blockSize),
-		blockMetaList: NewBlockMetaList(),
+		blockMetaList: block.NewBlockMetaList(),
 		blockSize:     blockSize,
 	}
 }
@@ -45,7 +45,7 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 
 	buffer := new(bytes.Buffer)
 	buffer.Write(builder.data)
-	buffer.Write(builder.blockMetaList.encode())
+	buffer.Write(builder.blockMetaList.Encode())
 	buffer.Write(blockMetaOffset)
 
 	file, err := Create(filePath, buffer.Bytes())
@@ -64,9 +64,9 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 
 func (builder *SSTableBuilder) finishBlock() {
 	encodedBlock := builder.blockBuilder.Build().Encode()
-	builder.blockMetaList.add(BlockMeta{
-		offset:      uint32(len(builder.data)),
-		startingKey: builder.startingKey,
+	builder.blockMetaList.Add(block.Meta{
+		Offset:      uint32(len(builder.data)),
+		StartingKey: builder.startingKey,
 	})
 	builder.data = append(builder.data, encodedBlock...)
 }
