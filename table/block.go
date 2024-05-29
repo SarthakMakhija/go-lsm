@@ -2,6 +2,7 @@ package table
 
 import (
 	"encoding/binary"
+	"go-lsm/txn"
 )
 
 type Block struct {
@@ -19,7 +20,6 @@ func NewBlock(data []byte, offsets []uint16) Block {
 func (block Block) encode() []byte {
 	data := block.data
 	data = append(data, block.encodeOffsets()...)
-
 	numberOfOffsets := make([]byte, uint16Size)
 	binary.LittleEndian.PutUint16(numberOfOffsets, uint16(len(block.offsets)))
 
@@ -40,6 +40,23 @@ func decodeToBlock(data []byte) Block {
 		data:    data[:startOfOffsets],
 		offsets: offsets,
 	}
+}
+
+func (block Block) SeekToFirst() *BlockIterator {
+	iterator := &BlockIterator{
+		block:       block,
+		offsetIndex: 0,
+	}
+	iterator.seekToOffsetIndex(iterator.offsetIndex)
+	return iterator
+}
+
+func (block Block) SeekToKey(key txn.Key) *BlockIterator {
+	iterator := &BlockIterator{
+		block: block,
+	}
+	iterator.seekToGreaterOrEqual(key)
+	return iterator
 }
 
 func (block Block) encodeOffsets() []byte {

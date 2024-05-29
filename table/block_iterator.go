@@ -14,23 +14,6 @@ type BlockIterator struct {
 	// only value range can be key here and the value can be returned from the Value method.
 }
 
-func SeekToFirst(block Block) *BlockIterator {
-	iterator := &BlockIterator{
-		block:       block,
-		offsetIndex: 0,
-	}
-	iterator.seekToOffsetIndex(iterator.offsetIndex)
-	return iterator
-}
-
-func SeekToKey(block Block, key txn.Key) *BlockIterator {
-	iterator := &BlockIterator{
-		block: block,
-	}
-	iterator.seekToGreaterOrEqual(key)
-	return iterator
-}
-
 func (iterator *BlockIterator) Key() txn.Key {
 	return iterator.key
 }

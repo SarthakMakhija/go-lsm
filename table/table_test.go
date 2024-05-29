@@ -8,7 +8,7 @@ import (
 
 func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
-	blockMetaList.add(BlockMeta{offset: 4096, startingKey: txn.NewStringKey("accurate")})
+	blockMetaList.add(BlockMeta{offset: 0, startingKey: txn.NewStringKey("accurate")})
 
 	encoded := blockMetaList.encode()
 	decodedBlockMetaList := decodeToBlockMetaList(encoded)
@@ -19,9 +19,9 @@ func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
 
 func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
-	blockMetaList.add(BlockMeta{offset: 4096, startingKey: txn.NewStringKey("accurate")})
-	blockMetaList.add(BlockMeta{offset: 8192, startingKey: txn.NewStringKey("bolt")})
-	blockMetaList.add(BlockMeta{offset: 12_288, startingKey: txn.NewStringKey("consensus")})
+	blockMetaList.add(BlockMeta{offset: 0, startingKey: txn.NewStringKey("accurate")})
+	blockMetaList.add(BlockMeta{offset: 4096, startingKey: txn.NewStringKey("bolt")})
+	blockMetaList.add(BlockMeta{offset: 8192, startingKey: txn.NewStringKey("consensus")})
 
 	encoded := blockMetaList.encode()
 	decodedBlockMetaList := decodeToBlockMetaList(encoded)
