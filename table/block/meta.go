@@ -54,7 +54,7 @@ func (metaList *MetaList) Length() int {
 	return len(metaList.list)
 }
 
-func (metaList *MetaList) MaybeBlockContaining(key txn.Key) Meta {
+func (metaList *MetaList) MaybeBlockMetaContaining(key txn.Key) (Meta, int) {
 	low, high := 0, metaList.Length()
 	for low < high {
 		mid := low + (high-low)/2
@@ -63,7 +63,7 @@ func (metaList *MetaList) MaybeBlockContaining(key txn.Key) Meta {
 		case -1:
 			high = mid - 1
 		case 0:
-			return meta
+			return meta, mid
 		case 1:
 			next := mid + 1
 			low = mid
@@ -72,7 +72,7 @@ func (metaList *MetaList) MaybeBlockContaining(key txn.Key) Meta {
 			}
 		}
 	}
-	return metaList.list[low]
+	return metaList.list[low], low
 }
 
 func DecodeToBlockMetaList(buffer []byte) MetaList {
