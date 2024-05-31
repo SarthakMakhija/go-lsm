@@ -20,13 +20,14 @@ type StorageOptions struct {
 
 // StorageState TODO: Support concurrency and Close method
 type StorageState struct {
-	currentMemtable    *Memtable
-	immutableMemtables []*Memtable
-	idGenerator        *MemtableIdGenerator
-	l0SSTableIds       []uint64
-	ssTables           map[uint64]table.SSTable
-	closeChannel       chan struct{}
-	options            StorageOptions
+	currentMemtable                *Memtable
+	immutableMemtables             []*Memtable
+	idGenerator                    *MemtableIdGenerator
+	l0SSTableIds                   []uint64
+	ssTables                       map[uint64]table.SSTable
+	closeChannel                   chan struct{}
+	flushMemtableCompletionChannel chan struct{}
+	options                        StorageOptions
 }
 
 func NewStorageState() *StorageState {
@@ -44,11 +45,12 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	}
 	idGenerator := NewMemtableIdGenerator()
 	storageState := &StorageState{
-		currentMemtable: NewMemtable(idGenerator.NextId()),
-		idGenerator:     idGenerator,
-		ssTables:        make(map[uint64]table.SSTable),
-		closeChannel:    make(chan struct{}),
-		options:         options,
+		currentMemtable:                NewMemtable(idGenerator.NextId()),
+		idGenerator:                    idGenerator,
+		ssTables:                       make(map[uint64]table.SSTable),
+		closeChannel:                   make(chan struct{}),
+		flushMemtableCompletionChannel: make(chan struct{}),
+		options:                        options,
 	}
 	storageState.spawnMemtableFlush()
 	return storageState
@@ -132,6 +134,8 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 // Close TODO: Complete the implementation
 func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
+	//Wait for flush immutable tables goroutine to return
+	<-storageState.flushMemtableCompletionChannel
 }
 
 func (storageState *StorageState) hasImmutableMemtables() bool {
@@ -177,6 +181,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 				}
 				timer.Reset(storageState.options.FlushMemtableDuration)
 			case <-storageState.closeChannel:
+				close(storageState.flushMemtableCompletionChannel)
 				return
 			}
 		}
