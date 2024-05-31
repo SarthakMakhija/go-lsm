@@ -3,6 +3,7 @@ package go_lsm
 import (
 	"go-lsm/iterator"
 	"go-lsm/txn"
+	"slices"
 )
 
 type StorageOptions struct {
@@ -13,21 +14,21 @@ type StorageOptions struct {
 type StorageState struct {
 	currentMemtable    *Memtable
 	immutableMemtables []*Memtable
+	idGenerator        *MemtableIdGenerator
 	options            StorageOptions
 }
 
 func NewStorageState() *StorageState {
-	return &StorageState{
-		currentMemtable: NewMemtable(1),
-		options: StorageOptions{
-			memTableSizeInBytes: 1 << 20,
-		},
-	}
+	return NewStorageStateWithOptions(StorageOptions{
+		memTableSizeInBytes: 1 << 20,
+	})
 }
 
 func NewStorageStateWithOptions(options StorageOptions) *StorageState {
+	idGenerator := NewMemtableIdGenerator()
 	return &StorageState{
-		currentMemtable: NewMemtable(1),
+		currentMemtable: NewMemtable(idGenerator.NextId()),
+		idGenerator:     idGenerator,
 		options:         options,
 	}
 }
@@ -77,6 +78,16 @@ func (storageState *StorageState) hasImmutableMemtables() bool {
 	return len(storageState.immutableMemtables) > 0
 }
 
+func (storageState *StorageState) sortedMemtableIds() []uint64 {
+	ids := make([]uint64, 0, 1+len(storageState.immutableMemtables))
+	ids = append(ids, storageState.currentMemtable.id)
+	for _, immutableMemtable := range storageState.immutableMemtables {
+		ids = append(ids, immutableMemtable.id)
+	}
+	slices.Sort(ids)
+	return ids
+}
+
 // TODO: Generate new id
 // TODO: Manifest
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
@@ -84,12 +95,12 @@ func (storageState *StorageState) hasImmutableMemtables() bool {
 func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
 	if storageState.currentMemtable.Size() >= storageState.options.memTableSizeInBytes {
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-		storageState.currentMemtable = NewMemtable(1)
+		storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
 	}
 }
 
 // forceFreezeCurrentMemtable only for testing.
 func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-	storageState.currentMemtable = NewMemtable(1)
+	storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
 }

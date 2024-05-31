@@ -7,12 +7,12 @@ import (
 )
 
 type Memtable struct {
-	id      uint
+	id      uint64
 	size    atomic.Uint64
 	entries *skiplist.SkipList
 }
 
-func NewMemtable(id uint) *Memtable {
+func NewMemtable(id uint64) *Memtable {
 	return &Memtable{
 		id: id,
 		entries: skiplist.New(skiplist.GreaterThanFunc(func(key, otherKey interface{}) int {

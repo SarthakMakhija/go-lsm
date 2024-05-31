@@ -60,6 +60,8 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
 
 	assert.True(t, storageState.hasImmutableMemtables())
+	assert.Equal(t, 3, len(storageState.immutableMemtables))
+	assert.Equal(t, []uint64{1, 2, 3, 4}, storageState.sortedMemtableIds())
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
@@ -71,6 +73,7 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 
 	value, ok := storageState.Get(txn.NewStringKey("data-structure"))
 	assert.True(t, ok)
+	assert.True(t, storageState.hasImmutableMemtables())
 	assert.Equal(t, txn.NewStringValue("B+Tree"), value)
 }
 
