@@ -88,7 +88,6 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 	return ids
 }
 
-// TODO: Generate new id
 // TODO: Manifest
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only

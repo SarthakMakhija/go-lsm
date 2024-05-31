@@ -48,6 +48,12 @@ func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveKeyRange) *MemtableIt
 	}
 }
 
+func (memtable *Memtable) AllEntries(callback func(key txn.Key, value txn.Value)) {
+	for element := memtable.entries.Front(); element != nil; element = element.Next() {
+		callback(element.Key().(txn.Key), element.Value.(txn.Value))
+	}
+}
+
 func (memtable *Memtable) IsEmpty() bool {
 	return memtable.entries.Len() == 0
 }
