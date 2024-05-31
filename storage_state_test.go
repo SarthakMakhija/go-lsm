@@ -7,17 +7,31 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func testStorageStateOptions(memtableSizeInBytes uint64) StorageOptions {
 	return StorageOptions{
-		MemTableSizeInBytes: memtableSizeInBytes,
-		Path:                ".",
+		MemTableSizeInBytes:   memtableSizeInBytes,
+		Path:                  ".",
+		MaximumMemtables:      10,
+		FlushMemtableDuration: 1 * time.Minute,
+	}
+}
+
+func testStorageStateOptionsWithDirectory(memtableSizeInBytes uint64, directory string) StorageOptions {
+	return StorageOptions{
+		MemTableSizeInBytes:   memtableSizeInBytes,
+		Path:                  directory,
+		MaximumMemtables:      10,
+		FlushMemtableDuration: 1 * time.Minute,
 	}
 }
 
 func TestStorageStateWithASinglePutAndHasNotImmutableMemtables(t *testing.T) {
 	storageState := NewStorageState()
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 
 	assert.False(t, storageState.hasImmutableMemtables())
@@ -25,6 +39,8 @@ func TestStorageStateWithASinglePutAndHasNotImmutableMemtables(t *testing.T) {
 
 func TestStorageStateWithASinglePutAndGet(t *testing.T) {
 	storageState := NewStorageState()
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 
 	value, ok := storageState.Get(txn.NewStringKey("consensus"))
@@ -35,6 +51,8 @@ func TestStorageStateWithASinglePutAndGet(t *testing.T) {
 
 func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 	storageState := NewStorageState()
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
@@ -54,6 +72,8 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 
 func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 	storageState := NewStorageState()
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Delete(txn.NewStringKey("consensus")))
 
@@ -65,6 +85,8 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 
 func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(10))
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
@@ -76,6 +98,8 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 
 func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(10))
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
@@ -89,6 +113,7 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 
 func TestStorageStateScan(t *testing.T) {
 	storageState := NewStorageState()
+	defer storageState.Close()
 
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
@@ -113,6 +138,7 @@ func TestStorageStateScan(t *testing.T) {
 
 func TestStorageStateScanWithMultipleIterators(t *testing.T) {
 	storageState := NewStorageState()
+	defer storageState.Close()
 
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.forceFreezeCurrentMemtable()
@@ -141,6 +167,7 @@ func TestStorageStateScanWithMultipleIterators(t *testing.T) {
 
 func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 	storageState := NewStorageState()
+	defer storageState.Close()
 
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.forceFreezeCurrentMemtable()
@@ -156,6 +183,8 @@ func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 
 func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(1 << 10))
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 
 	assert.False(t, storageState.hasImmutableMemtables())
@@ -168,7 +197,9 @@ func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtabl
 func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(StorageOptions{MemTableSizeInBytes: 10, Path: tempDirectory})
+	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(10, tempDirectory))
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
@@ -180,13 +211,46 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(StorageOptions{MemTableSizeInBytes: 10, Path: tempDirectory})
+	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(10, tempDirectory))
+	defer storageState.Close()
+
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
 
 	err := storageState.ForceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
+
+	ssTable, err := table.Load(1, filepath.Join(tempDirectory, "1.sst"), 4096)
+	assert.Nil(t, err)
+
+	iterator, err := ssTable.SeekToFirst()
+	assert.Nil(t, err)
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixedInterval(t *testing.T) {
+	tempDirectory := os.TempDir()
+
+	storageOptions := StorageOptions{
+		MemTableSizeInBytes:   10,
+		Path:                  tempDirectory,
+		MaximumMemtables:      2,
+		FlushMemtableDuration: 1 * time.Millisecond,
+	}
+	storageState := NewStorageStateWithOptions(storageOptions)
+	defer storageState.Close()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	time.Sleep(10 * time.Millisecond)
 
 	ssTable, err := table.Load(1, filepath.Join(tempDirectory, "1.sst"), 4096)
 	assert.Nil(t, err)

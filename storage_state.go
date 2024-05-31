@@ -8,27 +8,33 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"time"
 )
 
 type StorageOptions struct {
-	MemTableSizeInBytes uint64
-	Path                string
+	MemTableSizeInBytes   uint64
+	Path                  string
+	MaximumMemtables      uint
+	FlushMemtableDuration time.Duration
 }
 
-// StorageState TODO: Support concurrency
+// StorageState TODO: Support concurrency and Close method
 type StorageState struct {
 	currentMemtable    *Memtable
 	immutableMemtables []*Memtable
 	idGenerator        *MemtableIdGenerator
 	l0SSTableIds       []uint64
 	ssTables           map[uint64]table.SSTable
+	closeChannel       chan struct{}
 	options            StorageOptions
 }
 
 func NewStorageState() *StorageState {
 	return NewStorageStateWithOptions(StorageOptions{
-		MemTableSizeInBytes: 1 << 20,
-		Path:                ".",
+		MemTableSizeInBytes:   1 << 20,
+		Path:                  ".",
+		MaximumMemtables:      5,
+		FlushMemtableDuration: 50 * time.Millisecond,
 	})
 }
 
@@ -37,12 +43,15 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 		_ = os.MkdirAll(options.Path, 0700)
 	}
 	idGenerator := NewMemtableIdGenerator()
-	return &StorageState{
+	storageState := &StorageState{
 		currentMemtable: NewMemtable(idGenerator.NextId()),
 		idGenerator:     idGenerator,
 		ssTables:        make(map[uint64]table.SSTable),
+		closeChannel:    make(chan struct{}),
 		options:         options,
 	}
+	storageState.spawnMemtableFlush()
+	return storageState
 }
 
 func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
@@ -120,6 +129,11 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 	return nil
 }
 
+// Close TODO: Complete the implementation
+func (storageState *StorageState) Close() {
+	close(storageState.closeChannel)
+}
+
 func (storageState *StorageState) hasImmutableMemtables() bool {
 	return len(storageState.immutableMemtables) > 0
 }
@@ -148,4 +162,23 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
 func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
 	storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
+}
+
+func (storageState *StorageState) spawnMemtableFlush() {
+	timer := time.NewTimer(storageState.options.FlushMemtableDuration)
+	go func() {
+		for {
+			select {
+			case <-timer.C:
+				if uint(len(storageState.immutableMemtables)) >= storageState.options.MaximumMemtables {
+					if err := storageState.ForceFlushNextImmutableMemtable(); err != nil {
+						panic(fmt.Errorf("could not flush memtable %v", err))
+					}
+				}
+				timer.Reset(storageState.options.FlushMemtableDuration)
+			case <-storageState.closeChannel:
+				return
+			}
+		}
+	}()
 }
