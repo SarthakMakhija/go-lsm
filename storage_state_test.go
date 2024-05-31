@@ -2,9 +2,19 @@ package go_lsm
 
 import (
 	"github.com/stretchr/testify/assert"
+	"go-lsm/table"
 	"go-lsm/txn"
+	"os"
+	"path/filepath"
 	"testing"
 )
+
+func testStorageStateOptions(memtableSizeInBytes uint64) StorageOptions {
+	return StorageOptions{
+		MemTableSizeInBytes: memtableSizeInBytes,
+		Path:                ".",
+	}
+}
 
 func TestStorageStateWithASinglePutAndHasNotImmutableMemtables(t *testing.T) {
 	storageState := NewStorageState()
@@ -54,7 +64,7 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 }
 
 func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
-	storageState := NewStorageStateWithOptions(StorageOptions{memTableSizeInBytes: 10})
+	storageState := NewStorageStateWithOptions(testStorageStateOptions(10))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
@@ -65,7 +75,7 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
-	storageState := NewStorageStateWithOptions(StorageOptions{memTableSizeInBytes: 10})
+	storageState := NewStorageStateWithOptions(testStorageStateOptions(10))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
@@ -141,5 +151,52 @@ func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("zen"), txn.NewStringKey("zen")))
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtable(t *testing.T) {
+	storageState := NewStorageStateWithOptions(testStorageStateOptions(1 << 10))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+
+	assert.False(t, storageState.hasImmutableMemtables())
+
+	assert.Panics(t, func() {
+		_ = storageState.ForceFlushNextImmutableMemtable()
+	})
+}
+
+func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
+	tempDirectory := os.TempDir()
+
+	storageState := NewStorageStateWithOptions(StorageOptions{MemTableSizeInBytes: 10, Path: tempDirectory})
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	err := storageState.ForceFlushNextImmutableMemtable()
+	assert.Nil(t, err)
+}
+
+func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *testing.T) {
+	tempDirectory := os.TempDir()
+
+	storageState := NewStorageStateWithOptions(StorageOptions{MemTableSizeInBytes: 10, Path: tempDirectory})
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	err := storageState.ForceFlushNextImmutableMemtable()
+	assert.Nil(t, err)
+
+	ssTable, err := table.Load(1, filepath.Join(tempDirectory, "1.sst"), 4096)
+	assert.Nil(t, err)
+
+	iterator, err := ssTable.SeekToFirst()
+	assert.Nil(t, err)
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
 	assert.False(t, iterator.IsValid())
 }

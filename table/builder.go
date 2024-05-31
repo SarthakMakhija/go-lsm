@@ -15,6 +15,10 @@ type SSTableBuilder struct {
 	blockSize     uint
 }
 
+func NewSSTableBuilderWithDefaultBlockSize() *SSTableBuilder {
+	return NewSSTableBuilder(4096)
+}
+
 func NewSSTableBuilder(blockSize uint) *SSTableBuilder {
 	return &SSTableBuilder{
 		blockBuilder:  block.NewBlockBuilder(blockSize),

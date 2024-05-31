@@ -1,13 +1,18 @@
 package go_lsm
 
 import (
+	"fmt"
 	"go-lsm/iterator"
+	"go-lsm/table"
 	"go-lsm/txn"
+	"os"
+	"path/filepath"
 	"slices"
 )
 
 type StorageOptions struct {
-	memTableSizeInBytes uint64
+	MemTableSizeInBytes uint64
+	Path                string
 }
 
 // StorageState TODO: Support concurrency
@@ -15,20 +20,27 @@ type StorageState struct {
 	currentMemtable    *Memtable
 	immutableMemtables []*Memtable
 	idGenerator        *MemtableIdGenerator
+	l0SSTableIds       []uint64
+	ssTables           map[uint64]table.SSTable
 	options            StorageOptions
 }
 
 func NewStorageState() *StorageState {
 	return NewStorageStateWithOptions(StorageOptions{
-		memTableSizeInBytes: 1 << 20,
+		MemTableSizeInBytes: 1 << 20,
+		Path:                ".",
 	})
 }
 
 func NewStorageStateWithOptions(options StorageOptions) *StorageState {
+	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
+		_ = os.MkdirAll(options.Path, 0700)
+	}
 	idGenerator := NewMemtableIdGenerator()
 	return &StorageState{
 		currentMemtable: NewMemtable(idGenerator.NextId()),
 		idGenerator:     idGenerator,
+		ssTables:        make(map[uint64]table.SSTable),
 		options:         options,
 	}
 }
@@ -74,6 +86,40 @@ func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange) ite
 	return iterator.NewMergeIterator(iterators)
 }
 
+func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
+	var memtableToFlush *Memtable
+	if len(storageState.immutableMemtables) > 0 {
+		memtableToFlush = storageState.immutableMemtables[0]
+	} else {
+		panic("no immutable memtables available to flush")
+	}
+
+	buildSSTable := func() (table.SSTable, error) {
+		ssTableBuilder := table.NewSSTableBuilderWithDefaultBlockSize()
+		memtableToFlush.AllEntries(func(key txn.Key, value txn.Value) {
+			ssTableBuilder.Add(key, value)
+		})
+		ssTable, err := ssTableBuilder.Build(
+			memtableToFlush.id,
+			filepath.Join(storageState.options.Path, fmt.Sprintf("%v.sst", memtableToFlush.id)),
+		)
+		if err != nil {
+			return table.SSTable{}, err
+		}
+		return ssTable, nil
+	}
+
+	ssTable, err := buildSSTable()
+	if err != nil {
+		return err
+	}
+	storageState.immutableMemtables = storageState.immutableMemtables[1:]
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.id) //TODO: Either use l0SSTables or levels
+	storageState.ssTables[memtableToFlush.id] = ssTable
+	//TODO: WAl remove, manifest, concurrency support
+	return nil
+}
+
 func (storageState *StorageState) hasImmutableMemtables() bool {
 	return len(storageState.immutableMemtables) > 0
 }
@@ -92,7 +138,7 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
 func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
-	if storageState.currentMemtable.Size() >= storageState.options.memTableSizeInBytes {
+	if storageState.currentMemtable.Size() >= storageState.options.MemTableSizeInBytes {
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
 		storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
 	}
