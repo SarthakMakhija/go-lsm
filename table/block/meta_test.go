@@ -41,6 +41,33 @@ func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
 	assert.Equal(t, "consensus", meta.StartingKey.String())
 }
 
+func TestBlockMetaListWithAThreeBlockMetaWithEndingKeyOfEachBlock(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate"), EndingKey: txn.NewStringKey("amorphous")})
+	blockMetaList.Add(Meta{Offset: 4096, StartingKey: txn.NewStringKey("bolt"), EndingKey: txn.NewStringKey("bunt")})
+	blockMetaList.Add(Meta{Offset: 8192, StartingKey: txn.NewStringKey("consensus"), EndingKey: txn.NewStringKey("distributed")})
+
+	encoded := blockMetaList.Encode()
+	decodedBlockMetaList := DecodeToBlockMetaList(encoded)
+
+	assert.Equal(t, 3, decodedBlockMetaList.Length())
+
+	meta, _ := decodedBlockMetaList.GetAt(0)
+	assert.Equal(t, uint32(0), meta.Offset)
+	assert.Equal(t, "accurate", meta.StartingKey.String())
+	assert.Equal(t, "amorphous", meta.EndingKey.String())
+
+	meta, _ = decodedBlockMetaList.GetAt(1)
+	assert.Equal(t, uint32(4096), meta.Offset)
+	assert.Equal(t, "bolt", meta.StartingKey.String())
+	assert.Equal(t, "bunt", meta.EndingKey.String())
+
+	meta, _ = decodedBlockMetaList.GetAt(2)
+	assert.Equal(t, uint32(8192), meta.Offset)
+	assert.Equal(t, "consensus", meta.StartingKey.String())
+	assert.Equal(t, "distributed", meta.EndingKey.String())
+}
+
 func TestBlockMetaListGetBlockContainingTheKey1(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
 	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
@@ -100,10 +127,11 @@ func TestBlockMetaListGetBlockWhichMayContainTheGivenKey2(t *testing.T) {
 
 func TestBlockMetaListGetBlockWhichMayContainTheGivenKey3(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
-	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("consensus")})
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("consensus"), EndingKey: txn.NewStringKey("demo")})
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("contribute"))
 	assert.Equal(t, "consensus", meta.StartingKey.String())
+	assert.Equal(t, "demo", meta.EndingKey.String())
 	assert.Equal(t, 0, index)
 }
 

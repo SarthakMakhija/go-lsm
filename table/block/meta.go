@@ -9,6 +9,7 @@ import (
 type Meta struct {
 	Offset      uint32
 	StartingKey txn.Key
+	EndingKey   txn.Key
 }
 
 type MetaList struct {
@@ -31,12 +32,28 @@ func (metaList *MetaList) Encode() []byte {
 	resultingBuffer.Write(numberOfBlocks)
 
 	for _, blockMeta := range metaList.list {
-		buffer := make([]byte, Uint32Size+ReservedKeySize+blockMeta.StartingKey.Size())
+		buffer := make(
+			[]byte,
+			Uint32Size+
+				ReservedKeySize+
+				blockMeta.StartingKey.Size()+
+				ReservedKeySize+
+				blockMeta.EndingKey.Size(),
+		)
 
 		binary.LittleEndian.PutUint32(buffer[:], blockMeta.Offset)
+
 		binary.LittleEndian.PutUint16(buffer[Uint32Size:], uint16(blockMeta.StartingKey.Size()))
 		copy(buffer[Uint32Size+ReservedKeySize:], blockMeta.StartingKey.Bytes())
 
+		binary.LittleEndian.PutUint16(
+			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.Size():],
+			uint16(blockMeta.EndingKey.Size()),
+		)
+		copy(
+			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.Size()+ReservedKeySize:],
+			blockMeta.EndingKey.Bytes(),
+		)
 		resultingBuffer.Write(buffer)
 	}
 
@@ -84,16 +101,28 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 	blockList := make([]Meta, 0, numberOfBlocks)
 
 	buffer = buffer[Uint32Size:]
-	for index := 0; index < len(buffer); {
-		offset := binary.LittleEndian.Uint32(buffer[index:])
-		keySize := binary.LittleEndian.Uint16(buffer[index+Uint32Size:])
-		key := buffer[index+Uint32Size+ReservedKeySize : index+Uint32Size+ReservedKeySize+int(keySize)]
+	//index := 0; index < len(buffer);
+	for blockCount := 0; blockCount < int(numberOfBlocks); blockCount++ {
+		offset := binary.LittleEndian.Uint32(buffer[:])
+
+		startingKeySize := binary.LittleEndian.Uint16(buffer[Uint32Size:])
+		startingKeyBegin := 0 + Uint32Size + ReservedKeySize
+		startingKey := buffer[startingKeyBegin : startingKeyBegin+int(startingKeySize)]
+
+		endKeyBegin := 0 + startingKeyBegin + int(startingKeySize)
+		endingKeySize := binary.LittleEndian.Uint16(buffer[endKeyBegin:])
+
+		endKeyBegin = endKeyBegin + ReservedKeySize
+		endingKey := buffer[endKeyBegin : endKeyBegin+int(endingKeySize)]
 
 		blockList = append(blockList, Meta{
 			Offset:      offset,
-			StartingKey: txn.NewKey(key),
+			StartingKey: txn.NewKey(startingKey),
+			EndingKey:   txn.NewKey(endingKey),
 		})
-		index = index + Uint32Size + ReservedKeySize + int(keySize)
+		index := endKeyBegin + int(endingKeySize)
+		//index = 0 + endKeyBegin + int(endingKeySize) + Uint32Size //uint32 for offset
+		buffer = buffer[index:]
 	}
 	return &MetaList{
 		list: blockList,

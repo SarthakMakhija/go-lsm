@@ -11,6 +11,7 @@ type SSTableBuilder struct {
 	blockBuilder  *block.Builder
 	blockMetaList *block.MetaList
 	startingKey   txn.Key
+	endingKey     txn.Key
 	blocksData    []byte
 	blockSize     uint
 }
@@ -31,6 +32,7 @@ func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
 	if builder.startingKey.IsEmpty() {
 		builder.startingKey = key
 	}
+	builder.endingKey = key
 	if builder.blockBuilder.Add(key, value) {
 		return
 	}
@@ -71,6 +73,7 @@ func (builder *SSTableBuilder) finishBlock() {
 	builder.blockMetaList.Add(block.Meta{
 		Offset:      uint32(len(builder.blocksData)),
 		StartingKey: builder.startingKey,
+		EndingKey:   builder.endingKey,
 	})
 	builder.blocksData = append(builder.blocksData, encodedBlock...)
 }
@@ -78,4 +81,5 @@ func (builder *SSTableBuilder) finishBlock() {
 func (builder *SSTableBuilder) startNewBlock(key txn.Key) {
 	builder.blockBuilder = block.NewBlockBuilder(builder.blockSize)
 	builder.startingKey = key
+	builder.endingKey = key
 }
