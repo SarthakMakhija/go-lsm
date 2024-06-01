@@ -12,6 +12,8 @@ type SSTable struct {
 	file            *File
 	blockMetaOffset uint32
 	blockSize       uint
+	startingKey     txn.Key
+	endingKey       txn.Key
 }
 
 func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
@@ -33,12 +35,19 @@ func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
 	if err != nil {
 		return SSTable{}, err
 	}
+
+	blockMetaList := block.DecodeToBlockMetaList(blockMetaListBuffer)
+	startingKey, _ := blockMetaList.StartingKeyOfFirstBlock()
+	endingKey, _ := blockMetaList.EndingKeyOfLastBlock()
+
 	return SSTable{
 		id:              id,
-		blockMetaList:   block.DecodeToBlockMetaList(blockMetaListBuffer),
+		blockMetaList:   blockMetaList,
 		blockMetaOffset: blockMetaOffset,
 		file:            file,
 		blockSize:       blockSize,
+		startingKey:     startingKey,
+		endingKey:       endingKey,
 	}, nil
 }
 

@@ -30,6 +30,19 @@ func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	assert.False(t, blockIterator.IsValid())
 }
 
+func TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+	assert.Equal(t, txn.NewStringKey("consensus"), ssTable.startingKey)
+	assert.Equal(t, txn.NewStringKey("consensus"), ssTable.endingKey)
+}
+
 func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
 	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
@@ -62,6 +75,22 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T)
 
 	_ = blockIterator.Next()
 	assert.False(t, blockIterator.IsValid())
+}
+
+func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	assert.Equal(t, txn.NewStringKey("consensus"), ssTable.startingKey)
+	assert.Equal(t, txn.NewStringKey("etcd"), ssTable.endingKey)
 }
 
 func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {

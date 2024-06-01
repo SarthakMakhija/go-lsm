@@ -101,7 +101,6 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 	blockList := make([]Meta, 0, numberOfBlocks)
 
 	buffer = buffer[Uint32Size:]
-	//index := 0; index < len(buffer);
 	for blockCount := 0; blockCount < int(numberOfBlocks); blockCount++ {
 		offset := binary.LittleEndian.Uint32(buffer[:])
 
@@ -121,10 +120,23 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 			EndingKey:   txn.NewKey(endingKey),
 		})
 		index := endKeyBegin + int(endingKeySize)
-		//index = 0 + endKeyBegin + int(endingKeySize) + Uint32Size //uint32 for offset
 		buffer = buffer[index:]
 	}
 	return &MetaList{
 		list: blockList,
 	}
+}
+
+func (metaList *MetaList) StartingKeyOfFirstBlock() (txn.Key, bool) {
+	if metaList.Length() > 0 {
+		return metaList.list[0].StartingKey, true
+	}
+	return txn.Key{}, false
+}
+
+func (metaList *MetaList) EndingKeyOfLastBlock() (txn.Key, bool) {
+	if metaList.Length() > 0 {
+		return metaList.list[metaList.Length()-1].EndingKey, true
+	}
+	return txn.Key{}, false
 }

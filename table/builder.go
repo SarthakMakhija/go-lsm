@@ -59,12 +59,17 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 		return SSTable{}, err
 	}
 	//TODO: Block cache + bloom fields
+
+	startingKey, _ := builder.blockMetaList.StartingKeyOfFirstBlock()
+	endingKey, _ := builder.blockMetaList.EndingKeyOfLastBlock()
 	return SSTable{
 		id:              id,
 		file:            file,
 		blockMetaList:   builder.blockMetaList,
 		blockMetaOffset: uint32(len(builder.blocksData)),
 		blockSize:       builder.blockSize,
+		startingKey:     startingKey,
+		endingKey:       endingKey,
 	}, nil
 }
 

@@ -68,6 +68,34 @@ func TestBlockMetaListWithAThreeBlockMetaWithEndingKeyOfEachBlock(t *testing.T) 
 	assert.Equal(t, "distributed", meta.EndingKey.String())
 }
 
+func TestBlockMetaListWithStartingKeyOfFirstBlock(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{Offset: 4096, StartingKey: txn.NewStringKey("bolt")})
+	blockMetaList.Add(Meta{Offset: 8192, StartingKey: txn.NewStringKey("consensus")})
+
+	encoded := blockMetaList.Encode()
+	decodedBlockMetaList := DecodeToBlockMetaList(encoded)
+
+	startingKeyOfFirstBlock, ok := decodedBlockMetaList.StartingKeyOfFirstBlock()
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringKey("accurate"), startingKeyOfFirstBlock)
+}
+
+func TestBlockMetaListWithEndingKeyOfLastBlock(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate"), EndingKey: txn.NewStringKey("amorphous")})
+	blockMetaList.Add(Meta{Offset: 4096, StartingKey: txn.NewStringKey("bolt"), EndingKey: txn.NewStringKey("bunt")})
+	blockMetaList.Add(Meta{Offset: 8192, StartingKey: txn.NewStringKey("consensus"), EndingKey: txn.NewStringKey("distributed")})
+
+	encoded := blockMetaList.Encode()
+	decodedBlockMetaList := DecodeToBlockMetaList(encoded)
+
+	endingKeyOfLastBlock, ok := decodedBlockMetaList.EndingKeyOfLastBlock()
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringKey("distributed"), endingKeyOfLastBlock)
+}
+
 func TestBlockMetaListGetBlockContainingTheKey1(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
 	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
