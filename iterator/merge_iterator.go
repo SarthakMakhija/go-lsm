@@ -94,7 +94,7 @@ func (iterator *MergeIterator) Next() error {
 
 func (iterator *MergeIterator) advanceOtherIteratorsOnSameKey() error {
 	current := iterator.current
-	for _, anIterator := range *iterator.iterators {
+	for index, anIterator := range *iterator.iterators {
 		if current.Key().IsEqualTo(anIterator.Key()) {
 			if err := iterator.advance(anIterator); err != nil {
 				heap.Pop(iterator.iterators)
@@ -102,6 +102,8 @@ func (iterator *MergeIterator) advanceOtherIteratorsOnSameKey() error {
 			}
 			if !anIterator.IsValid() {
 				heap.Pop(iterator.iterators)
+			} else {
+				heap.Fix(iterator.iterators, index)
 			}
 		} else {
 			break

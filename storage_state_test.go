@@ -111,7 +111,7 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 	assert.Equal(t, txn.NewStringValue("B+Tree"), value)
 }
 
-func TestStorageStateScan(t *testing.T) {
+func TestStorageStateScanWithMemtable(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
@@ -136,7 +136,7 @@ func TestStorageStateScan(t *testing.T) {
 	assert.False(t, iterator.IsValid())
 }
 
-func TestStorageStateScanWithMultipleIterators(t *testing.T) {
+func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
@@ -159,6 +159,136 @@ func TestStorageStateScanWithMultipleIterators(t *testing.T) {
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("data-structure"), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("LSM"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
+	tempDirectory := os.TempDir()
+
+	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(10, tempDirectory))
+	defer storageState.Close()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("paxos"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, 1)
+	storageState.ssTables[1] = ssTable
+
+	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("consensus"), txn.NewStringKey("distributed")))
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("data-structure"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("LSM"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("distributed"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("TiKV"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
+	tempDirectory := os.TempDir()
+
+	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(10, tempDirectory))
+	defer storageState.Close()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("paxos"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, 1)
+	storageState.ssTables[1] = ssTable
+
+	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("distributed"), txn.NewStringKey("etcd")))
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("distributed"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("TiKV"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("etcd"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("bbolt"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
+	tempDirectory := os.TempDir()
+
+	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(10, tempDirectory))
+	defer storageState.Close()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("paxos"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, 1)
+	storageState.ssTables[1] = ssTable
+
+	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("consensus"), txn.NewStringKey("elegant")))
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("data-structure"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("LSM"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringKey("distributed"), iterator.Key())
+	assert.Equal(t, txn.NewStringValue("TiKV"), iterator.Value())
 
 	_ = iterator.Next()
 

@@ -84,17 +84,37 @@ func (storageState *StorageState) Set(batch *txn.Batch) {
 }
 
 func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange) iterator.Iterator {
-	iterators := make([]iterator.Iterator, len(storageState.immutableMemtables)+1)
+	memtableIterators := func() []iterator.Iterator {
+		iterators := make([]iterator.Iterator, len(storageState.immutableMemtables)+1)
 
-	index := 0
-	iterators[index] = storageState.currentMemtable.Scan(inclusiveRange)
+		index := 0
+		iterators[index] = storageState.currentMemtable.Scan(inclusiveRange)
 
-	index += 1
-	for immutableMemtableIndex := len(storageState.immutableMemtables) - 1; immutableMemtableIndex >= 0; immutableMemtableIndex-- {
-		iterators[index] = storageState.immutableMemtables[immutableMemtableIndex].Scan(inclusiveRange)
 		index += 1
+		for immutableMemtableIndex := len(storageState.immutableMemtables) - 1; immutableMemtableIndex >= 0; immutableMemtableIndex-- {
+			iterators[index] = storageState.immutableMemtables[immutableMemtableIndex].Scan(inclusiveRange)
+			index += 1
+		}
+		return iterators
 	}
-	return iterator.NewMergeIterator(iterators)
+	l0SSTableIterators := func() []iterator.Iterator {
+		iterators := make([]iterator.Iterator, len(storageState.l0SSTableIds))
+		index := 0
+
+		for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
+			ssTable := storageState.ssTables[storageState.l0SSTableIds[l0SSTableIndex]]
+			ssTableIterator, err := ssTable.SeekToKey(inclusiveRange.Start())
+			if err != nil {
+				return nil
+			}
+			iterators[index] = ssTableIterator
+			index += 1
+		}
+		return iterators
+	}
+
+	allIterators := append(memtableIterators(), l0SSTableIterators()...)
+	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
 func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
