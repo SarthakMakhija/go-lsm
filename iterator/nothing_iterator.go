@@ -7,12 +7,12 @@ import (
 
 type NothingIterator struct{}
 
-var errNoNextSupposedByNothingIterator = errors.New("no next supposed by nothing iterator")
+var errNoNextSupposedByNothingIterator = errors.New("no support for Next() by NothingIterator")
 
 var nothingIterator = &NothingIterator{}
 
 func (iterator NothingIterator) Key() txn.Key {
-	return txn.NewKey(nil)
+	return txn.EmptyKey
 }
 
 func (iterator *NothingIterator) Value() txn.Value {
