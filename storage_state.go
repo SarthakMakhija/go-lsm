@@ -67,6 +67,11 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 			return value, ok
 		}
 	}
+
+	mergeIterator := iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(storageState.l0SSTableIterators(key)), key)
+	if mergeIterator.IsValid() && mergeIterator.Key().IsEqualTo(key) {
+		return mergeIterator.Value(), true
+	}
 	return txn.EmptyValue, false
 }
 
@@ -97,23 +102,8 @@ func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange) ite
 		}
 		return iterators
 	}
-	l0SSTableIterators := func() []iterator.Iterator {
-		iterators := make([]iterator.Iterator, len(storageState.l0SSTableIds))
-		index := 0
 
-		for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
-			ssTable := storageState.ssTables[storageState.l0SSTableIds[l0SSTableIndex]]
-			ssTableIterator, err := ssTable.SeekToKey(inclusiveRange.Start())
-			if err != nil {
-				return nil
-			}
-			iterators[index] = ssTableIterator
-			index += 1
-		}
-		return iterators
-	}
-
-	allIterators := append(memtableIterators(), l0SSTableIterators()...)
+	allIterators := append(memtableIterators(), storageState.l0SSTableIterators(inclusiveRange.Start())...)
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
@@ -186,6 +176,22 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
 func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
 	storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
+}
+
+func (storageState *StorageState) l0SSTableIterators(key txn.Key) []iterator.Iterator {
+	iterators := make([]iterator.Iterator, len(storageState.l0SSTableIds))
+	index := 0
+
+	for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
+		ssTable := storageState.ssTables[storageState.l0SSTableIds[l0SSTableIndex]]
+		ssTableIterator, err := ssTable.SeekToKey(key)
+		if err != nil {
+			return nil
+		}
+		iterators[index] = ssTableIterator
+		index += 1
+	}
+	return iterators
 }
 
 func (storageState *StorageState) spawnMemtableFlush() {

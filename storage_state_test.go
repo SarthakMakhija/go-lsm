@@ -70,6 +70,72 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 	assert.Equal(t, txn.NewStringValue("LSM"), value)
 }
 
+func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testing.T) {
+	storageState := NewStorageState()
+	defer storageState.Close()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("paxos"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, 1)
+	storageState.ssTables[1] = ssTable
+
+	value, ok := storageState.Get(txn.NewStringKey("etcd"))
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringValue("bbolt"), value)
+
+	value, ok = storageState.Get(txn.NewStringKey("consensus"))
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringValue("raft"), value)
+
+	value, ok = storageState.Get(txn.NewStringKey("distributed"))
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringValue("TiKV"), value)
+}
+
+func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testing.T) {
+	storageState := NewStorageState()
+	defer storageState.Close()
+
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("storage"), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("paxos"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, 1)
+	storageState.ssTables[1] = ssTable
+
+	value, ok := storageState.Get(txn.NewStringKey("data-structure"))
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringValue("LSM"), value)
+
+	value, ok = storageState.Get(txn.NewStringKey("paxos"))
+	assert.False(t, ok)
+	assert.Equal(t, txn.EmptyValue, value)
+}
+
 func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
