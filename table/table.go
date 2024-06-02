@@ -87,6 +87,16 @@ func (table SSTable) SeekToKey(key txn.Key) (*Iterator, error) {
 	}, nil
 }
 
+func (table SSTable) ContainsInclusive(inclusiveKeyRange txn.InclusiveKeyRange) bool {
+	if inclusiveKeyRange.Start().Compare(table.endingKey) > 0 {
+		return false
+	}
+	if inclusiveKeyRange.End().Compare(table.startingKey) < 0 {
+		return false
+	}
+	return true
+}
+
 func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
 	startingOffset, endOffset := table.offsetRangeOfBlockAt(blockIndex)
 	buffer := make([]byte, endOffset-startingOffset)

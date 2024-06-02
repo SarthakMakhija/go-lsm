@@ -142,3 +142,59 @@ func TestLoadAnSSTableWithTwoBlocksWithStartingAndEndingKey(t *testing.T) {
 	assert.Equal(t, txn.NewStringKey("consensus"), ssTable.startingKey)
 	assert.Equal(t, txn.NewStringKey("distributed"), ssTable.endingKey)
 }
+
+func TestSSTableContainsAGiveInclusiveKeyRange1(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	assert.True(t, ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(txn.NewStringKey("bolt"), txn.NewStringKey("debt"))))
+}
+
+func TestSSTableContainsAGiveInclusiveKeyRange2(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	assert.True(t, ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(txn.NewStringKey("crate"), txn.NewStringKey("paxos"))))
+}
+
+func TestSSTableDoesNotContainAGiveInclusiveKeyRange1(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	assert.False(t, ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(txn.NewStringKey("bolt"), txn.NewStringKey("bunt"))))
+}
+
+func TestSSTableDoesNotContainAGiveInclusiveKeyRange2(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+
+	tempDirectory := os.TempDir()
+	filePath := filepath.Join(tempDirectory, "temp.log")
+
+	ssTable, err := ssTableBuilder.Build(1, filePath)
+	assert.Nil(t, err)
+
+	assert.False(t, ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(txn.NewStringKey("etcd"), txn.NewStringKey("traffik"))))
+}
