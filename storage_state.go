@@ -72,7 +72,7 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 		iterator.NewMergeIterator(storageState.l0SSTableIterators(
 			key,
 			func(ssTable table.SSTable) bool {
-				return ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(key, key))
+				return ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
 			},
 		)),
 		key,
