@@ -125,7 +125,7 @@ func (table SSTable) ContainsInclusive(inclusiveKeyRange txn.InclusiveKeyRange) 
 	return true
 }
 
-func (table SSTable) CanPotentiallyContain(key txn.Key) bool {
+func (table SSTable) MayContain(key txn.Key) bool {
 	return table.bloomFilter.MayContain(key)
 }
 

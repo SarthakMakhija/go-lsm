@@ -23,9 +23,9 @@ func TestLoadSSTableWithSingleBlockAndCheckKeysForExistenceUsingBloom(t *testing
 	ssTable, err := Load(1, filePath, 4096)
 
 	assert.Nil(t, err)
-	assert.True(t, ssTable.CanPotentiallyContain(txn.NewStringKey("consensus")))
-	assert.True(t, ssTable.CanPotentiallyContain(txn.NewStringKey("distributed")))
-	assert.True(t, ssTable.CanPotentiallyContain(txn.NewStringKey("etcd")))
+	assert.True(t, ssTable.MayContain(txn.NewStringKey("consensus")))
+	assert.True(t, ssTable.MayContain(txn.NewStringKey("distributed")))
+	assert.True(t, ssTable.MayContain(txn.NewStringKey("etcd")))
 }
 
 func TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom(t *testing.T) {
@@ -43,8 +43,8 @@ func TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom(t *test
 	ssTable, err := Load(1, filePath, 4096)
 
 	assert.Nil(t, err)
-	assert.False(t, ssTable.CanPotentiallyContain(txn.NewStringKey("paxos")))
-	assert.False(t, ssTable.CanPotentiallyContain(txn.NewStringKey("bolt")))
+	assert.False(t, ssTable.MayContain(txn.NewStringKey("paxos")))
+	assert.False(t, ssTable.MayContain(txn.NewStringKey("bolt")))
 }
 
 func TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom(t *testing.T) {
@@ -60,7 +60,7 @@ func TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom(t *testing
 
 	ssTable, err := Load(1, filePath, 30)
 	assert.Nil(t, err)
-	assert.True(t, ssTable.CanPotentiallyContain(txn.NewStringKey("consensus")))
-	assert.True(t, ssTable.CanPotentiallyContain(txn.NewStringKey("distributed")))
-	assert.False(t, ssTable.CanPotentiallyContain(txn.NewStringKey("etcd")))
+	assert.True(t, ssTable.MayContain(txn.NewStringKey("consensus")))
+	assert.True(t, ssTable.MayContain(txn.NewStringKey("distributed")))
+	assert.False(t, ssTable.MayContain(txn.NewStringKey("etcd")))
 }
