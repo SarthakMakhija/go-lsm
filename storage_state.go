@@ -68,7 +68,15 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 		}
 	}
 
-	mergeIterator := iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(storageState.l0SSTableIterators(key)), key)
+	mergeIterator := iterator.NewInclusiveBoundedIterator(
+		iterator.NewMergeIterator(storageState.l0SSTableIterators(
+			key,
+			func(ssTable table.SSTable) bool {
+				return ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(key, key))
+			},
+		)),
+		key,
+	)
 	if mergeIterator.IsValid() && mergeIterator.Key().IsEqualTo(key) {
 		return mergeIterator.Value(), true
 	}
@@ -103,7 +111,12 @@ func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange) ite
 		return iterators
 	}
 
-	allIterators := append(memtableIterators(), storageState.l0SSTableIterators(inclusiveRange.Start())...)
+	allIterators := append(
+		memtableIterators(),
+		storageState.l0SSTableIterators(inclusiveRange.Start(), func(ssTable table.SSTable) bool {
+			return ssTable.ContainsInclusive(inclusiveRange)
+		})...,
+	)
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
@@ -178,18 +191,20 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
 }
 
-func (storageState *StorageState) l0SSTableIterators(key txn.Key) []iterator.Iterator {
+func (storageState *StorageState) l0SSTableIterators(seekTo txn.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {
 	iterators := make([]iterator.Iterator, len(storageState.l0SSTableIds))
 	index := 0
 
 	for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
 		ssTable := storageState.ssTables[storageState.l0SSTableIds[l0SSTableIndex]]
-		ssTableIterator, err := ssTable.SeekToKey(key)
-		if err != nil {
-			return nil
+		if ssTableSelector(ssTable) {
+			ssTableIterator, err := ssTable.SeekToKey(seekTo)
+			if err != nil {
+				return nil
+			}
+			iterators[index] = ssTableIterator
+			index += 1
 		}
-		iterators[index] = ssTableIterator
-		index += 1
 	}
 	return iterators
 }

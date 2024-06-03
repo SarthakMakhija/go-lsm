@@ -52,7 +52,7 @@ func NewMergeIterator(iterators []Iterator) *MergeIterator {
 	heap.Init(prioritizedIterators)
 
 	for index, iterator := range iterators {
-		if iterator.IsValid() {
+		if iterator != nil && iterator.IsValid() {
 			heap.Push(prioritizedIterators, NewIndexedIterator(index, iterator))
 		}
 	}
