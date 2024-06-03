@@ -13,7 +13,7 @@ func NewBloomFilterBuilder() *FilterBuilder {
 	return &FilterBuilder{}
 }
 
-func (builder *FilterBuilder) Put(key txn.Key) {
+func (builder *FilterBuilder) Add(key txn.Key) {
 	builder.keys = append(builder.keys, key)
 }
 

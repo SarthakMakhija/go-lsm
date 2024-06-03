@@ -3,12 +3,14 @@ package table
 import (
 	"encoding/binary"
 	"go-lsm/table/block"
+	"go-lsm/table/bloom"
 	"go-lsm/txn"
 )
 
 type SSTable struct {
 	id              uint64
 	blockMetaList   *block.MetaList
+	bloomFilter     bloom.Filter
 	file            *File
 	blockMetaOffset uint32
 	blockSize       uint
@@ -23,27 +25,53 @@ func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
 	}
 
 	fileSize := file.Size()
-	blockMetaOffsetBuffer := make([]byte, block.Uint32Size)
-	n, err := file.Read(fileSize-int64(block.Uint32Size), blockMetaOffsetBuffer)
+	bloomFilter := func() (bloom.Filter, uint32, error) {
+		offsetBuffer := make([]byte, block.Uint32Size)
+		n, err := file.Read(fileSize-int64(block.Uint32Size), offsetBuffer)
+		if err != nil {
+			return bloom.Filter{}, 0, err
+		}
+
+		bloomOffset := binary.LittleEndian.Uint32(offsetBuffer[:n])
+		bloomBuffer := make([]byte, fileSize-int64(bloomOffset)-int64(block.Uint32Size))
+		n, err = file.Read(int64(bloomOffset), bloomBuffer)
+		if err != nil {
+			return bloom.Filter{}, 0, err
+		}
+		filter, err := bloom.DecodeToBloomFilter(bloomBuffer, bloom.FalsePositiveRate)
+		return filter, bloomOffset, err
+	}
+	blockMetaList := func(bloomOffset uint32) (*block.MetaList, uint32, error) {
+		blockMetaOffsetBuffer := make([]byte, block.Uint32Size)
+		n, err := file.Read(int64(bloomOffset-uint32(block.Uint32Size)), blockMetaOffsetBuffer)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		blockMetaOffset := binary.LittleEndian.Uint32(blockMetaOffsetBuffer[:n])
+		blockMetaListBuffer := make([]byte, int64(bloomOffset)-int64(block.Uint32Size))
+		n, err = file.Read(int64(blockMetaOffset), blockMetaListBuffer)
+		if err != nil {
+			return nil, 0, err
+		}
+		return block.DecodeToBlockMetaList(blockMetaListBuffer), blockMetaOffset, nil
+	}
+
+	filter, bloomOffset, err := bloomFilter()
 	if err != nil {
 		return SSTable{}, err
 	}
-	blockMetaOffset := binary.LittleEndian.Uint32(blockMetaOffsetBuffer[:n])
-
-	blockMetaListBuffer := make([]byte, fileSize-int64(blockMetaOffset)-int64(block.Uint32Size))
-	n, err = file.Read(int64(blockMetaOffset), blockMetaListBuffer)
+	metaList, metaOffset, err := blockMetaList(bloomOffset)
 	if err != nil {
 		return SSTable{}, err
 	}
-
-	blockMetaList := block.DecodeToBlockMetaList(blockMetaListBuffer)
-	startingKey, _ := blockMetaList.StartingKeyOfFirstBlock()
-	endingKey, _ := blockMetaList.EndingKeyOfLastBlock()
-
+	startingKey, _ := metaList.StartingKeyOfFirstBlock()
+	endingKey, _ := metaList.EndingKeyOfLastBlock()
 	return SSTable{
 		id:              id,
-		blockMetaList:   blockMetaList,
-		blockMetaOffset: blockMetaOffset,
+		blockMetaList:   metaList,
+		bloomFilter:     filter,
+		blockMetaOffset: metaOffset,
 		file:            file,
 		blockSize:       blockSize,
 		startingKey:     startingKey,
@@ -95,6 +123,10 @@ func (table SSTable) ContainsInclusive(inclusiveKeyRange txn.InclusiveKeyRange) 
 		return false
 	}
 	return true
+}
+
+func (table SSTable) CanPotentiallyContain(key txn.Key) bool {
+	return table.bloomFilter.MayContain(key)
 }
 
 func (table SSTable) readBlock(blockIndex int) (block.Block, error) {

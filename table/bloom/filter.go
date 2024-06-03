@@ -10,6 +10,8 @@ import (
 
 const uin8Size = int(unsafe.Sizeof(uint8(0)))
 
+const FalsePositiveRate = 0.01
+
 type Filter struct {
 	numberOfHashFunctions uint8
 	falsePositiveRate     float64
@@ -38,7 +40,7 @@ func (filter Filter) Encode() ([]byte, error) {
 	return append(buffer, filter.numberOfHashFunctions), nil
 }
 
-func (filter Filter) Has(key txn.Key) bool {
+func (filter Filter) MayContain(key txn.Key) bool {
 	positions := filter.bitPositionsFor(key)
 	for index := 0; index < len(positions); index++ {
 		position := positions[index]

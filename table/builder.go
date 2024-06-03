@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"encoding/binary"
 	"go-lsm/table/block"
+	"go-lsm/table/bloom"
 	"go-lsm/txn"
 )
 
 type SSTableBuilder struct {
-	blockBuilder  *block.Builder
-	blockMetaList *block.MetaList
-	startingKey   txn.Key
-	endingKey     txn.Key
-	blocksData    []byte
-	blockSize     uint
+	blockBuilder       *block.Builder
+	blockMetaList      *block.MetaList
+	bloomFilterBuilder *bloom.FilterBuilder
+	startingKey        txn.Key
+	endingKey          txn.Key
+	blocksData         []byte
+	blockSize          uint
 }
 
 func NewSSTableBuilderWithDefaultBlockSize() *SSTableBuilder {
@@ -22,9 +24,10 @@ func NewSSTableBuilderWithDefaultBlockSize() *SSTableBuilder {
 
 func NewSSTableBuilder(blockSize uint) *SSTableBuilder {
 	return &SSTableBuilder{
-		blockBuilder:  block.NewBlockBuilder(blockSize),
-		blockMetaList: block.NewBlockMetaList(),
-		blockSize:     blockSize,
+		blockBuilder:       block.NewBlockBuilder(blockSize),
+		blockMetaList:      block.NewBlockMetaList(),
+		bloomFilterBuilder: bloom.NewBloomFilterBuilder(),
+		blockSize:          blockSize,
 	}
 }
 
@@ -33,6 +36,7 @@ func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
 		builder.startingKey = key
 	}
 	builder.endingKey = key
+	builder.bloomFilterBuilder.Add(key)
 	if builder.blockBuilder.Add(key, value) {
 		return
 	}
@@ -44,15 +48,31 @@ func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
 // Build
 // TODO: Bloom
 func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error) {
+	blockMetaOffset := func() []byte {
+		blockMetaOffset := make([]byte, block.Uint32Size)
+		binary.LittleEndian.PutUint32(blockMetaOffset, uint32(len(builder.blocksData)))
+		return blockMetaOffset
+	}
+	bloomOffset := func(buffer *bytes.Buffer) []byte {
+		bloomOffset := make([]byte, block.Uint32Size)
+		binary.LittleEndian.PutUint32(bloomOffset, uint32(buffer.Len()))
+		return bloomOffset
+	}
+
 	builder.finishBlock()
-
-	blockMetaOffset := make([]byte, block.Uint32Size)
-	binary.LittleEndian.PutUint32(blockMetaOffset, uint32(len(builder.blocksData)))
-
 	buffer := new(bytes.Buffer)
 	buffer.Write(builder.blocksData)
 	buffer.Write(builder.blockMetaList.Encode())
-	buffer.Write(blockMetaOffset)
+	buffer.Write(blockMetaOffset())
+	filter := builder.bloomFilterBuilder.Build(bloom.FalsePositiveRate)
+	encodedFilter, err := filter.Encode()
+	if err != nil {
+		return SSTable{}, err
+	}
+
+	bloomFilterOffset := bloomOffset(buffer)
+	buffer.Write(encodedFilter)
+	buffer.Write(bloomFilterOffset)
 
 	file, err := Create(filePath, buffer.Bytes())
 	if err != nil {
@@ -66,6 +86,7 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 		id:              id,
 		file:            file,
 		blockMetaList:   builder.blockMetaList,
+		bloomFilter:     filter,
 		blockMetaOffset: uint32(len(builder.blocksData)),
 		blockSize:       builder.blockSize,
 		startingKey:     startingKey,
