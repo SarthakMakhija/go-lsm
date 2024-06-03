@@ -7,29 +7,32 @@ import (
 )
 
 func TestAddAKeyWithBloomFilterAndChecksForItsPositiveExistence(t *testing.T) {
-	bloomFilter := newBloomFilter(20, 0.001)
+	bloomFilterBuilder := NewBloomFilterBuilder()
 
 	key := txn.NewStringKey("consensus")
-	bloomFilter.Put(key)
+	bloomFilterBuilder.Put(key)
 
+	bloomFilter := bloomFilterBuilder.Build(0.001)
 	assert.True(t, bloomFilter.Has(key))
 }
 
 func TestAddAKeyWithBloomFilterAndChecksForTheExistenceOfANonExistingKey(t *testing.T) {
-	bloomFilter := newBloomFilter(20, 0.001)
+	bloomFilterBuilder := NewBloomFilterBuilder()
 
 	key := txn.NewStringKey("consensus")
-	bloomFilter.Put(key)
+	bloomFilterBuilder.Put(key)
 
+	bloomFilter := bloomFilterBuilder.Build(0.001)
 	assert.False(t, bloomFilter.Has(txn.NewStringKey("missing")))
 }
 
 func TestEncodeBloomFilter(t *testing.T) {
-	bloomFilter := newBloomFilter(20, 0.001)
+	bloomFilterBuilder := NewBloomFilterBuilder()
 
 	key := txn.NewStringKey("consensus")
-	bloomFilter.Put(key)
+	bloomFilterBuilder.Put(key)
 
+	bloomFilter := bloomFilterBuilder.Build(0.001)
 	encoded, err := bloomFilter.Encode()
 	assert.Nil(t, err)
 
@@ -50,11 +53,12 @@ func TestEncodeBloomFilterContainingAFewKeys(t *testing.T) {
 		txn.NewStringKey("LSM"),
 	}
 
-	bloomFilter := newBloomFilter(100, 0.001)
+	bloomFilterBuilder := NewBloomFilterBuilder()
 	for _, key := range keys {
-		bloomFilter.Put(key)
+		bloomFilterBuilder.Put(key)
 	}
 
+	bloomFilter := bloomFilterBuilder.Build(0.001)
 	encoded, err := bloomFilter.Encode()
 	assert.Nil(t, err)
 
@@ -67,11 +71,12 @@ func TestEncodeBloomFilterContainingAFewKeys(t *testing.T) {
 }
 
 func TestEncodeBloomFilterAndCheckForNonExistingKey(t *testing.T) {
-	bloomFilter := newBloomFilter(20, 0.001)
+	bloomFilterBuilder := NewBloomFilterBuilder()
 
 	key := txn.NewStringKey("consensus")
-	bloomFilter.Put(key)
+	bloomFilterBuilder.Put(key)
 
+	bloomFilter := bloomFilterBuilder.Build(0.001)
 	encoded, err := bloomFilter.Encode()
 	assert.Nil(t, err)
 
