@@ -5,14 +5,15 @@ import (
 	"github.com/spaolacci/murmur3"
 	"go-lsm/txn"
 	"math"
+	"unsafe"
 )
 
+const uin8Size = int(unsafe.Sizeof(uint8(0)))
+
 type Filter struct {
-	capacity              int
 	numberOfHashFunctions uint8
 	falsePositiveRate     float64
 	bitVector             *bitset.BitSet
-	bitVectorSize         uint
 }
 
 func newBloomFilter(capacity int, falsePositiveRate float64) *Filter {
@@ -21,11 +22,9 @@ func newBloomFilter(capacity int, falsePositiveRate float64) *Filter {
 	}
 	vectorSize := bitVectorSize(capacity, falsePositiveRate)
 	return &Filter{
-		capacity:              capacity,
 		numberOfHashFunctions: numberOfHashFunctions(falsePositiveRate),
 		falsePositiveRate:     falsePositiveRate,
 		bitVector:             bitset.New(uint(vectorSize)),
-		bitVectorSize:         uint(vectorSize),
 	}
 }
 
@@ -48,12 +47,34 @@ func (bloomFilter *Filter) Has(key txn.Key) bool {
 	return true
 }
 
+func (bloomFilter *Filter) Encode() ([]byte, error) {
+	buffer, err := bloomFilter.bitVector.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	return append(buffer, bloomFilter.numberOfHashFunctions), nil
+}
+
+func DecodeToBloomFilter(buffer []byte, falsePositiveRate float64) (*Filter, error) {
+	bitVector := new(bitset.BitSet)
+	filter := buffer[:len(buffer)-uin8Size]
+
+	if bitVector.UnmarshalBinary(filter) != nil {
+		return nil, bitVector.UnmarshalBinary(filter)
+	}
+	return &Filter{
+		numberOfHashFunctions: numberOfHashFunctions(falsePositiveRate),
+		falsePositiveRate:     falsePositiveRate,
+		bitVector:             bitVector,
+	}, nil
+}
+
 func (bloomFilter *Filter) bitPositionsFor(key txn.Key) []uint32 {
 	indices := make([]uint32, 0, bloomFilter.numberOfHashFunctions)
 
 	for index := uint8(0); index < bloomFilter.numberOfHashFunctions; index++ {
 		hash := murmur3.Sum32WithSeed(key.Bytes(), uint32(index))
-		indices = append(indices, hash%uint32(bloomFilter.bitVectorSize))
+		indices = append(indices, hash%uint32(bloomFilter.bitVector.Len()))
 	}
 	return indices
 }
