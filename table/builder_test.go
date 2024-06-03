@@ -13,7 +13,7 @@ func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "test.log")
+	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -35,7 +35,7 @@ func TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -50,7 +50,7 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T)
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -84,7 +84,7 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAn
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -99,7 +99,7 @@ func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithTwoBlocks.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)

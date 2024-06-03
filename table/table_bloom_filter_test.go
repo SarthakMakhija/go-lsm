@@ -15,7 +15,7 @@ func TestLoadSSTableWithSingleBlockAndCheckKeysForExistenceUsingBloom(t *testing
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestLoadSSTableWithSingleBlockAndCheckKeysForExistenceUsingBloom.log")
 
 	_, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -35,7 +35,7 @@ func TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom(t *test
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom.log")
 
 	_, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -53,7 +53,7 @@ func TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom(t *testing
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom.log")
 
 	_, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)

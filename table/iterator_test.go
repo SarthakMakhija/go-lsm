@@ -13,7 +13,7 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing
 	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValue.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -35,7 +35,7 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValues(t *test
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValues.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -66,7 +66,7 @@ func TestIterateOverAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithTwoBlocks.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -91,7 +91,7 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValueUsingSeekTo
 	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValueUsingSeekToKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -113,7 +113,7 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSeekToKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -140,7 +140,7 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSeekToKeyContainingTheKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -171,7 +171,7 @@ func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKey(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -192,7 +192,7 @@ func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKeyWithTheKeyLessThanTheFir
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKeyWithTheKeyLessThanTheFirstKeyOfTheFirstBlock.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
