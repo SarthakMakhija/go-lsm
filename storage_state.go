@@ -3,6 +3,7 @@ package go_lsm
 import (
 	"fmt"
 	"go-lsm/iterator"
+	"go-lsm/memory"
 	"go-lsm/table"
 	"go-lsm/txn"
 	"os"
@@ -20,8 +21,8 @@ type StorageOptions struct {
 
 // StorageState TODO: Support concurrency and Close method
 type StorageState struct {
-	currentMemtable                *Memtable
-	immutableMemtables             []*Memtable
+	currentMemtable                *memory.Memtable
+	immutableMemtables             []*memory.Memtable
 	idGenerator                    *SSTableIdGenerator
 	l0SSTableIds                   []uint64
 	ssTables                       map[uint64]table.SSTable
@@ -45,7 +46,7 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	}
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
-		currentMemtable:                NewMemtable(idGenerator.NextId()),
+		currentMemtable:                memory.NewMemtable(idGenerator.NextId()),
 		idGenerator:                    idGenerator,
 		ssTables:                       make(map[uint64]table.SSTable),
 		closeChannel:                   make(chan struct{}),
@@ -121,7 +122,7 @@ func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange) ite
 }
 
 func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
-	var memtableToFlush *Memtable
+	var memtableToFlush *memory.Memtable
 	if len(storageState.immutableMemtables) > 0 {
 		memtableToFlush = storageState.immutableMemtables[0]
 	} else {
@@ -134,8 +135,8 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 			ssTableBuilder.Add(key, value)
 		})
 		ssTable, err := ssTableBuilder.Build(
-			memtableToFlush.id,
-			filepath.Join(storageState.options.Path, fmt.Sprintf("%v.sst", memtableToFlush.id)),
+			memtableToFlush.Id(),
+			filepath.Join(storageState.options.Path, fmt.Sprintf("%v.sst", memtableToFlush.Id())),
 		)
 		if err != nil {
 			return table.SSTable{}, err
@@ -148,8 +149,8 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 		return err
 	}
 	storageState.immutableMemtables = storageState.immutableMemtables[1:]
-	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.id) //TODO: Either use l0SSTables or levels
-	storageState.ssTables[memtableToFlush.id] = ssTable
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or levels
+	storageState.ssTables[memtableToFlush.Id()] = ssTable
 	//TODO: WAl remove, manifest, concurrency support
 	return nil
 }
@@ -167,9 +168,9 @@ func (storageState *StorageState) hasImmutableMemtables() bool {
 
 func (storageState *StorageState) sortedMemtableIds() []uint64 {
 	ids := make([]uint64, 0, 1+len(storageState.immutableMemtables))
-	ids = append(ids, storageState.currentMemtable.id)
+	ids = append(ids, storageState.currentMemtable.Id())
 	for _, immutableMemtable := range storageState.immutableMemtables {
-		ids = append(ids, immutableMemtable.id)
+		ids = append(ids, immutableMemtable.Id())
 	}
 	slices.Sort(ids)
 	return ids
@@ -181,14 +182,14 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
 	if storageState.currentMemtable.Size() >= storageState.options.MemTableSizeInBytes {
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-		storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
+		storageState.currentMemtable = memory.NewMemtable(storageState.idGenerator.NextId())
 	}
 }
 
 // forceFreezeCurrentMemtable only for testing.
 func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-	storageState.currentMemtable = NewMemtable(storageState.idGenerator.NextId())
+	storageState.currentMemtable = memory.NewMemtable(storageState.idGenerator.NextId())
 }
 
 func (storageState *StorageState) l0SSTableIterators(seekTo txn.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {

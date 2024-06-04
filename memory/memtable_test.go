@@ -1,4 +1,4 @@
-package go_lsm
+package memory
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -123,7 +123,7 @@ func TestMemtableAllEntries(t *testing.T) {
 		keys = append(keys, key)
 		values = append(values, value)
 	})
-	
+
 	assert.Equal(t, []txn.Key{
 		txn.NewStringKey("bolt"),
 		txn.NewStringKey("consensus"),

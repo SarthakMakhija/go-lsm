@@ -1,4 +1,4 @@
-package go_lsm
+package memory
 
 import (
 	"github.com/huandu/skiplist"
@@ -60,6 +60,10 @@ func (memtable *Memtable) IsEmpty() bool {
 
 func (memtable *Memtable) Size() uint64 {
 	return memtable.size.Load()
+}
+
+func (memtable *Memtable) Id() uint64 {
+	return memtable.id
 }
 
 type MemtableIterator struct {
