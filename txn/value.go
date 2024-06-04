@@ -26,6 +26,18 @@ func (value Value) Size() int {
 	return len(value.value)
 }
 
+func (value Value) SizeAsUint32() uint32 {
+	return uint32(value.Size())
+}
+
+func (value *Value) EncodeTo(buffer []byte) uint32 {
+	return uint32(copy(buffer, value.value))
+}
+
+func (value *Value) DecodeFrom(buffer []byte) {
+	value.value = buffer
+}
+
 func (value Value) Bytes() []byte {
 	return value.value
 }
