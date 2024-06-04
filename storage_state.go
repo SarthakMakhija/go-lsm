@@ -22,7 +22,7 @@ type StorageOptions struct {
 type StorageState struct {
 	currentMemtable                *Memtable
 	immutableMemtables             []*Memtable
-	idGenerator                    *MemtableIdGenerator
+	idGenerator                    *SSTableIdGenerator
 	l0SSTableIds                   []uint64
 	ssTables                       map[uint64]table.SSTable
 	closeChannel                   chan struct{}
@@ -43,7 +43,7 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, 0700)
 	}
-	idGenerator := NewMemtableIdGenerator()
+	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
 		currentMemtable:                NewMemtable(idGenerator.NextId()),
 		idGenerator:                    idGenerator,
