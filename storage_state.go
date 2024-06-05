@@ -12,8 +12,20 @@ import (
 	"time"
 )
 
+const (
+	level0 = iota
+	level1 = iota + 1
+)
+const totalLevels = 6
+
+type Level struct {
+	levelNumber int
+	ssTableIds  []uint64
+}
+
 type StorageOptions struct {
 	MemTableSizeInBytes   int64
+	SSTableSizeInBytes    int64
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration
@@ -25,6 +37,7 @@ type StorageState struct {
 	immutableMemtables             []*memory.Memtable
 	idGenerator                    *SSTableIdGenerator
 	l0SSTableIds                   []uint64
+	levels                         []*Level
 	ssTables                       map[uint64]table.SSTable
 	closeChannel                   chan struct{}
 	flushMemtableCompletionChannel chan struct{}
@@ -49,6 +62,7 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes),
 		idGenerator:                    idGenerator,
 		ssTables:                       make(map[uint64]table.SSTable),
+		levels:                         make([]*Level, totalLevels),
 		closeChannel:                   make(chan struct{}),
 		flushMemtableCompletionChannel: make(chan struct{}),
 		options:                        options,
@@ -160,6 +174,22 @@ func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
 	//Wait for flush immutable tables goroutine to return
 	<-storageState.flushMemtableCompletionChannel
+}
+
+func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
+	if level == 0 {
+		ids := make([]uint64, 0, len(storageState.l0SSTableIds))
+		for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
+			ids = append(ids, storageState.l0SSTableIds[l0SSTableIndex])
+		}
+		return ids
+	}
+	ssTableIds := storageState.levels[level-1].ssTableIds
+	ids := make([]uint64, 0, len(ssTableIds))
+	for ssTableIndex := len(ssTableIds) - 1; ssTableIndex >= 0; ssTableIndex-- {
+		ids = append(ids, ssTableIds[ssTableIndex])
+	}
+	return ids
 }
 
 func (storageState *StorageState) ssTableFilePath(id uint64) string {

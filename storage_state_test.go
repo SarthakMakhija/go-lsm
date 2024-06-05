@@ -84,7 +84,7 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testi
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -119,7 +119,7 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testi
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -146,7 +146,7 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testi
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -273,7 +273,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestStorageStateScanWithImmutableMemtablesAndSSTables1.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -319,7 +319,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestStorageStateScanWithImmutableMemtablesAndSSTables2.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -359,7 +359,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestStorageStateScanWithImmutableMemtablesAndSSTables3.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -406,7 +406,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
 	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
 
-	filePath := filepath.Join(tempDirectory, "temp.log")
+	filePath := filepath.Join(tempDirectory, "TestStorageStateScanWithImmutableMemtablesAndSSTables4.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)

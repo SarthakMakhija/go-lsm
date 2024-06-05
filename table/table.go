@@ -129,6 +129,10 @@ func (table SSTable) MayContain(key txn.Key) bool {
 	return table.bloomFilter.MayContain(key)
 }
 
+func (table SSTable) Id() uint64 {
+	return table.id
+}
+
 func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
 	startingOffset, endOffset := table.offsetRangeOfBlockAt(blockIndex)
 	buffer := make([]byte, endOffset-startingOffset)
