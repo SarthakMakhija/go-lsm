@@ -8,7 +8,7 @@ import (
 
 type Memtable struct {
 	id      uint64
-	size    atomic.Uint64
+	size    atomic.Int64
 	entries *skiplist.SkipList
 }
 
@@ -33,7 +33,7 @@ func (memtable *Memtable) Get(key txn.Key) (txn.Value, bool) {
 }
 
 func (memtable *Memtable) Set(key txn.Key, value txn.Value) {
-	memtable.size.Add(uint64(key.Size() + value.Size()))
+	memtable.size.Add(int64(key.Size() + value.Size()))
 	memtable.entries.Set(key, value)
 }
 
@@ -58,7 +58,7 @@ func (memtable *Memtable) IsEmpty() bool {
 	return memtable.entries.Len() == 0
 }
 
-func (memtable *Memtable) Size() uint64 {
+func (memtable *Memtable) Size() int64 {
 	return memtable.size.Load()
 }
 

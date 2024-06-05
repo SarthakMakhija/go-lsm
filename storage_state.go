@@ -13,7 +13,7 @@ import (
 )
 
 type StorageOptions struct {
-	MemTableSizeInBytes   uint64
+	MemTableSizeInBytes   int64
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration

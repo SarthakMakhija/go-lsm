@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func testStorageStateOptions(memtableSizeInBytes uint64) StorageOptions {
+func testStorageStateOptions(memtableSizeInBytes int64) StorageOptions {
 	return StorageOptions{
 		MemTableSizeInBytes:   memtableSizeInBytes,
 		Path:                  ".",
@@ -19,7 +19,7 @@ func testStorageStateOptions(memtableSizeInBytes uint64) StorageOptions {
 	}
 }
 
-func testStorageStateOptionsWithDirectory(memtableSizeInBytes uint64, directory string) StorageOptions {
+func testStorageStateOptionsWithDirectory(memtableSizeInBytes int64, directory string) StorageOptions {
 	return StorageOptions{
 		MemTableSizeInBytes:   memtableSizeInBytes,
 		Path:                  directory,

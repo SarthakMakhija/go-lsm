@@ -48,7 +48,7 @@ func TestTheSizeOfMemtableWithASingleKey(t *testing.T) {
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
 	size := memTable.Size()
-	assert.Equal(t, uint64(13), size)
+	assert.Equal(t, int64(13), size)
 }
 
 func TestMemtableWithADelete(t *testing.T) {
