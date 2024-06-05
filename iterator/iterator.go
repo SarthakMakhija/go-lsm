@@ -9,6 +9,7 @@ type Iterator interface {
 	Value() txn.Value
 	Next() error
 	IsValid() bool
+	Close()
 }
 
 type InclusiveBoundedIteratorType = *MergeIterator
@@ -49,6 +50,10 @@ func (iterator *InclusiveBoundedIterator) Next() error {
 
 func (iterator *InclusiveBoundedIterator) IsValid() bool {
 	return iterator.isValid
+}
+
+func (iterator *InclusiveBoundedIterator) Close() {
+	iterator.inner.Close()
 }
 
 func (iterator *InclusiveBoundedIterator) moveToNonDeletedKey() error {

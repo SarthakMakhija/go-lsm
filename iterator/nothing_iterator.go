@@ -26,3 +26,5 @@ func (iterator *NothingIterator) Next() error {
 func (iterator *NothingIterator) IsValid() bool {
 	return false
 }
+
+func (iterator NothingIterator) Close() {}

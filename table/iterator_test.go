@@ -19,6 +19,8 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -41,6 +43,8 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValues(t *test
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -72,6 +76,8 @@ func TestIterateOverAnSSTableWithTwoBlocks(t *testing.T) {
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -97,6 +103,8 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValueUsingSeekTo
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(txn.NewStringKey("consensus"))
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -119,6 +127,8 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(txn.NewStringKey("contribute"))
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -146,6 +156,8 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(txn.NewStringKey("consensus"))
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -177,6 +189,8 @@ func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKey(t *testing.T) {
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(txn.NewStringKey("consensus"))
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -198,6 +212,8 @@ func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKeyWithTheKeyLessThanTheFir
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(txn.NewStringKey("bolt"))
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())

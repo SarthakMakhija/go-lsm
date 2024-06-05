@@ -33,6 +33,10 @@ func TestIterateOverSkipList(t *testing.T) {
 	iterator := skipList.NewIterator()
 	iterator.SeekToFirst()
 
+	defer func() {
+		_ = iterator.Close()
+	}()
+
 	assert.True(t, iterator.Valid())
 	assert.Equal(t, txn.NewStringKey("badger"), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("LSM"), iterator.Value())

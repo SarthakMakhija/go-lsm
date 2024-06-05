@@ -33,6 +33,8 @@ func (iterator *Iterator) Next() error {
 	return nil
 }
 
+func (iterator *Iterator) Close() {}
+
 func (iterator *Iterator) seekToOffsetIndex(index uint16) {
 	if index >= uint16(len(iterator.block.offsets)) {
 		iterator.markInvalid()

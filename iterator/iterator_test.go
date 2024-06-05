@@ -17,6 +17,7 @@ func TestInclusiveBoundedIteratorWithTwoIterators(t *testing.T) {
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
 	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, txn.NewStringKey("diskType"))
+	defer inclusiveBoundedIterator.Close()
 
 	assert.True(t, inclusiveBoundedIterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), inclusiveBoundedIterator.Key())
@@ -43,6 +44,7 @@ func TestInclusiveBoundedIteratorWithTwoIteratorsAndADeletedKeyWithEmptyValue(t 
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
 	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, txn.NewStringKey("diskType"))
+	defer inclusiveBoundedIterator.Close()
 
 	assert.True(t, inclusiveBoundedIterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), inclusiveBoundedIterator.Key())

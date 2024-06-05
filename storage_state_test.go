@@ -209,6 +209,7 @@ func TestStorageStateScanWithMemtable(t *testing.T) {
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("accurate"), txn.NewStringKey("etcd")))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
@@ -238,6 +239,7 @@ func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("accurate"), txn.NewStringKey("etcd")))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
@@ -280,6 +282,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	storageState.ssTables[1] = ssTable
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("consensus"), txn.NewStringKey("distributed")))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
@@ -325,6 +328,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
 	storageState.ssTables[1] = ssTable
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("distributed"), txn.NewStringKey("etcd")))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("distributed"), iterator.Key())
@@ -364,6 +368,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 	storageState.ssTables[1] = ssTable
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("consensus"), txn.NewStringKey("elegant")))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
@@ -410,6 +415,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 	storageState.ssTables[1] = ssTable
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("paxos"), txn.NewStringKey("quotient")))
+	defer iterator.Close()
 
 	assert.False(t, iterator.IsValid())
 }
@@ -427,6 +433,8 @@ func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKey("data-structure"), txn.NewStringValue("LSM")))
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("zen"), txn.NewStringKey("zen")))
+	defer iterator.Close()
+
 	assert.False(t, iterator.IsValid())
 }
 
@@ -474,6 +482,8 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *te
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
@@ -505,6 +515,8 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
+	defer iterator.Close()
+
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())

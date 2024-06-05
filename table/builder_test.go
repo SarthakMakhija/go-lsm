@@ -22,6 +22,7 @@ func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	assert.Nil(t, err)
 
 	blockIterator := block.SeekToFirst()
+	defer blockIterator.Close()
 
 	assert.True(t, blockIterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("raft"), blockIterator.Value())
@@ -59,6 +60,7 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T)
 	assert.Nil(t, err)
 
 	blockIterator := block.SeekToFirst()
+	defer blockIterator.Close()
 
 	assert.True(t, blockIterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("raft"), blockIterator.Value())
@@ -109,6 +111,7 @@ func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
 		assert.Nil(t, err)
 
 		blockIterator := block.SeekToFirst()
+		defer blockIterator.Close()
 
 		assert.True(t, blockIterator.IsValid())
 		assert.Equal(t, value, blockIterator.Value())

@@ -15,6 +15,7 @@ func TestEncodeAndDecodeBlockWithASingleKeyValue(t *testing.T) {
 
 	decodedBlock := DecodeToBlock(buffer)
 	iterator := decodedBlock.SeekToFirst()
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
@@ -33,6 +34,7 @@ func TestEncodeAndDecodeBlockWithTwoKeyValues(t *testing.T) {
 
 	decodedBlock := DecodeToBlock(buffer)
 	iterator := decodedBlock.SeekToFirst()
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())

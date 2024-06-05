@@ -39,3 +39,5 @@ func (iterator *Iterator) Next() error {
 	}
 	return nil
 }
+
+func (iterator *Iterator) Close() {}

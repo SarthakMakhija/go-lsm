@@ -94,3 +94,7 @@ func (iterator *MemtableIterator) Next() error {
 func (iterator *MemtableIterator) IsValid() bool {
 	return iterator.internalIterator.Valid() && iterator.internalIterator.Key().IsLessThanOrEqualTo(iterator.endKey)
 }
+
+func (iterator *MemtableIterator) Close() {
+	_ = iterator.internalIterator.Close()
+}

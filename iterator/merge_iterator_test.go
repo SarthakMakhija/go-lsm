@@ -37,12 +37,16 @@ func (iterator *testIteratorNoEndKey) IsValid() bool {
 	return iterator.currentIndex < len(iterator.keys)
 }
 
+func (iterator *testIteratorNoEndKey) Close() {
+}
+
 func TestMergeIteratorWithASingleIterator(t *testing.T) {
 	iterator := newTestIteratorNoEndKey(
 		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
 		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iterator})
+	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("raft"), mergeIterator.Value())
@@ -62,6 +66,7 @@ func TestMergeIteratorWithASingleInvalidIterator(t *testing.T) {
 	)
 	iterator.currentIndex = 2
 	mergeIterator := NewMergeIterator([]Iterator{iterator})
+	defer mergeIterator.Close()
 
 	assert.False(t, mergeIterator.IsValid())
 }
@@ -76,6 +81,7 @@ func TestMergeIteratorWithATwoIterators(t *testing.T) {
 		[]txn.Value{txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
@@ -115,6 +121,7 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 	)
 	//iterator with the lower index has higher priority
 	mergeIterator := NewMergeIterator([]Iterator{iteratorTwo, iteratorOne})
+	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
@@ -154,6 +161,7 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey2(t *testing.T) {
 	)
 	//iterator with the lower index has higher priority
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("accurate"), mergeIterator.Key())

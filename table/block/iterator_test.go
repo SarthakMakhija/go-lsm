@@ -13,6 +13,7 @@ func TestBlockSeekWithSeekToTheFirstKey(t *testing.T) {
 
 	block := blockBuilder.Build()
 	iterator := block.SeekToFirst()
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
@@ -33,6 +34,7 @@ func TestBlockSeekToTheMatchingKey(t *testing.T) {
 
 	block := blockBuilder.Build()
 	iterator := block.SeekToKey(txn.NewStringKey("etcd"))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("kv"), iterator.Value())
@@ -48,6 +50,7 @@ func TestBlockSeekToTheMatchingKeyFollowedByNext(t *testing.T) {
 
 	block := blockBuilder.Build()
 	iterator := block.SeekToKey(txn.NewStringKey("consensus"))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
@@ -68,6 +71,7 @@ func TestBlockSeekToTheKeyGreaterThanTheSpecifiedKey(t *testing.T) {
 
 	block := blockBuilder.Build()
 	iterator := block.SeekToKey(txn.NewStringKey("distributed"))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("etcd"), iterator.Key())
@@ -85,6 +89,7 @@ func TestBlockSeekToTheKeyGreaterThanTheSpecifiedKeyFollowedByNext(t *testing.T)
 
 	block := blockBuilder.Build()
 	iterator := block.SeekToKey(txn.NewStringKey("distributed"))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("etcd"), iterator.Key())
@@ -106,6 +111,7 @@ func TestBlockSeekToTheMatchingKeyWithAnEmptyValue(t *testing.T) {
 
 	block := blockBuilder.Build()
 	iterator := block.SeekToKey(txn.NewStringKey("consensus"))
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
@@ -123,6 +129,7 @@ func TestBlockSeekToTheNonExistingKey(t *testing.T) {
 
 	block := blockBuilder.Build()
 	iterator := block.SeekToKey(txn.NewStringKey("foundationDb"))
+	defer iterator.Close()
 
 	assert.False(t, iterator.IsValid())
 }
