@@ -2,11 +2,9 @@ module go-lsm
 
 go 1.22
 
-require github.com/huandu/skiplist v1.2.0
-
 require (
-	github.com/bits-and-blooms/bitset v1.13.0 // indirect
-	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/bits-and-blooms/bitset v1.13.0
+	github.com/spaolacci/murmur3 v1.1.0
 )
 
 require (
