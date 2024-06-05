@@ -46,7 +46,7 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	}
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
-		currentMemtable:                memory.NewMemtable(idGenerator.NextId()),
+		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes),
 		idGenerator:                    idGenerator,
 		ssTables:                       make(map[uint64]table.SSTable),
 		closeChannel:                   make(chan struct{}),
@@ -85,6 +85,7 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 }
 
 func (storageState *StorageState) Set(batch *txn.Batch) {
+	storageState.mayBeFreezeCurrentMemtable(int64(batch.Size()))
 	for _, entry := range batch.AllEntries() {
 		if entry.IsKindPut() {
 			storageState.currentMemtable.Set(entry.Key, entry.Value)
@@ -93,7 +94,6 @@ func (storageState *StorageState) Set(batch *txn.Batch) {
 		} else {
 			panic("Unsupported entry type")
 		}
-		storageState.mayBeFreezeCurrentMemtable()
 	}
 }
 
@@ -179,17 +179,17 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 // TODO: Manifest
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
-func (storageState *StorageState) mayBeFreezeCurrentMemtable() {
-	if storageState.currentMemtable.Size() >= storageState.options.MemTableSizeInBytes {
+func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSize int64) {
+	if !storageState.currentMemtable.CanFit(requiredSize) {
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-		storageState.currentMemtable = memory.NewMemtable(storageState.idGenerator.NextId())
+		storageState.currentMemtable = memory.NewMemtable(storageState.idGenerator.NextId(), storageState.options.MemTableSizeInBytes)
 	}
 }
 
 // forceFreezeCurrentMemtable only for testing.
 func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-	storageState.currentMemtable = memory.NewMemtable(storageState.idGenerator.NextId())
+	storageState.currentMemtable = memory.NewMemtable(storageState.idGenerator.NextId(), storageState.options.MemTableSizeInBytes)
 }
 
 func (storageState *StorageState) l0SSTableIterators(seekTo txn.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {

@@ -21,6 +21,10 @@ func (entry Entry) IsKindDelete() bool {
 	return entry.EntryKind == EntryKindDelete
 }
 
+func (entry Entry) Size() int {
+	return entry.Key.Size() + entry.Value.Size()
+}
+
 // Batch TODO: What if the batch has a get
 type Batch struct {
 	entries []Entry
@@ -42,4 +46,12 @@ func (batch *Batch) Delete(key Key) *Batch {
 
 func (batch *Batch) AllEntries() []Entry {
 	return batch.entries
+}
+
+func (batch Batch) Size() int {
+	size := 0
+	for _, entry := range batch.entries {
+		size += entry.Size()
+	}
+	return size
 }

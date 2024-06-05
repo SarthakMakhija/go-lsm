@@ -6,13 +6,15 @@ import (
 	"testing"
 )
 
+const testMemtableSize = 1 << 10
+
 func TestEmptyMemtable(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	assert.True(t, memTable.IsEmpty())
 }
 
 func TestMemtableWithASingleKey(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
 	value, ok := memTable.Get(txn.NewStringKey("consensus"))
@@ -21,7 +23,7 @@ func TestMemtableWithASingleKey(t *testing.T) {
 }
 
 func TestMemtableWithNonExistingKey(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 
 	value, ok := memTable.Get(txn.NewStringKey("storage"))
@@ -30,7 +32,7 @@ func TestMemtableWithNonExistingKey(t *testing.T) {
 }
 
 func TestMemtableWithMultipleKeys(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 	memTable.Set(txn.NewStringKey("storage"), txn.NewStringValue("NVMe"))
 
@@ -43,16 +45,8 @@ func TestMemtableWithMultipleKeys(t *testing.T) {
 	assert.Equal(t, txn.NewStringValue("NVMe"), value)
 }
 
-func TestTheSizeOfMemtableWithASingleKey(t *testing.T) {
-	memTable := NewMemtable(1)
-	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-
-	size := memTable.Size()
-	assert.Equal(t, int64(13), size)
-}
-
 func TestMemtableWithADelete(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 	memTable.Delete(txn.NewStringKey("consensus"))
 
@@ -62,7 +56,7 @@ func TestMemtableWithADelete(t *testing.T) {
 }
 
 func TestMemtableScanInclusive1(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 	memTable.Set(txn.NewStringKey("epoch"), txn.NewStringValue("time"))
 	memTable.Set(txn.NewStringKey("distributed"), txn.NewStringValue("Db"))
@@ -76,7 +70,7 @@ func TestMemtableScanInclusive1(t *testing.T) {
 }
 
 func TestMemtableScanInclusive2(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 	memTable.Set(txn.NewStringKey("epoch"), txn.NewStringValue("time"))
 	memTable.Set(txn.NewStringKey("distributed"), txn.NewStringValue("Db"))
@@ -94,7 +88,7 @@ func TestMemtableScanInclusive2(t *testing.T) {
 }
 
 func TestMemtableScanInclusive3(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 	memTable.Set(txn.NewStringKey("epoch"), txn.NewStringValue("time"))
 	memTable.Set(txn.NewStringKey("distributed"), txn.NewStringValue("Db"))
@@ -112,7 +106,7 @@ func TestMemtableScanInclusive3(t *testing.T) {
 }
 
 func TestMemtableAllEntries(t *testing.T) {
-	memTable := NewMemtable(1)
+	memTable := NewMemtable(1, testMemtableSize)
 	memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
 	memTable.Set(txn.NewStringKey("bolt"), txn.NewStringValue("kv"))
 	memTable.Set(txn.NewStringKey("etcd"), txn.NewStringValue("distributed"))
