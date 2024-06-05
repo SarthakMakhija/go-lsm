@@ -136,7 +136,7 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 		})
 		ssTable, err := ssTableBuilder.Build(
 			memtableToFlush.Id(),
-			filepath.Join(storageState.options.Path, fmt.Sprintf("%v.sst", memtableToFlush.Id())),
+			storageState.ssTableFilePath(memtableToFlush.Id()),
 		)
 		if err != nil {
 			return table.SSTable{}, err
@@ -160,6 +160,10 @@ func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
 	//Wait for flush immutable tables goroutine to return
 	<-storageState.flushMemtableCompletionChannel
+}
+
+func (storageState *StorageState) ssTableFilePath(id uint64) string {
+	return filepath.Join(storageState.options.Path, fmt.Sprintf("%v.sst", id))
 }
 
 func (storageState *StorageState) hasImmutableMemtables() bool {
