@@ -94,6 +94,10 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 	}, nil
 }
 
+func (builder SSTableBuilder) EstimatedSize() int {
+	return len(builder.blocksData)
+}
+
 func (builder *SSTableBuilder) finishBlock() {
 	encodedBlock := builder.blockBuilder.Build().Encode()
 	builder.blockMetaList.Add(block.Meta{
