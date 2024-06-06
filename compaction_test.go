@@ -20,6 +20,11 @@ func TestForceFullCompaction(t *testing.T) {
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
+		compactionOptions: SimpleLeveledCompactionOptions{
+			sizeRatioPercentage:          200,
+			maxLevels:                    totalLevels,
+			level0FilesCompactionTrigger: 2,
+		},
 	}
 	storageState := NewStorageStateWithOptions(storageOptions)
 	defer storageState.Close()

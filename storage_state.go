@@ -14,7 +14,7 @@ import (
 
 const (
 	level0 = iota
-	level1 = iota + 1
+	level1 = 1
 )
 const totalLevels = 6
 
@@ -29,6 +29,7 @@ type StorageOptions struct {
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration
+	compactionOptions     SimpleLeveledCompactionOptions
 }
 
 // StorageState TODO: Support concurrency and Close method
@@ -50,6 +51,11 @@ func NewStorageState() *StorageState {
 		Path:                  ".",
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
+		compactionOptions: SimpleLeveledCompactionOptions{
+			level0FilesCompactionTrigger: 6,
+			maxLevels:                    totalLevels,
+			sizeRatioPercentage:          200,
+		},
 	})
 }
 
@@ -57,12 +63,17 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, 0700)
 	}
+
+	levels := make([]*Level, options.compactionOptions.maxLevels)
+	for level := 1; level <= int(options.compactionOptions.maxLevels); level++ {
+		levels[level-1] = &Level{levelNumber: level}
+	}
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
 		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes),
 		idGenerator:                    idGenerator,
 		ssTables:                       make(map[uint64]table.SSTable),
-		levels:                         make([]*Level, totalLevels),
+		levels:                         levels,
 		closeChannel:                   make(chan struct{}),
 		flushMemtableCompletionChannel: make(chan struct{}),
 		options:                        options,
