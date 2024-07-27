@@ -5,11 +5,12 @@ import (
 	"go-lsm/memory"
 	"go-lsm/txn"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestAppendToWAL(t *testing.T) {
-	walPath := os.TempDir() + "wal_append.log"
+	walPath := filepath.Join(os.TempDir(), "TestAppendToWAL.log")
 	wal, err := NewWAL(walPath)
 
 	assert.Nil(t, err)
@@ -23,7 +24,7 @@ func TestAppendToWAL(t *testing.T) {
 }
 
 func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
-	walPath := os.TempDir() + "wal_append_recover.log"
+	walPath := filepath.Join(os.TempDir(), "TestAppendToWALAndRecoverFromWALPath.log")
 	wal, err := NewWAL(walPath)
 
 	assert.Nil(t, err)
