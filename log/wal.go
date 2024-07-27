@@ -2,7 +2,6 @@ package log
 
 import (
 	"encoding/binary"
-	"go-lsm/memory"
 	"go-lsm/table/block"
 	"go-lsm/txn"
 	"io"
@@ -34,7 +33,7 @@ func (wal *WAL) Append(key txn.Key, value txn.Value) error {
 	return err
 }
 
-func RecoverInto(path string, memtable *memory.Memtable) error {
+func Recover(path string, callback func(key txn.Key, value txn.Value)) error {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0666)
 	if err != nil {
 		return err
@@ -53,7 +52,7 @@ func RecoverInto(path string, memtable *memory.Memtable) error {
 		valueSize := binary.LittleEndian.Uint16(bytes[uint16(block.ReservedKeySize)+keySize:])
 		value := bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize) : uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize]
 
-		memtable.Set(txn.NewKey(key), txn.NewValue(value))
+		callback(txn.NewKey(key), txn.NewValue(value))
 		bytes = bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize:]
 	}
 	return nil

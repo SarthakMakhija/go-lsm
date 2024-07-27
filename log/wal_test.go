@@ -38,7 +38,9 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 	wal.Close()
 
 	memTable := memory.NewMemtable(1, 1024)
-	assert.Nil(t, RecoverInto(walPath, memTable))
+	assert.Nil(t, Recover(walPath, func(key txn.Key, value txn.Value) {
+		memTable.Set(key, value)
+	}))
 
 	value, ok := memTable.Get(txn.NewStringKey("consensus"))
 	assert.True(t, ok)
