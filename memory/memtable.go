@@ -1,6 +1,8 @@
 package memory
 
 import (
+	"fmt"
+	"go-lsm/log"
 	"go-lsm/memory/external"
 	"go-lsm/txn"
 )
@@ -9,13 +11,28 @@ type Memtable struct {
 	id                  uint64
 	memTableSizeInBytes int64
 	entries             *external.SkipList
+	wal                 *log.WAL
 }
 
-func NewMemtable(id uint64, memTableSizeInBytes int64) *Memtable {
+func NewMemtableWithoutWAL(id uint64, memTableSizeInBytes int64) *Memtable {
 	return &Memtable{
 		id:                  id,
 		memTableSizeInBytes: memTableSizeInBytes,
 		entries:             external.NewSkipList(memTableSizeInBytes),
+		wal:                 nil,
+	}
+}
+
+func NewMemtableWithWAL(id uint64, memTableSizeInBytes int64, walPath string) *Memtable {
+	wal, err := log.NewWAL(walPath)
+	if err != nil {
+		panic(fmt.Errorf("error creating new WAL: %v", err))
+	}
+	return &Memtable{
+		id:                  id,
+		memTableSizeInBytes: memTableSizeInBytes,
+		entries:             external.NewSkipList(memTableSizeInBytes),
+		wal:                 wal,
 	}
 }
 
@@ -27,12 +44,18 @@ func (memtable *Memtable) Get(key txn.Key) (txn.Value, bool) {
 	return value, true
 }
 
-func (memtable *Memtable) Set(key txn.Key, value txn.Value) {
+func (memtable *Memtable) Set(key txn.Key, value txn.Value) error {
+	if memtable.wal != nil {
+		if err := memtable.wal.Append(key, value); err != nil {
+			return err
+		}
+	}
 	memtable.entries.Put(key, value)
+	return nil
 }
 
-func (memtable *Memtable) Delete(key txn.Key) {
-	memtable.Set(key, txn.EmptyValue)
+func (memtable *Memtable) Delete(key txn.Key) error {
+	return memtable.Set(key, txn.EmptyValue)
 }
 
 func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveKeyRange) *MemtableIterator {

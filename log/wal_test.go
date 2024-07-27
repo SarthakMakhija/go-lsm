@@ -2,7 +2,6 @@ package log
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm/memory"
 	"go-lsm/txn"
 	"os"
 	"path/filepath"
@@ -38,16 +37,16 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 	_ = wal.Sync()
 	wal.Close()
 
-	memTable := memory.NewMemtable(1, 1024)
+	keyValues := make(map[string]string)
 	assert.Nil(t, Recover(walPath, func(key txn.Key, value txn.Value) {
-		memTable.Set(key, value)
+		keyValues[key.String()] = value.String()
 	}))
 
-	value, ok := memTable.Get(txn.NewStringKey("consensus"))
+	value, ok := keyValues["consensus"]
 	assert.True(t, ok)
-	assert.Equal(t, txn.NewStringValue("raft"), value)
+	assert.Equal(t, "raft", value)
 
-	value, ok = memTable.Get(txn.NewStringKey("kv"))
+	value, ok = keyValues["kv"]
 	assert.True(t, ok)
-	assert.Equal(t, txn.NewStringValue("distributed"), value)
+	assert.Equal(t, "distributed", value)
 }
