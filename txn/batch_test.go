@@ -20,5 +20,5 @@ func TestBatchWithTwoEntries(t *testing.T) {
 
 func TestBatchWithThreeEntries(t *testing.T) {
 	batch := NewBatch().Put(NewStringKey("consensus"), NewStringValue("raft"))
-	assert.Equal(t, 13, batch.Size())
+	assert.Equal(t, 13, batch.SizeInBytes())
 }

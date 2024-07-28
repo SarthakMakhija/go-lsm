@@ -65,7 +65,7 @@ func (arena *Arena) putVal(v txn.Value) uint32 {
 }
 
 func (arena *Arena) putKey(key txn.Key) uint32 {
-	l := uint32(key.Size())
+	l := uint32(key.SizeInBytes())
 	n := arena.n.Add(l)
 
 	// m is the offset where you should write.

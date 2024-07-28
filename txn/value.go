@@ -22,12 +22,12 @@ func (value Value) String() string {
 	return string(value.value)
 }
 
-func (value Value) Size() int {
+func (value Value) SizeInBytes() int {
 	return len(value.value)
 }
 
 func (value Value) SizeAsUint32() uint32 {
-	return uint32(value.Size())
+	return uint32(value.SizeInBytes())
 }
 
 func (value *Value) EncodeTo(buffer []byte) uint32 {

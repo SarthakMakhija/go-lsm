@@ -53,13 +53,13 @@ func Recover(path string, callback func(key txn.Key, value txn.Value)) (*WAL, er
 }
 
 func (wal *WAL) Append(key txn.Key, value txn.Value) error {
-	buffer := make([]byte, key.Size()+value.Size()+block.ReservedKeySize+block.ReservedValueSize)
+	buffer := make([]byte, key.SizeInBytes()+value.SizeInBytes()+block.ReservedKeySize+block.ReservedValueSize)
 
-	binary.LittleEndian.PutUint16(buffer, uint16(key.Size()))
+	binary.LittleEndian.PutUint16(buffer, uint16(key.SizeInBytes()))
 	copy(buffer[block.ReservedKeySize:], key.Bytes())
 
-	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.Size():], uint16(value.Size()))
-	copy(buffer[block.ReservedKeySize+key.Size()+block.ReservedValueSize:], value.Bytes())
+	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.SizeInBytes():], uint16(value.SizeInBytes()))
+	copy(buffer[block.ReservedKeySize+key.SizeInBytes()+block.ReservedValueSize:], value.Bytes())
 
 	_, err := wal.file.Write(buffer)
 	return err

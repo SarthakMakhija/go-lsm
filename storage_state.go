@@ -119,7 +119,7 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 // Set
 // TODO: Handle error in Set and Delete
 func (storageState *StorageState) Set(batch *txn.Batch) {
-	storageState.mayBeFreezeCurrentMemtable(int64(batch.Size()))
+	storageState.mayBeFreezeCurrentMemtable(int64(batch.SizeInBytes()))
 	for _, entry := range batch.AllEntries() {
 		if entry.IsKindPut() {
 			_ = storageState.currentMemtable.Set(entry.Key, entry.Value)
@@ -233,8 +233,8 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 // TODO: Manifest
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
-func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSize int64) {
-	if !storageState.currentMemtable.CanFit(requiredSize) {
+func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes int64) {
+	if !storageState.currentMemtable.CanFit(requiredSizeInBytes) {
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
 		storageState.currentMemtable = memory.NewMemtable(
 			storageState.idGenerator.NextId(),

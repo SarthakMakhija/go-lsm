@@ -74,7 +74,7 @@ func (iterator *Iterator) seekToOffset(offset uint16) {
 	keySize := binary.LittleEndian.Uint16(data[:])
 	key := txn.NewKey(data[ReservedKeySize : uint16(ReservedKeySize)+keySize])
 
-	valueSize := binary.LittleEndian.Uint16(data[ReservedKeySize+key.Size():])
+	valueSize := binary.LittleEndian.Uint16(data[ReservedKeySize+key.SizeInBytes():])
 	valueOffsetStart := uint16(ReservedKeySize) + keySize + uint16(ReservedValueSize)
 	value := txn.NewValue(data[valueOffsetStart : valueOffsetStart+valueSize])
 

@@ -21,8 +21,8 @@ func (entry Entry) IsKindDelete() bool {
 	return entry.EntryKind == EntryKindDelete
 }
 
-func (entry Entry) Size() int {
-	return entry.Key.Size() + entry.Value.Size()
+func (entry Entry) SizeInBytes() int {
+	return entry.Key.SizeInBytes() + entry.Value.SizeInBytes()
 }
 
 // Batch TODO: What if the batch has a get
@@ -48,10 +48,10 @@ func (batch *Batch) AllEntries() []Entry {
 	return batch.entries
 }
 
-func (batch Batch) Size() int {
+func (batch Batch) SizeInBytes() int {
 	size := 0
 	for _, entry := range batch.entries {
-		size += entry.Size()
+		size += entry.SizeInBytes()
 	}
 	return size
 }

@@ -17,7 +17,7 @@ func TestKeyIsNotEqualTo(t *testing.T) {
 
 func TestKeySize(t *testing.T) {
 	key := NewStringKey("consensus")
-	assert.Equal(t, 9, key.Size())
+	assert.Equal(t, 9, key.SizeInBytes())
 }
 
 func TestKeyIsLessThan(t *testing.T) {

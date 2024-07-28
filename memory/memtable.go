@@ -95,12 +95,12 @@ func (memtable *Memtable) IsEmpty() bool {
 	return memtable.entries.Empty()
 }
 
-func (memtable *Memtable) Size() int64 {
+func (memtable *Memtable) SizeInBytes() int64 {
 	return memtable.entries.MemSize()
 }
 
-func (memtable *Memtable) CanFit(requiredSize int64) bool {
-	return memtable.Size()+requiredSize+int64(external.MaxNodeSize) < memtable.memTableSizeInBytes
+func (memtable *Memtable) CanFit(requiredSizeInBytes int64) bool {
+	return memtable.SizeInBytes()+requiredSizeInBytes+int64(external.MaxNodeSize) < memtable.memTableSizeInBytes
 }
 
 func (memtable *Memtable) Id() uint64 {

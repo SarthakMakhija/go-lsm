@@ -17,5 +17,5 @@ func TestEmptyValueWithNil(t *testing.T) {
 
 func TestValueSize(t *testing.T) {
 	value := NewStringValue("raft")
-	assert.Equal(t, 4, value.Size())
+	assert.Equal(t, 4, value.SizeInBytes())
 }

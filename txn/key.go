@@ -32,12 +32,12 @@ func (key Key) String() string {
 	return string(key.key)
 }
 
-func (key Key) Size() int {
+func (key Key) SizeInBytes() int {
 	return len(key.key)
 }
 
 func (key Key) IsEmpty() bool {
-	return key.Size() == 0
+	return key.SizeInBytes() == 0
 }
 
 func (key Key) Bytes() []byte {

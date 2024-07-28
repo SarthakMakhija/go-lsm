@@ -36,22 +36,22 @@ func (metaList *MetaList) Encode() []byte {
 			[]byte,
 			Uint32Size+
 				ReservedKeySize+
-				blockMeta.StartingKey.Size()+
+				blockMeta.StartingKey.SizeInBytes()+
 				ReservedKeySize+
-				blockMeta.EndingKey.Size(),
+				blockMeta.EndingKey.SizeInBytes(),
 		)
 
 		binary.LittleEndian.PutUint32(buffer[:], blockMeta.Offset)
 
-		binary.LittleEndian.PutUint16(buffer[Uint32Size:], uint16(blockMeta.StartingKey.Size()))
+		binary.LittleEndian.PutUint16(buffer[Uint32Size:], uint16(blockMeta.StartingKey.SizeInBytes()))
 		copy(buffer[Uint32Size+ReservedKeySize:], blockMeta.StartingKey.Bytes())
 
 		binary.LittleEndian.PutUint16(
-			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.Size():],
-			uint16(blockMeta.EndingKey.Size()),
+			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.SizeInBytes():],
+			uint16(blockMeta.EndingKey.SizeInBytes()),
 		)
 		copy(
-			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.Size()+ReservedKeySize:],
+			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.SizeInBytes()+ReservedKeySize:],
 			blockMeta.EndingKey.Bytes(),
 		)
 		resultingBuffer.Write(buffer)
