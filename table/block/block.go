@@ -6,14 +6,14 @@ import (
 )
 
 type Block struct {
-	data    []byte
-	offsets []uint16
+	data                 []byte
+	keyValueBeginOffsets []uint16
 }
 
-func NewBlock(data []byte, offsets []uint16) Block {
+func NewBlock(data []byte, keyValueBeginOffsets []uint16) Block {
 	return Block{
-		data:    data,
-		offsets: offsets,
+		data:                 data,
+		keyValueBeginOffsets: keyValueBeginOffsets,
 	}
 }
 
@@ -21,7 +21,7 @@ func (block Block) Encode() []byte {
 	data := block.data
 	data = append(data, block.encodeOffsets()...)
 	numberOfOffsets := make([]byte, Uint16Size)
-	binary.LittleEndian.PutUint16(numberOfOffsets, uint16(len(block.offsets)))
+	binary.LittleEndian.PutUint16(numberOfOffsets, uint16(len(block.keyValueBeginOffsets)))
 
 	data = append(data, numberOfOffsets...)
 	return data
@@ -32,13 +32,13 @@ func DecodeToBlock(data []byte) Block {
 	startOfOffsets := uint16(len(data)) - uint16(Uint16Size) - numberOfOffsets*uint16(Uint16Size)
 	offsetsBuffer := data[startOfOffsets : len(data)-Uint16Size]
 
-	offsets := make([]uint16, 0, numberOfOffsets)
+	keyValueBeginOffsets := make([]uint16, 0, numberOfOffsets)
 	for index := 0; index < len(offsetsBuffer); index += Uint16Size {
-		offsets = append(offsets, binary.LittleEndian.Uint16(offsetsBuffer[index:]))
+		keyValueBeginOffsets = append(keyValueBeginOffsets, binary.LittleEndian.Uint16(offsetsBuffer[index:]))
 	}
 	return Block{
-		data:    data[:startOfOffsets],
-		offsets: offsets,
+		data:                 data[:startOfOffsets],
+		keyValueBeginOffsets: keyValueBeginOffsets,
 	}
 }
 
@@ -60,9 +60,9 @@ func (block Block) SeekToKey(key txn.Key) *Iterator {
 }
 
 func (block Block) encodeOffsets() []byte {
-	offsetBuffer := make([]byte, Uint16Size*len(block.offsets))
+	offsetBuffer := make([]byte, Uint16Size*len(block.keyValueBeginOffsets))
 	offsetIndex := 0
-	for _, offset := range block.offsets {
+	for _, offset := range block.keyValueBeginOffsets {
 		binary.LittleEndian.PutUint16(offsetBuffer[offsetIndex:], offset)
 		offsetIndex += Uint16Size
 	}

@@ -12,11 +12,10 @@ var Uint16Size = int(unsafe.Sizeof(uint16(0)))
 var Uint32Size = int(unsafe.Sizeof(uint32(0)))
 
 type Builder struct {
-	offsets          []uint16
-	firstKey         txn.Key
-	blockSize        uint
-	data             []byte
-	currentDataIndex int
+	keyValueBeginOffsets []uint16
+	firstKey             txn.Key
+	blockSize            uint
+	data                 []byte
 }
 
 // NewBlockBuilder TODO: blockSize should be a multiple of 4096
@@ -35,7 +34,7 @@ func (builder *Builder) Add(key txn.Key, value txn.Value) bool {
 	if builder.firstKey.IsRawKeyEmpty() {
 		builder.firstKey = key
 	}
-	builder.offsets = append(builder.offsets, uint16(len(builder.data)))
+	builder.keyValueBeginOffsets = append(builder.keyValueBeginOffsets, uint16(len(builder.data)))
 	buffer := make([]byte, ReservedKeySize+ReservedValueSize+key.EncodedSizeInBytes()+value.SizeInBytes())
 
 	binary.LittleEndian.PutUint16(buffer[:], uint16(key.EncodedSizeInBytes()))
@@ -45,22 +44,20 @@ func (builder *Builder) Add(key txn.Key, value txn.Value) bool {
 	copy(buffer[ReservedKeySize+key.EncodedSizeInBytes()+ReservedValueSize:], value.Bytes())
 
 	builder.data = append(builder.data, buffer...)
-	builder.currentDataIndex += len(buffer)
-
 	return true
 }
 
 func (builder *Builder) isEmpty() bool {
-	return len(builder.offsets) == 0
+	return len(builder.keyValueBeginOffsets) == 0
 }
 
 func (builder *Builder) Build() Block {
 	if builder.isEmpty() {
 		panic("cannot build an empty Block")
 	}
-	return NewBlock(builder.data, builder.offsets)
+	return NewBlock(builder.data, builder.keyValueBeginOffsets)
 }
 
 func (builder *Builder) size() int {
-	return len(builder.data) + len(builder.offsets)*Uint16Size
+	return len(builder.data) + len(builder.keyValueBeginOffsets)*Uint16Size
 }

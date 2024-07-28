@@ -36,18 +36,18 @@ func (iterator *Iterator) Next() error {
 func (iterator *Iterator) Close() {}
 
 func (iterator *Iterator) seekToOffsetIndex(index uint16) {
-	if index >= uint16(len(iterator.block.offsets)) {
+	if index >= uint16(len(iterator.block.keyValueBeginOffsets)) {
 		iterator.markInvalid()
 		return
 	}
-	offset := iterator.block.offsets[index]
+	keyValueBeginOffset := iterator.block.keyValueBeginOffsets[index]
 	iterator.offsetIndex = index
-	iterator.seekToOffset(offset)
+	iterator.seekToOffset(keyValueBeginOffset)
 }
 
 func (iterator *Iterator) seekToGreaterOrEqual(key txn.Key) {
 	low := 0
-	high := len(iterator.block.offsets)
+	high := len(iterator.block.keyValueBeginOffsets)
 
 	for low < high {
 		mid := low + (high-low)/2
@@ -68,8 +68,8 @@ func (iterator *Iterator) seekToGreaterOrEqual(key txn.Key) {
 	iterator.seekToOffsetIndex(uint16(low))
 }
 
-func (iterator *Iterator) seekToOffset(offset uint16) {
-	data := iterator.block.data[offset:]
+func (iterator *Iterator) seekToOffset(keyValueBeginOffset uint16) {
+	data := iterator.block.data[keyValueBeginOffset:]
 
 	keySize := binary.LittleEndian.Uint16(data[:])
 	key := txn.DecodeFrom(data[ReservedKeySize : uint16(ReservedKeySize)+keySize])
