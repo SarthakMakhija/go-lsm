@@ -32,7 +32,7 @@ func NewSSTableBuilder(blockSize uint) *SSTableBuilder {
 }
 
 func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
-	if builder.startingKey.IsEmpty() {
+	if builder.startingKey.IsRawKeyEmpty() {
 		builder.startingKey = key
 	}
 	builder.endingKey = key

@@ -58,7 +58,7 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 
 	keyValues := make(map[string]string)
 	_, err = Recover(walPath, func(key txn.Key, value txn.Value) {
-		keyValues[key.String()] = value.String()
+		keyValues[key.RawString()] = value.String()
 	})
 	assert.Nil(t, err)
 

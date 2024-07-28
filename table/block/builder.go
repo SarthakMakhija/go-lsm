@@ -28,21 +28,21 @@ func NewBlockBuilder(blockSize uint) *Builder {
 }
 
 func (builder *Builder) Add(key txn.Key, value txn.Value) bool {
-	if uint(builder.size()+key.SizeInBytes()+value.SizeInBytes()+Uint16Size*2 /* key_len, value_len */) > builder.blockSize {
+	if uint(builder.size()+key.EncodedSizeInBytes()+value.SizeInBytes()+Uint16Size*2 /* key_len, value_len */) > builder.blockSize {
 		return false
 	}
 
-	if builder.firstKey.IsEmpty() {
+	if builder.firstKey.IsRawKeyEmpty() {
 		builder.firstKey = key
 	}
 	builder.offsets = append(builder.offsets, uint16(len(builder.data)))
-	buffer := make([]byte, ReservedKeySize+ReservedValueSize+key.SizeInBytes()+value.SizeInBytes())
+	buffer := make([]byte, ReservedKeySize+ReservedValueSize+key.EncodedSizeInBytes()+value.SizeInBytes())
 
-	binary.LittleEndian.PutUint16(buffer[:], uint16(key.SizeInBytes()))
-	copy(buffer[ReservedKeySize:], key.Bytes())
+	binary.LittleEndian.PutUint16(buffer[:], uint16(key.EncodedSizeInBytes()))
+	copy(buffer[ReservedKeySize:], key.EncodedBytes())
 
-	binary.LittleEndian.PutUint16(buffer[ReservedKeySize+key.SizeInBytes():], uint16(value.SizeInBytes()))
-	copy(buffer[ReservedKeySize+key.SizeInBytes()+ReservedValueSize:], value.Bytes())
+	binary.LittleEndian.PutUint16(buffer[ReservedKeySize+key.EncodedSizeInBytes():], uint16(value.SizeInBytes()))
+	copy(buffer[ReservedKeySize+key.EncodedSizeInBytes()+ReservedValueSize:], value.Bytes())
 
 	builder.data = append(builder.data, buffer...)
 	builder.currentDataIndex += len(buffer)

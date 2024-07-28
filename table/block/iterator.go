@@ -11,7 +11,7 @@ type Iterator struct {
 	offsetIndex uint16
 	block       Block
 	//the entire value is kept in the iterator. If memory optimization needs to be done,
-	// only value range can be key here and the value can be returned from the Value method.
+	//only value range can be key here and the value can be returned from the Value method.
 }
 
 func (iterator *Iterator) Key() txn.Key {
@@ -23,7 +23,7 @@ func (iterator *Iterator) Value() txn.Value {
 }
 
 func (iterator *Iterator) IsValid() bool {
-	return !iterator.key.IsEmpty()
+	return !iterator.key.IsRawKeyEmpty()
 }
 
 func (iterator *Iterator) Next() error {
@@ -72,9 +72,9 @@ func (iterator *Iterator) seekToOffset(offset uint16) {
 	data := iterator.block.data[offset:]
 
 	keySize := binary.LittleEndian.Uint16(data[:])
-	key := txn.NewKey(data[ReservedKeySize : uint16(ReservedKeySize)+keySize])
+	key := txn.DecodeFrom(data[ReservedKeySize : uint16(ReservedKeySize)+keySize])
 
-	valueSize := binary.LittleEndian.Uint16(data[ReservedKeySize+key.SizeInBytes():])
+	valueSize := binary.LittleEndian.Uint16(data[ReservedKeySize+key.EncodedSizeInBytes():])
 	valueOffsetStart := uint16(ReservedKeySize) + keySize + uint16(ReservedValueSize)
 	value := txn.NewValue(data[valueOffsetStart : valueOffsetStart+valueSize])
 

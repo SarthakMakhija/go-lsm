@@ -46,20 +46,20 @@ func Recover(path string, callback func(key txn.Key, value txn.Value)) (*WAL, er
 		valueSize := binary.LittleEndian.Uint16(bytes[uint16(block.ReservedKeySize)+keySize:])
 		value := bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize) : uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize]
 
-		callback(txn.NewKey(key), txn.NewValue(value))
+		callback(txn.DecodeFrom(key), txn.NewValue(value))
 		bytes = bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize:]
 	}
 	return &WAL{file: file}, nil
 }
 
 func (wal *WAL) Append(key txn.Key, value txn.Value) error {
-	buffer := make([]byte, key.SizeInBytes()+value.SizeInBytes()+block.ReservedKeySize+block.ReservedValueSize)
+	buffer := make([]byte, key.EncodedSizeInBytes()+value.SizeInBytes()+block.ReservedKeySize+block.ReservedValueSize)
 
-	binary.LittleEndian.PutUint16(buffer, uint16(key.SizeInBytes()))
-	copy(buffer[block.ReservedKeySize:], key.Bytes())
+	binary.LittleEndian.PutUint16(buffer, uint16(key.EncodedSizeInBytes()))
+	copy(buffer[block.ReservedKeySize:], key.EncodedBytes())
 
-	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.SizeInBytes():], uint16(value.SizeInBytes()))
-	copy(buffer[block.ReservedKeySize+key.SizeInBytes()+block.ReservedValueSize:], value.Bytes())
+	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.EncodedSizeInBytes():], uint16(value.SizeInBytes()))
+	copy(buffer[block.ReservedKeySize+key.EncodedSizeInBytes()+block.ReservedValueSize:], value.Bytes())
 
 	_, err := wal.file.Write(buffer)
 	return err

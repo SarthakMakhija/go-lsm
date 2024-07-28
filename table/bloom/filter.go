@@ -55,7 +55,7 @@ func (filter Filter) bitPositionsFor(key txn.Key) []uint32 {
 	indices := make([]uint32, 0, filter.numberOfHashFunctions)
 
 	for index := uint8(0); index < filter.numberOfHashFunctions; index++ {
-		hash := murmur3.Sum32WithSeed(key.Bytes(), uint32(index))
+		hash := murmur3.Sum32WithSeed(key.RawBytes(), uint32(index))
 		indices = append(indices, hash%uint32(filter.bitVector.Len()))
 	}
 	return indices

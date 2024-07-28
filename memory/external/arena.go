@@ -65,14 +65,14 @@ func (arena *Arena) putVal(v txn.Value) uint32 {
 }
 
 func (arena *Arena) putKey(key txn.Key) uint32 {
-	l := uint32(key.SizeInBytes())
+	l := uint32(key.EncodedSizeInBytes())
 	n := arena.n.Add(l)
 
 	// m is the offset where you should write.
 	// n = new len - key len give you the offset at which you should write.
 	m := n - l
 	// Copy to buffer from m:n
-	copy(arena.buf[m:n], key.Bytes())
+	copy(arena.buf[m:n], key.EncodedBytes())
 	return m
 }
 
@@ -88,7 +88,7 @@ func (arena *Arena) getNode(offset uint32) *node {
 
 // getKey returns byte slice at offset.
 func (arena *Arena) getKey(offset uint32, size uint16) txn.Key {
-	return txn.NewKey(arena.buf[offset : offset+uint32(size)])
+	return txn.DecodeFrom(arena.buf[offset : offset+uint32(size)])
 }
 
 // getValue returns byte slice at offset. The given size should be just the value

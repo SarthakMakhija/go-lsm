@@ -17,7 +17,7 @@ func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
 	assert.Equal(t, 1, decodedBlockMetaList.Length())
 
 	meta, _ := decodedBlockMetaList.GetAt(0)
-	assert.Equal(t, "accurate", meta.StartingKey.String())
+	assert.Equal(t, "accurate", meta.StartingKey.RawString())
 }
 
 func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
@@ -32,13 +32,13 @@ func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
 	assert.Equal(t, 3, decodedBlockMetaList.Length())
 
 	meta, _ := decodedBlockMetaList.GetAt(0)
-	assert.Equal(t, "accurate", meta.StartingKey.String())
+	assert.Equal(t, "accurate", meta.StartingKey.RawString())
 
 	meta, _ = decodedBlockMetaList.GetAt(1)
-	assert.Equal(t, "bolt", meta.StartingKey.String())
+	assert.Equal(t, "bolt", meta.StartingKey.RawString())
 
 	meta, _ = decodedBlockMetaList.GetAt(2)
-	assert.Equal(t, "consensus", meta.StartingKey.String())
+	assert.Equal(t, "consensus", meta.StartingKey.RawString())
 }
 
 func TestBlockMetaListWithAThreeBlockMetaWithEndingKeyOfEachBlock(t *testing.T) {
@@ -54,18 +54,18 @@ func TestBlockMetaListWithAThreeBlockMetaWithEndingKeyOfEachBlock(t *testing.T) 
 
 	meta, _ := decodedBlockMetaList.GetAt(0)
 	assert.Equal(t, uint32(0), meta.Offset)
-	assert.Equal(t, "accurate", meta.StartingKey.String())
-	assert.Equal(t, "amorphous", meta.EndingKey.String())
+	assert.Equal(t, "accurate", meta.StartingKey.RawString())
+	assert.Equal(t, "amorphous", meta.EndingKey.RawString())
 
 	meta, _ = decodedBlockMetaList.GetAt(1)
 	assert.Equal(t, uint32(4096), meta.Offset)
-	assert.Equal(t, "bolt", meta.StartingKey.String())
-	assert.Equal(t, "bunt", meta.EndingKey.String())
+	assert.Equal(t, "bolt", meta.StartingKey.RawString())
+	assert.Equal(t, "bunt", meta.EndingKey.RawString())
 
 	meta, _ = decodedBlockMetaList.GetAt(2)
 	assert.Equal(t, uint32(8192), meta.Offset)
-	assert.Equal(t, "consensus", meta.StartingKey.String())
-	assert.Equal(t, "distributed", meta.EndingKey.String())
+	assert.Equal(t, "consensus", meta.StartingKey.RawString())
+	assert.Equal(t, "distributed", meta.EndingKey.RawString())
 }
 
 func TestBlockMetaListWithStartingKeyOfFirstBlock(t *testing.T) {
@@ -102,7 +102,7 @@ func TestBlockMetaListGetBlockContainingTheKey1(t *testing.T) {
 	blockMetaList.Add(Meta{Offset: 20, StartingKey: txn.NewStringKey("bolt")})
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("bolt"))
-	assert.Equal(t, "bolt", meta.StartingKey.String())
+	assert.Equal(t, "bolt", meta.StartingKey.RawString())
 	assert.Equal(t, 1, index)
 }
 
@@ -114,7 +114,7 @@ func TestBlockMetaListGetBlockContainingTheKey2(t *testing.T) {
 	blockMetaList.Add(Meta{Offset: 60, StartingKey: txn.NewStringKey("exact")})
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("accurate"))
-	assert.Equal(t, "accurate", meta.StartingKey.String())
+	assert.Equal(t, "accurate", meta.StartingKey.RawString())
 	assert.Equal(t, 0, index)
 }
 
@@ -126,7 +126,7 @@ func TestBlockMetaListGetBlockContainingTheKey3(t *testing.T) {
 	blockMetaList.Add(Meta{Offset: 60, StartingKey: txn.NewStringKey("exact")})
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("exact"))
-	assert.Equal(t, "exact", meta.StartingKey.String())
+	assert.Equal(t, "exact", meta.StartingKey.RawString())
 	assert.Equal(t, 3, index)
 }
 
@@ -138,7 +138,7 @@ func TestBlockMetaListGetBlockWhichMayContainTheGivenKey1(t *testing.T) {
 	blockMetaList.Add(Meta{Offset: 60, StartingKey: txn.NewStringKey("exact")})
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("consensus"))
-	assert.Equal(t, "bolt", meta.StartingKey.String())
+	assert.Equal(t, "bolt", meta.StartingKey.RawString())
 	assert.Equal(t, 1, index)
 }
 
@@ -149,7 +149,7 @@ func TestBlockMetaListGetBlockWhichMayContainTheGivenKey2(t *testing.T) {
 	blockMetaList.Add(Meta{Offset: 40, StartingKey: txn.NewStringKey("etcd")})
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("contribute"))
-	assert.Equal(t, "consensus", meta.StartingKey.String())
+	assert.Equal(t, "consensus", meta.StartingKey.RawString())
 	assert.Equal(t, 0, index)
 }
 
@@ -158,8 +158,8 @@ func TestBlockMetaListGetBlockWhichMayContainTheGivenKey3(t *testing.T) {
 	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("consensus"), EndingKey: txn.NewStringKey("demo")})
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("contribute"))
-	assert.Equal(t, "consensus", meta.StartingKey.String())
-	assert.Equal(t, "demo", meta.EndingKey.String())
+	assert.Equal(t, "consensus", meta.StartingKey.RawString())
+	assert.Equal(t, "demo", meta.EndingKey.RawString())
 	assert.Equal(t, 0, index)
 }
 
@@ -171,6 +171,6 @@ func TestBlockMetaListGetBlockWhichMayContainTheGivenKey4(t *testing.T) {
 	}
 
 	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("key-55"))
-	assert.Equal(t, "key-50", meta.StartingKey.String())
+	assert.Equal(t, "key-50", meta.StartingKey.RawString())
 	assert.Equal(t, 4, index)
 }

@@ -36,23 +36,23 @@ func (metaList *MetaList) Encode() []byte {
 			[]byte,
 			Uint32Size+
 				ReservedKeySize+
-				blockMeta.StartingKey.SizeInBytes()+
+				blockMeta.StartingKey.EncodedSizeInBytes()+
 				ReservedKeySize+
-				blockMeta.EndingKey.SizeInBytes(),
+				blockMeta.EndingKey.EncodedSizeInBytes(),
 		)
 
 		binary.LittleEndian.PutUint32(buffer[:], blockMeta.Offset)
 
-		binary.LittleEndian.PutUint16(buffer[Uint32Size:], uint16(blockMeta.StartingKey.SizeInBytes()))
-		copy(buffer[Uint32Size+ReservedKeySize:], blockMeta.StartingKey.Bytes())
+		binary.LittleEndian.PutUint16(buffer[Uint32Size:], uint16(blockMeta.StartingKey.EncodedSizeInBytes()))
+		copy(buffer[Uint32Size+ReservedKeySize:], blockMeta.StartingKey.EncodedBytes())
 
 		binary.LittleEndian.PutUint16(
-			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.SizeInBytes():],
-			uint16(blockMeta.EndingKey.SizeInBytes()),
+			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.EncodedSizeInBytes():],
+			uint16(blockMeta.EndingKey.EncodedSizeInBytes()),
 		)
 		copy(
-			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.SizeInBytes()+ReservedKeySize:],
-			blockMeta.EndingKey.Bytes(),
+			buffer[Uint32Size+ReservedKeySize+blockMeta.StartingKey.EncodedSizeInBytes()+ReservedKeySize:],
+			blockMeta.EndingKey.EncodedBytes(),
 		)
 		resultingBuffer.Write(buffer)
 	}
@@ -116,8 +116,8 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 
 		blockList = append(blockList, Meta{
 			Offset:      offset,
-			StartingKey: txn.NewKey(startingKey),
-			EndingKey:   txn.NewKey(endingKey),
+			StartingKey: txn.DecodeFrom(startingKey),
+			EndingKey:   txn.DecodeFrom(endingKey),
 		})
 		index := endKeyBegin + int(endingKeySize)
 		buffer = buffer[index:]

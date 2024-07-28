@@ -22,7 +22,7 @@ func (entry Entry) IsKindDelete() bool {
 }
 
 func (entry Entry) SizeInBytes() int {
-	return entry.Key.SizeInBytes() + entry.Value.SizeInBytes()
+	return entry.Key.EncodedSizeInBytes() + entry.Value.SizeInBytes()
 }
 
 // Batch TODO: What if the batch has a get

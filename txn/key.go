@@ -1,19 +1,33 @@
 package txn
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/binary"
+	"unsafe"
+)
+
+const TimestampSize = int(unsafe.Sizeof(uint64(0)))
 
 type Key struct {
-	key []byte
+	key       []byte
+	timestamp uint64
 }
 
 var EmptyKey = Key{key: nil}
 
-func NewKey(key []byte) Key {
-	return Key{key: key}
-}
-
 func NewStringKey(key string) Key {
 	return Key{key: []byte(key)}
+}
+
+func DecodeFrom(buffer []byte) Key {
+	if len(buffer) < TimestampSize {
+		panic("buffer too small to decode the key from")
+	}
+	length := len(buffer)
+	return Key{
+		key:       buffer[:length-TimestampSize],
+		timestamp: binary.LittleEndian.Uint64(buffer[length-TimestampSize:]),
+	}
 }
 
 func (key Key) IsLessThanOrEqualTo(other Key) bool {
@@ -28,18 +42,31 @@ func (key Key) Compare(other Key) int {
 	return bytes.Compare(key.key, other.key)
 }
 
-func (key Key) String() string {
+func (key Key) IsRawKeyEmpty() bool {
+	return key.RawSizeInBytes() == 0
+}
+
+func (key Key) EncodedBytes() []byte {
+	buffer := make([]byte, key.EncodedSizeInBytes())
+
+	numberOfBytesWritten := copy(buffer, key.key)
+	binary.LittleEndian.PutUint64(buffer[numberOfBytesWritten:], key.timestamp)
+
+	return buffer
+}
+
+func (key Key) RawBytes() []byte {
+	return key.key
+}
+
+func (key Key) RawString() string {
 	return string(key.key)
 }
 
-func (key Key) SizeInBytes() int {
-	return len(key.key)
+func (key Key) EncodedSizeInBytes() int {
+	return len(key.key) + TimestampSize
 }
 
-func (key Key) IsEmpty() bool {
-	return key.SizeInBytes() == 0
-}
-
-func (key Key) Bytes() []byte {
-	return key.key
+func (key Key) RawSizeInBytes() int {
+	return len(key.RawBytes())
 }

@@ -183,7 +183,7 @@ func newNode(arena *Arena, key txn.Key, v txn.Value, height int) *node {
 	offset := arena.putNode(height)
 	node := arena.getNode(offset)
 	node.keyOffset = arena.putKey(key)
-	node.keySize = uint16(key.SizeInBytes())
+	node.keySize = uint16(key.EncodedSizeInBytes())
 	node.height = uint16(height)
 	node.value.Store(encodeValue(arena.putVal(v), v.SizeAsUint32()))
 	return node
