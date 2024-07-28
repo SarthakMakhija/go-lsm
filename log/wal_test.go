@@ -9,13 +9,15 @@ import (
 )
 
 func TestAppendToWALForId(t *testing.T) {
-	walDirectoryPath := os.TempDir()
+	walDirectoryPath := filepath.Join(".", "wal")
+	assert.Nil(t, os.MkdirAll(walDirectoryPath, os.ModePerm))
+
 	wal, err := NewWALForId(10, walDirectoryPath)
 
 	assert.Nil(t, err)
 	defer func() {
 		wal.Close()
-		_ = os.Remove(walDirectoryPath)
+		_ = os.RemoveAll(walDirectoryPath)
 	}()
 
 	if _, err := os.Stat(filepath.Join(walDirectoryPath, "10.wal")); os.IsNotExist(err) {

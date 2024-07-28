@@ -7,11 +7,30 @@ import (
 	"go-lsm/txn"
 )
 
+type WalPresence struct {
+	EnableWAL        bool
+	WALDirectoryPath string
+}
+
+func NewWALPresence(enableWAL bool, walDirectoryPath string) WalPresence {
+	return WalPresence{
+		EnableWAL:        enableWAL,
+		WALDirectoryPath: walDirectoryPath,
+	}
+}
+
 type Memtable struct {
 	id                  uint64
 	memTableSizeInBytes int64
 	entries             *external.SkipList
 	wal                 *log.WAL
+}
+
+func NewMemtable(id uint64, memTableSizeInBytes int64, walPresence WalPresence) *Memtable {
+	if walPresence.EnableWAL {
+		return newMemtableWithWAL(id, memTableSizeInBytes, walPresence.WALDirectoryPath)
+	}
+	return NewMemtableWithoutWAL(id, memTableSizeInBytes)
 }
 
 func NewMemtableWithoutWAL(id uint64, memTableSizeInBytes int64) *Memtable {
@@ -23,8 +42,8 @@ func NewMemtableWithoutWAL(id uint64, memTableSizeInBytes int64) *Memtable {
 	}
 }
 
-func NewMemtableWithWAL(id uint64, memTableSizeInBytes int64, walPath string) *Memtable {
-	wal, err := log.NewWAL(walPath)
+func newMemtableWithWAL(id uint64, memTableSizeInBytes int64, walDirectoryPath string) *Memtable {
+	wal, err := log.NewWALForId(id, walDirectoryPath)
 	if err != nil {
 		panic(fmt.Errorf("error creating new WAL: %v", err))
 	}

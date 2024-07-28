@@ -19,7 +19,11 @@ func NewWALForId(id uint64, walDirectoryPath string) (*WAL, error) {
 }
 
 func NewWAL(path string) (*WAL, error) {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	_, err := os.Create(path)
+	if err != nil {
+		return nil, err
+	}
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
 	}

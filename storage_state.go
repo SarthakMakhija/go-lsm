@@ -29,6 +29,7 @@ type StorageOptions struct {
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration
+	EnableWAL             bool
 	compactionOptions     SimpleLeveledCompactionOptions
 }
 
@@ -43,6 +44,7 @@ type StorageState struct {
 	closeChannel                   chan struct{}
 	flushMemtableCompletionChannel chan struct{}
 	options                        StorageOptions
+	walDirectoryPath               string
 }
 
 func NewStorageState() *StorageState {
@@ -51,6 +53,7 @@ func NewStorageState() *StorageState {
 		Path:                  ".",
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
+		EnableWAL:             false,
 		compactionOptions: SimpleLeveledCompactionOptions{
 			level0FilesCompactionTrigger: 6,
 			maxLevels:                    totalLevels,
@@ -61,22 +64,26 @@ func NewStorageState() *StorageState {
 
 func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
-		_ = os.MkdirAll(options.Path, 0700)
+		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
-
+	walDirectoryPath := filepath.Join(options.Path, "wal")
+	if _, err := os.Stat(walDirectoryPath); os.IsNotExist(err) {
+		_ = os.MkdirAll(walDirectoryPath, os.ModePerm)
+	}
 	levels := make([]*Level, options.compactionOptions.maxLevels)
 	for level := 1; level <= int(options.compactionOptions.maxLevels); level++ {
 		levels[level-1] = &Level{levelNumber: level}
 	}
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
-		currentMemtable:                memory.NewMemtableWithoutWAL(idGenerator.NextId(), options.MemTableSizeInBytes),
+		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, memory.NewWALPresence(options.EnableWAL, walDirectoryPath)),
 		idGenerator:                    idGenerator,
 		ssTables:                       make(map[uint64]table.SSTable),
 		levels:                         levels,
 		closeChannel:                   make(chan struct{}),
 		flushMemtableCompletionChannel: make(chan struct{}),
 		options:                        options,
+		walDirectoryPath:               walDirectoryPath,
 	}
 	storageState.spawnMemtableFlush()
 	return storageState
@@ -229,14 +236,22 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSize int64) {
 	if !storageState.currentMemtable.CanFit(requiredSize) {
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-		storageState.currentMemtable = memory.NewMemtableWithoutWAL(storageState.idGenerator.NextId(), storageState.options.MemTableSizeInBytes)
+		storageState.currentMemtable = memory.NewMemtable(
+			storageState.idGenerator.NextId(),
+			storageState.options.MemTableSizeInBytes,
+			memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
+		)
 	}
 }
 
 // forceFreezeCurrentMemtable only for testing.
 func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-	storageState.currentMemtable = memory.NewMemtableWithoutWAL(storageState.idGenerator.NextId(), storageState.options.MemTableSizeInBytes)
+	storageState.currentMemtable = memory.NewMemtable(
+		storageState.idGenerator.NextId(),
+		storageState.options.MemTableSizeInBytes,
+		memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
+	)
 }
 
 func (storageState *StorageState) l0SSTableIterators(seekTo txn.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {
