@@ -62,6 +62,7 @@ func NewStorageState() *StorageState {
 	})
 }
 
+// NewStorageStateWithOptions TODO: Recover from WAL
 func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
