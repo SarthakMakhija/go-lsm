@@ -15,10 +15,6 @@ type Key struct {
 
 var EmptyKey = Key{key: nil}
 
-func NewStringKey(key string) Key {
-	return Key{key: []byte(key)}
-}
-
 func DecodeFrom(buffer []byte) Key {
 	if len(buffer) < TimestampSize {
 		panic("buffer too small to decode the key from")
