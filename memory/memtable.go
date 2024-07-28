@@ -55,6 +55,23 @@ func newMemtableWithWAL(id uint64, memTableSizeInBytes int64, walDirectoryPath s
 	}
 }
 
+// recoverFromWAL recovers Memtable from WAL, it skips the check on memTableSizeInBytes.
+func recoverFromWAL(id uint64, memTableSizeInBytes int64, path string) (*Memtable, error) {
+	memtable := &Memtable{
+		id:                  id,
+		memTableSizeInBytes: memTableSizeInBytes,
+		entries:             external.NewSkipList(memTableSizeInBytes),
+	}
+	wal, err := log.Recover(path, func(key txn.Key, value txn.Value) {
+		memtable.entries.Put(key, value)
+	})
+	if err != nil {
+		return nil, err
+	}
+	memtable.wal = wal
+	return memtable, nil
+}
+
 func (memtable *Memtable) Get(key txn.Key) (txn.Value, bool) {
 	value, ok := memtable.entries.Get(key)
 	if !ok || value.IsEmpty() {
