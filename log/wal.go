@@ -30,30 +30,14 @@ func NewWAL(path string) (*WAL, error) {
 	return &WAL{file: file}, nil
 }
 
-func (wal *WAL) Append(key txn.Key, value txn.Value) error {
-	buffer := make([]byte, key.Size()+value.Size()+block.ReservedKeySize+block.ReservedValueSize)
-
-	binary.LittleEndian.PutUint16(buffer, uint16(key.Size()))
-	copy(buffer[block.ReservedKeySize:], key.Bytes())
-
-	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.Size():], uint16(value.Size()))
-	copy(buffer[block.ReservedKeySize+key.Size()+block.ReservedValueSize:], value.Bytes())
-
-	_, err := wal.file.Write(buffer)
-	return err
-}
-
-func Recover(path string, callback func(key txn.Key, value txn.Value)) error {
-	file, err := os.OpenFile(path, os.O_RDONLY, 0666)
+func Recover(path string, callback func(key txn.Key, value txn.Value)) (*WAL, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY|os.O_APPEND, 0666)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer func() {
-		_ = file.Close()
-	}()
 	bytes, err := io.ReadAll(file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for len(bytes) > 0 {
 		keySize := binary.LittleEndian.Uint16(bytes)
@@ -65,7 +49,20 @@ func Recover(path string, callback func(key txn.Key, value txn.Value)) error {
 		callback(txn.NewKey(key), txn.NewValue(value))
 		bytes = bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize:]
 	}
-	return nil
+	return &WAL{file: file}, nil
+}
+
+func (wal *WAL) Append(key txn.Key, value txn.Value) error {
+	buffer := make([]byte, key.Size()+value.Size()+block.ReservedKeySize+block.ReservedValueSize)
+
+	binary.LittleEndian.PutUint16(buffer, uint16(key.Size()))
+	copy(buffer[block.ReservedKeySize:], key.Bytes())
+
+	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.Size():], uint16(value.Size()))
+	copy(buffer[block.ReservedKeySize+key.Size()+block.ReservedValueSize:], value.Bytes())
+
+	_, err := wal.file.Write(buffer)
+	return err
 }
 
 func (wal *WAL) Sync() error {
