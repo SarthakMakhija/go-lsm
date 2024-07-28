@@ -8,6 +8,23 @@ import (
 	"testing"
 )
 
+func TestAppendToWALForId(t *testing.T) {
+	walDirectoryPath := os.TempDir()
+	wal, err := NewWALForId(10, walDirectoryPath)
+
+	assert.Nil(t, err)
+	defer func() {
+		wal.Close()
+		_ = os.Remove(walDirectoryPath)
+	}()
+
+	if _, err := os.Stat(filepath.Join(walDirectoryPath, "10.wal")); os.IsNotExist(err) {
+		panic("WAL does not exist")
+	}
+	assert.Nil(t, wal.Append(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(txn.NewStringKey("kv"), txn.NewStringValue("distributed")))
+}
+
 func TestAppendToWAL(t *testing.T) {
 	walPath := filepath.Join(os.TempDir(), "TestAppendToWAL.log")
 	wal, err := NewWAL(walPath)

@@ -2,14 +2,20 @@ package log
 
 import (
 	"encoding/binary"
+	"fmt"
 	"go-lsm/table/block"
 	"go-lsm/txn"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 type WAL struct {
 	file *os.File
+}
+
+func NewWALForId(id uint64, walDirectoryPath string) (*WAL, error) {
+	return NewWAL(filepath.Join(walDirectoryPath, fmt.Sprintf("%v.wal", id)))
 }
 
 func NewWAL(path string) (*WAL, error) {
