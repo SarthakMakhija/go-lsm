@@ -21,31 +21,61 @@ func TestKeySize(t *testing.T) {
 }
 
 func TestKeyIsLessThan(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.True(t, key.IsLessThanOrEqualTo(NewStringKey("raft")))
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.True(t, key.IsLessThanOrEqualTo(NewStringKeyWithTimestamp("raft", 10)))
+}
+
+func TestKeyIsLessThanBasedOnTimestamp(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.True(t, key.IsLessThanOrEqualTo(NewStringKeyWithTimestamp("consensus", 15)))
 }
 
 func TestKeyIsLessThanOrEqualTo(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.True(t, key.IsLessThanOrEqualTo(NewStringKey("consensus")))
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.True(t, key.IsLessThanOrEqualTo(NewStringKeyWithTimestamp("consensus", 10)))
+}
+
+func TestKeyIsLessThanOrEqualToBasedOnTimestamp(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.True(t, key.IsLessThanOrEqualTo(NewStringKeyWithTimestamp("consensus", 10)))
 }
 
 func TestKeyIsNotLessThanOrEqualTo(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.False(t, key.IsLessThanOrEqualTo(NewStringKey("accurate")))
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.False(t, key.IsLessThanOrEqualTo(NewStringKeyWithTimestamp("accurate", 10)))
+}
+
+func TestKeyIsNotLessThanOrEqualToBasedOnTimestamp(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.False(t, key.IsLessThanOrEqualTo(NewStringKeyWithTimestamp("consensus", 5)))
 }
 
 func TestKeyComparisonLessThan(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.Equal(t, -1, key.Compare(NewStringKey("distributed")))
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.Equal(t, -1, key.Compare(NewStringKeyWithTimestamp("distributed", 10)))
+}
+
+func TestKeyComparisonLessThanBasedOnTimestamp(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 15)
+	assert.Equal(t, -1, key.Compare(NewStringKeyWithTimestamp("consensus", 10)))
 }
 
 func TestKeyComparisonEqualTo(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.Equal(t, 0, key.Compare(NewStringKey("consensus")))
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.Equal(t, 0, key.Compare(NewStringKeyWithTimestamp("consensus", 10)))
+}
+
+func TestKeyComparisonEqualToBasedOnTimestamp(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.Equal(t, 0, key.Compare(NewStringKeyWithTimestamp("consensus", 10)))
 }
 
 func TestKeyComparisonGreaterThan(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.Equal(t, 1, key.Compare(NewStringKey("accurate")))
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.Equal(t, 1, key.Compare(NewStringKeyWithTimestamp("accurate", 10)))
+}
+
+func TestKeyComparisonGreaterThanBasedOnTimestamp(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.Equal(t, 1, key.Compare(NewStringKeyWithTimestamp("consensus", 20)))
 }
