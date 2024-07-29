@@ -7,12 +7,12 @@ import (
 
 func TestKeyIsEqualTo(t *testing.T) {
 	key := NewStringKey("consensus")
-	assert.True(t, key.IsEqualTo(NewStringKey("consensus")))
+	assert.True(t, key.IsRawKeyEqualTo(NewStringKey("consensus")))
 }
 
 func TestKeyIsNotEqualTo(t *testing.T) {
 	key := NewStringKey("consensus")
-	assert.False(t, key.IsEqualTo(NewStringKey("raft")))
+	assert.False(t, key.IsRawKeyEqualTo(NewStringKey("raft")))
 }
 
 func TestKeySize(t *testing.T) {

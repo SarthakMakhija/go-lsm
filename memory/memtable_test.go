@@ -22,6 +22,23 @@ func TestMemtableWithASingleKey(t *testing.T) {
 	assert.Equal(t, txn.NewStringValue("raft"), value)
 }
 
+func TestMemtableWithASingleKeyIncludingTimestampWhichReturnsTheValueOfTheKeyWithTimestampLessThanOrEqualToTheGiven(t *testing.T) {
+	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 4), txn.NewStringValue("raft"))
+
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 5))
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringValue("raft"), value)
+}
+
+func TestMemtableWithASingleKeyIncludingTimestampDoesNotReturnTheValueOfTheKeyWithTimestampLessThanOrEqualToTheGiven(t *testing.T) {
+	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 4), txn.NewStringValue("raft"))
+
+	_, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 2))
+	assert.False(t, ok)
+}
+
 func TestMemtableWithNonExistingKey(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
@@ -102,6 +119,64 @@ func TestMemtableScanInclusive3(t *testing.T) {
 	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
 
 	_ = iterator.Next()
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("Db"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestMemtableScanInclusiveWithTimestamp1(t *testing.T) {
+	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 1), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("epoch", 2), txn.NewStringValue("time"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("distributed", 3), txn.NewStringValue("Db"))
+
+	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("distributed", 4), txn.NewStringKeyWithTimestamp("zen", 4)))
+	defer iterator.Close()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("Db"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("time"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestMemtableScanInclusiveWithTimestamp2(t *testing.T) {
+	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 1), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 2), txn.NewStringValue("paxos"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("epoch", 2), txn.NewStringValue("time"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("distributed", 3), txn.NewStringValue("Db"))
+
+	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("consensus", 2), txn.NewStringKeyWithTimestamp("distributed", 2)))
+	defer iterator.Close()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("paxos"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestMemtableScanInclusiveWithTimestamp3(t *testing.T) {
+	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("paxos"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("epoch", 20), txn.NewStringValue("time"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("distributed", 2), txn.NewStringValue("Db"))
+
+	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("consensus", 2), txn.NewStringKeyWithTimestamp("distributed", 3)))
+	defer iterator.Close()
+
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("Db"), iterator.Value())
 

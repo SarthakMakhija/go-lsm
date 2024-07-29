@@ -104,7 +104,7 @@ func (iterator *MergeIterator) Close() {
 func (iterator *MergeIterator) advanceOtherIteratorsOnSameKey() error {
 	current := iterator.current
 	for index, anIterator := range *iterator.iterators {
-		if current.Key().IsEqualTo(anIterator.Key()) {
+		if current.Key().IsRawKeyEqualTo(anIterator.Key()) {
 			if err := iterator.advance(anIterator); err != nil {
 				heap.Pop(iterator.iterators).(IndexedIterator).Close()
 				return err

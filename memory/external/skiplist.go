@@ -133,7 +133,7 @@ func (skipList *SkipList) Get(key txn.Key) (txn.Value, bool) {
 	}
 
 	nextKey := skipList.arena.getKey(foundNode.keyOffset, foundNode.keySize)
-	if !key.IsEqualTo(nextKey) {
+	if !key.IsRawKeyEqualTo(nextKey) {
 		return txn.EmptyValue, false
 	}
 	valOffset, valSize := foundNode.getValueOffset()

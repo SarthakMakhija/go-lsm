@@ -27,15 +27,33 @@ func DecodeFrom(buffer []byte) Key {
 }
 
 func (key Key) IsLessThanOrEqualTo(other Key) bool {
-	return bytes.Compare(key.key, other.key) <= 0
-}
-
-func (key Key) IsEqualTo(other Key) bool {
-	return bytes.Compare(key.key, other.key) == 0
+	comparison := bytes.Compare(key.key, other.key)
+	if comparison > 0 {
+		return false
+	}
+	if comparison < 0 {
+		return true
+	}
+	//comparison == 0
+	return key.timestamp <= other.timestamp
 }
 
 func (key Key) Compare(other Key) int {
-	return bytes.Compare(key.key, other.key)
+	comparison := bytes.Compare(key.key, other.key)
+	if comparison != 0 {
+		return comparison
+	}
+	if key.timestamp == other.timestamp {
+		return 0
+	}
+	if key.timestamp < other.timestamp {
+		return 1
+	}
+	return -1
+}
+
+func (key Key) IsRawKeyEqualTo(other Key) bool {
+	return bytes.Compare(key.key, other.key) == 0
 }
 
 func (key Key) IsRawKeyEmpty() bool {

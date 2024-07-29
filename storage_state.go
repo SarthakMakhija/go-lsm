@@ -111,7 +111,7 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 		)),
 		key,
 	)
-	if mergeIterator.IsValid() && mergeIterator.Key().IsEqualTo(key) {
+	if mergeIterator.IsValid() && mergeIterator.Key().IsRawKeyEqualTo(key) {
 		return mergeIterator.Value(), true
 	}
 	return txn.EmptyValue, false
