@@ -19,11 +19,12 @@ func NewBlock(data []byte, keyValueBeginOffsets []uint16) Block {
 
 func (block Block) Encode() []byte {
 	data := block.data
-	data = append(data, block.encodeOffsets()...)
-	numberOfOffsets := make([]byte, Uint16Size)
-	binary.LittleEndian.PutUint16(numberOfOffsets, uint16(len(block.keyValueBeginOffsets)))
+	data = append(data, block.encodeKeyValueBeginOffsets()...)
 
-	data = append(data, numberOfOffsets...)
+	numberOfKeyValueBeginOffsets := make([]byte, Uint16Size)
+	binary.LittleEndian.PutUint16(numberOfKeyValueBeginOffsets, uint16(len(block.keyValueBeginOffsets)))
+
+	data = append(data, numberOfKeyValueBeginOffsets...)
 	return data
 }
 
@@ -59,7 +60,7 @@ func (block Block) SeekToKey(key txn.Key) *Iterator {
 	return iterator
 }
 
-func (block Block) encodeOffsets() []byte {
+func (block Block) encodeKeyValueBeginOffsets() []byte {
 	offsetBuffer := make([]byte, Uint16Size*len(block.keyValueBeginOffsets))
 	offsetIndex := 0
 	for _, offset := range block.keyValueBeginOffsets {

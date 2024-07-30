@@ -2,6 +2,7 @@ package table
 
 import (
 	"encoding/binary"
+	"fmt"
 	"go-lsm/table/block"
 	"go-lsm/table/bloom"
 	"go-lsm/txn"
@@ -150,14 +151,15 @@ func (table SSTable) noOfBlocks() int {
 func (table SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
 	blockMeta, ok := table.blockMetaList.GetAt(blockIndex)
 	if !ok {
-		panic("block meta not found")
+		panic(fmt.Errorf("block meta not found at index %v", blockIndex))
 	}
 	nextBlockMeta, ok := table.blockMetaList.GetAt(blockIndex + 1)
+
 	var endOffset uint32
 	if ok {
-		endOffset = nextBlockMeta.Offset
+		endOffset = nextBlockMeta.BlockStartingOffset
 	} else {
 		endOffset = table.blockMetaOffset
 	}
-	return blockMeta.Offset, endOffset
+	return blockMeta.BlockStartingOffset, endOffset
 }

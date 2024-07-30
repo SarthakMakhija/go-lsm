@@ -14,7 +14,7 @@ type SSTableBuilder struct {
 	bloomFilterBuilder *bloom.FilterBuilder
 	startingKey        txn.Key
 	endingKey          txn.Key
-	blocksData         []byte
+	allBlocksData      []byte
 	blockSize          uint
 }
 
@@ -50,7 +50,7 @@ func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
 func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error) {
 	blockMetaOffset := func() []byte {
 		blockMetaOffset := make([]byte, block.Uint32Size)
-		binary.LittleEndian.PutUint32(blockMetaOffset, uint32(len(builder.blocksData)))
+		binary.LittleEndian.PutUint32(blockMetaOffset, uint32(len(builder.allBlocksData)))
 		return blockMetaOffset
 	}
 	bloomOffset := func(buffer *bytes.Buffer) []byte {
@@ -61,7 +61,7 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 
 	builder.finishBlock()
 	buffer := new(bytes.Buffer)
-	buffer.Write(builder.blocksData)
+	buffer.Write(builder.allBlocksData)
 	buffer.Write(builder.blockMetaList.Encode())
 	buffer.Write(blockMetaOffset())
 	filter := builder.bloomFilterBuilder.Build(bloom.FalsePositiveRate)
@@ -87,7 +87,7 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 		file:            file,
 		blockMetaList:   builder.blockMetaList,
 		bloomFilter:     filter,
-		blockMetaOffset: uint32(len(builder.blocksData)),
+		blockMetaOffset: uint32(len(builder.allBlocksData)),
 		blockSize:       builder.blockSize,
 		startingKey:     startingKey,
 		endingKey:       endingKey,
@@ -95,17 +95,17 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 }
 
 func (builder SSTableBuilder) EstimatedSize() int {
-	return len(builder.blocksData)
+	return len(builder.allBlocksData)
 }
 
 func (builder *SSTableBuilder) finishBlock() {
 	encodedBlock := builder.blockBuilder.Build().Encode()
 	builder.blockMetaList.Add(block.Meta{
-		Offset:      uint32(len(builder.blocksData)),
-		StartingKey: builder.startingKey,
-		EndingKey:   builder.endingKey,
+		BlockStartingOffset: uint32(len(builder.allBlocksData)),
+		StartingKey:         builder.startingKey,
+		EndingKey:           builder.endingKey,
 	})
-	builder.blocksData = append(builder.blocksData, encodedBlock...)
+	builder.allBlocksData = append(builder.allBlocksData, encodedBlock...)
 }
 
 func (builder *SSTableBuilder) startNewBlock(key txn.Key) {

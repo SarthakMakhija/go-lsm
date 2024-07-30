@@ -7,9 +7,9 @@ import (
 )
 
 type Meta struct {
-	Offset      uint32
-	StartingKey txn.Key
-	EndingKey   txn.Key
+	BlockStartingOffset uint32
+	StartingKey         txn.Key
+	EndingKey           txn.Key
 }
 
 type MetaList struct {
@@ -20,8 +20,8 @@ func NewBlockMetaList() *MetaList {
 	return &MetaList{}
 }
 
-func (metaList *MetaList) Add(block Meta) {
-	metaList.list = append(metaList.list, block)
+func (metaList *MetaList) Add(meta Meta) {
+	metaList.list = append(metaList.list, meta)
 }
 
 func (metaList *MetaList) Encode() []byte {
@@ -41,7 +41,7 @@ func (metaList *MetaList) Encode() []byte {
 				blockMeta.EndingKey.EncodedSizeInBytes(),
 		)
 
-		binary.LittleEndian.PutUint32(buffer[:], blockMeta.Offset)
+		binary.LittleEndian.PutUint32(buffer[:], blockMeta.BlockStartingOffset)
 
 		binary.LittleEndian.PutUint16(buffer[Uint32Size:], uint16(blockMeta.StartingKey.EncodedSizeInBytes()))
 		copy(buffer[Uint32Size+ReservedKeySize:], blockMeta.StartingKey.EncodedBytes())
@@ -115,9 +115,9 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 		endingKey := buffer[endKeyBegin : endKeyBegin+int(endingKeySize)]
 
 		blockList = append(blockList, Meta{
-			Offset:      offset,
-			StartingKey: txn.DecodeFrom(startingKey),
-			EndingKey:   txn.DecodeFrom(endingKey),
+			BlockStartingOffset: offset,
+			StartingKey:         txn.DecodeFrom(startingKey),
+			EndingKey:           txn.DecodeFrom(endingKey),
 		})
 		index := endKeyBegin + int(endingKeySize)
 		buffer = buffer[index:]
