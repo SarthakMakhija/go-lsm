@@ -9,7 +9,7 @@ import (
 
 func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
-	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate"), EndingKey: txn.NewStringKey("consensus")})
 
 	encoded := blockMetaList.Encode()
 	decodedBlockMetaList := DecodeToBlockMetaList(encoded)
@@ -22,9 +22,9 @@ func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
 
 func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
-	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
-	blockMetaList.Add(Meta{Offset: 4096, StartingKey: txn.NewStringKey("bolt")})
-	blockMetaList.Add(Meta{Offset: 8192, StartingKey: txn.NewStringKey("consensus")})
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate"), EndingKey: txn.NewStringKey("badger")})
+	blockMetaList.Add(Meta{Offset: 4096, StartingKey: txn.NewStringKey("bolt"), EndingKey: txn.NewStringKey("calculator")})
+	blockMetaList.Add(Meta{Offset: 8192, StartingKey: txn.NewStringKey("consensus"), EndingKey: txn.NewStringKey("distributed")})
 
 	encoded := blockMetaList.Encode()
 	decodedBlockMetaList := DecodeToBlockMetaList(encoded)
@@ -70,9 +70,9 @@ func TestBlockMetaListWithAThreeBlockMetaWithEndingKeyOfEachBlock(t *testing.T) 
 
 func TestBlockMetaListWithStartingKeyOfFirstBlock(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
-	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate")})
-	blockMetaList.Add(Meta{Offset: 4096, StartingKey: txn.NewStringKey("bolt")})
-	blockMetaList.Add(Meta{Offset: 8192, StartingKey: txn.NewStringKey("consensus")})
+	blockMetaList.Add(Meta{Offset: 0, StartingKey: txn.NewStringKey("accurate"), EndingKey: txn.NewStringKey("badger")})
+	blockMetaList.Add(Meta{Offset: 4096, StartingKey: txn.NewStringKey("bolt"), EndingKey: txn.NewStringKey("calculator")})
+	blockMetaList.Add(Meta{Offset: 8192, StartingKey: txn.NewStringKey("consensus"), EndingKey: txn.NewStringKey("distributed")})
 
 	encoded := blockMetaList.Encode()
 	decodedBlockMetaList := DecodeToBlockMetaList(encoded)

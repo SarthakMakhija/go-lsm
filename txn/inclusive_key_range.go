@@ -6,7 +6,7 @@ type InclusiveKeyRange struct {
 }
 
 func NewInclusiveKeyRange(start, end Key) InclusiveKeyRange {
-	if end.Compare(start) < 0 {
+	if end.CompareKeysWithDescendingTimestamp(start) < 0 {
 		panic("end must be greater than start")
 	}
 	return InclusiveKeyRange{

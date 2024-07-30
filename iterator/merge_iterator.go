@@ -35,7 +35,7 @@ func NewIndexedIterator(index int, iterator Iterator) IndexedIterator {
 }
 
 func (indexedIterator IndexedIterator) IsPrioritizedOver(other IndexedIterator) bool {
-	comparisonResult := indexedIterator.Key().Compare(other.Key())
+	comparisonResult := indexedIterator.Key().CompareKeysWithDescendingTimestamp(other.Key())
 	if comparisonResult == 0 {
 		return indexedIterator.index < other.index
 	}

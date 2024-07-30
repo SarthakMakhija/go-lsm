@@ -15,6 +15,15 @@ func TestPutAndGetTheKey(t *testing.T) {
 	assert.Equal(t, txn.NewStringValue("raft"), value)
 }
 
+func TestPutAndGetTheKeyWithTimestamp(t *testing.T) {
+	skipList := NewSkipList(1 << 10)
+	skipList.Put(txn.NewStringKeyWithTimestamp("consensus", 2), txn.NewStringValue("raft"))
+
+	value, ok := skipList.Get(txn.NewStringKeyWithTimestamp("consensus", 3))
+	assert.True(t, ok)
+	assert.Equal(t, txn.NewStringValue("raft"), value)
+}
+
 func TestGetANonExistingKey(t *testing.T) {
 	skipList := NewSkipList(1 << 10)
 

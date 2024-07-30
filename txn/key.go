@@ -38,7 +38,7 @@ func (key Key) IsLessThanOrEqualTo(other Key) bool {
 	return key.timestamp <= other.timestamp
 }
 
-func (key Key) Compare(other Key) int {
+func (key Key) CompareKeysWithDescendingTimestamp(other Key) int {
 	comparison := bytes.Compare(key.key, other.key)
 	if comparison != 0 {
 		return comparison
@@ -46,10 +46,14 @@ func (key Key) Compare(other Key) int {
 	if key.timestamp == other.timestamp {
 		return 0
 	}
-	if key.timestamp < other.timestamp {
-		return 1
+	if key.timestamp > other.timestamp {
+		return -1
 	}
-	return -1
+	return 1
+}
+
+func CompareKeys(userKey, systemKey Key) int {
+	return userKey.CompareKeysWithDescendingTimestamp(systemKey)
 }
 
 func (key Key) IsRawKeyEqualTo(other Key) bool {
@@ -61,6 +65,9 @@ func (key Key) IsRawKeyEmpty() bool {
 }
 
 func (key Key) EncodedBytes() []byte {
+	if key.IsRawKeyEmpty() {
+		return nil
+	}
 	buffer := make([]byte, key.EncodedSizeInBytes())
 
 	numberOfBytesWritten := copy(buffer, key.key)
@@ -78,6 +85,9 @@ func (key Key) RawString() string {
 }
 
 func (key Key) EncodedSizeInBytes() int {
+	if key.IsRawKeyEmpty() {
+		return 0
+	}
 	return len(key.key) + TimestampSize
 }
 

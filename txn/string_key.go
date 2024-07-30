@@ -3,7 +3,7 @@
 package txn
 
 func NewStringKey(key string) Key {
-	return Key{key: []byte(key), timestamp: 0}
+	return NewStringKeyWithTimestamp(key, 0)
 }
 
 func NewStringKeyWithTimestamp(key string, timestamp uint64) Key {

@@ -255,7 +255,7 @@ func (skipList *SkipList) findNear(key txn.Key, less bool, allowEqual bool) (*no
 		}
 
 		nextKey := next.key(skipList.arena)
-		cmp := key.Compare(nextKey)
+		cmp := txn.CompareKeys(key, nextKey)
 		if cmp > 0 {
 			// x.key < next.key < key. We can continue to move right.
 			x = next
@@ -310,7 +310,7 @@ func (skipList *SkipList) findSpliceForLevel(key txn.Key, before *node, level in
 			return before, next
 		}
 		nextKey := next.key(skipList.arena)
-		cmp := key.Compare(nextKey)
+		cmp := txn.CompareKeys(key, nextKey)
 		if cmp == 0 {
 			// Equality case.
 			return next, next

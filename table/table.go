@@ -116,10 +116,10 @@ func (table SSTable) SeekToKey(key txn.Key) (*Iterator, error) {
 }
 
 func (table SSTable) ContainsInclusive(inclusiveKeyRange txn.InclusiveKeyRange) bool {
-	if inclusiveKeyRange.Start().Compare(table.endingKey) > 0 {
+	if inclusiveKeyRange.Start().CompareKeysWithDescendingTimestamp(table.endingKey) > 0 {
 		return false
 	}
-	if inclusiveKeyRange.End().Compare(table.startingKey) < 0 {
+	if inclusiveKeyRange.End().CompareKeysWithDescendingTimestamp(table.startingKey) < 0 {
 		return false
 	}
 	return true

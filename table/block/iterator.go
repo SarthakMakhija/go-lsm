@@ -56,7 +56,7 @@ func (iterator *Iterator) seekToGreaterOrEqual(key txn.Key) {
 		if !iterator.IsValid() {
 			panic("invalid iterator")
 		}
-		switch iterator.key.Compare(key) {
+		switch iterator.key.CompareKeysWithDescendingTimestamp(key) {
 		case -1:
 			low = mid + 1
 		case 0:
