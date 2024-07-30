@@ -11,6 +11,9 @@ var ReservedValueSize = int(unsafe.Sizeof(uint16(0)))
 var Uint16Size = int(unsafe.Sizeof(uint16(0)))
 var Uint32Size = int(unsafe.Sizeof(uint32(0)))
 
+const kb uint = 1024
+const DefaultBlockSize = 4 * kb
+
 type Builder struct {
 	keyValueBeginOffsets []uint16
 	firstKey             txn.Key
