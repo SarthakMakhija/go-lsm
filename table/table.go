@@ -98,6 +98,7 @@ func (table SSTable) SeekToKey(key txn.Key) (*Iterator, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	blockIterator := readBlock.SeekToKey(key)
 	if !blockIterator.IsValid() {
 		blockIndex += 1

@@ -47,10 +47,10 @@ func (iterator *Iterator) seekToOffsetIndex(index uint16) {
 
 func (iterator *Iterator) seekToGreaterOrEqual(key txn.Key) {
 	low := 0
-	high := len(iterator.block.keyValueBeginOffsets)
+	high := len(iterator.block.keyValueBeginOffsets) - 1
 
-	for low < high {
-		mid := low + (high-low)/2
+	for low <= high {
+		mid := (low + high) / 2
 		iterator.seekToOffsetIndex(uint16(mid))
 
 		if !iterator.IsValid() {
@@ -62,7 +62,7 @@ func (iterator *Iterator) seekToGreaterOrEqual(key txn.Key) {
 		case 0:
 			return
 		case 1:
-			high = mid
+			high = mid - 1
 		}
 	}
 	iterator.seekToOffsetIndex(uint16(low))
