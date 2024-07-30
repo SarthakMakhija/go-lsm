@@ -9,14 +9,14 @@ import (
 )
 
 type SSTable struct {
-	id              uint64
-	blockMetaList   *block.MetaList
-	bloomFilter     bloom.Filter
-	file            *File
-	blockMetaOffset uint32
-	blockSize       uint
-	startingKey     txn.Key
-	endingKey       txn.Key
+	id                   uint64
+	blockMetaList        *block.MetaList
+	bloomFilter          bloom.Filter
+	file                 *File
+	blockMetaBeginOffset uint32
+	blockSize            uint
+	startingKey          txn.Key
+	endingKey            txn.Key
 }
 
 func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
@@ -69,14 +69,14 @@ func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
 	startingKey, _ := metaList.StartingKeyOfFirstBlock()
 	endingKey, _ := metaList.EndingKeyOfLastBlock()
 	return SSTable{
-		id:              id,
-		blockMetaList:   metaList,
-		bloomFilter:     filter,
-		blockMetaOffset: metaOffset,
-		file:            file,
-		blockSize:       blockSize,
-		startingKey:     startingKey,
-		endingKey:       endingKey,
+		id:                   id,
+		blockMetaList:        metaList,
+		bloomFilter:          filter,
+		blockMetaBeginOffset: metaOffset,
+		file:                 file,
+		blockSize:            blockSize,
+		startingKey:          startingKey,
+		endingKey:            endingKey,
 	}, nil
 }
 
@@ -159,7 +159,7 @@ func (table SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
 	if ok {
 		endOffset = nextBlockMeta.BlockStartingOffset
 	} else {
-		endOffset = table.blockMetaOffset
+		endOffset = table.blockMetaBeginOffset
 	}
 	return blockMeta.BlockStartingOffset, endOffset
 }
