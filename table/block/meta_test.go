@@ -165,6 +165,48 @@ func TestBlockMetaListGetBlockWhichMayContainTheGivenKey3(t *testing.T) {
 
 func TestBlockMetaListGetBlockWhichMayContainTheGivenKey4(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{BlockStartingOffset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 20, StartingKey: txn.NewStringKey("bolt")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 40, StartingKey: txn.NewStringKey("db")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 60, StartingKey: txn.NewStringKey("exact")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 80, StartingKey: txn.NewStringKey("foundation")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 100, StartingKey: txn.NewStringKey("gossip")})
+
+	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("group"))
+	assert.Equal(t, "gossip", meta.StartingKey.RawString())
+	assert.Equal(t, 5, index)
+}
+
+func TestBlockMetaListGetBlockWhichMayContainTheGivenKey5(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{BlockStartingOffset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 20, StartingKey: txn.NewStringKey("bolt")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 40, StartingKey: txn.NewStringKey("db")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 60, StartingKey: txn.NewStringKey("exact")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 80, StartingKey: txn.NewStringKey("foundation")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 100, StartingKey: txn.NewStringKey("gossip")})
+
+	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("yugabyte"))
+	assert.Equal(t, "gossip", meta.StartingKey.RawString())
+	assert.Equal(t, 5, index)
+}
+
+func TestBlockMetaListGetBlockWhichMayContainTheGivenKey6(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
+	blockMetaList.Add(Meta{BlockStartingOffset: 0, StartingKey: txn.NewStringKey("accurate")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 20, StartingKey: txn.NewStringKey("bolt")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 40, StartingKey: txn.NewStringKey("db")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 60, StartingKey: txn.NewStringKey("exact")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 80, StartingKey: txn.NewStringKey("foundation")})
+	blockMetaList.Add(Meta{BlockStartingOffset: 100, StartingKey: txn.NewStringKey("gossip")})
+
+	meta, index := blockMetaList.MaybeBlockMetaContaining(txn.NewStringKey("fixed"))
+	assert.Equal(t, "exact", meta.StartingKey.RawString())
+	assert.Equal(t, 3, index)
+}
+
+func TestBlockMetaListGetBlockWhichMayContainTheGivenKey7(t *testing.T) {
+	blockMetaList := NewBlockMetaList()
 	for count := 10; count <= 100; count += 10 {
 		key := fmt.Sprintf("key-%d", count)
 		blockMetaList.Add(Meta{BlockStartingOffset: uint32(count), StartingKey: txn.NewStringKey(key)})

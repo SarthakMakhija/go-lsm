@@ -72,9 +72,9 @@ func (metaList *MetaList) Length() int {
 }
 
 func (metaList *MetaList) MaybeBlockMetaContaining(key txn.Key) (Meta, int) {
-	low, high := 0, metaList.Length()
-	previousLow := low
-	for low < high {
+	low, high := 0, metaList.Length()-1
+	possibleIndex := low
+	for low <= high {
 		mid := low + (high-low)/2
 		meta := metaList.list[mid]
 		switch key.CompareKeysWithDescendingTimestamp(meta.StartingKey) {
@@ -83,17 +83,11 @@ func (metaList *MetaList) MaybeBlockMetaContaining(key txn.Key) (Meta, int) {
 		case 0:
 			return meta, mid
 		case 1:
-			next := mid + 1
-			low = mid
-			if next < metaList.Length() && key.CompareKeysWithDescendingTimestamp(metaList.list[next].StartingKey) >= 0 {
-				low = mid + 1
-			}
-			if low == previousLow {
-				return metaList.list[low], low
-			}
+			possibleIndex = mid
+			low = mid + 1
 		}
 	}
-	return metaList.list[low], low
+	return metaList.list[possibleIndex], possibleIndex
 }
 
 func DecodeToBlockMetaList(buffer []byte) *MetaList {
