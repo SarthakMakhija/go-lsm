@@ -10,7 +10,7 @@ import (
 
 func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue.log")
@@ -33,22 +33,22 @@ func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 
 func TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
-	assert.Equal(t, txn.NewStringKey("consensus"), ssTable.startingKey)
-	assert.Equal(t, txn.NewStringKey("consensus"), ssTable.endingKey)
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 5), ssTable.startingKey)
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 5), ssTable.endingKey)
 }
 
 func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
-	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 6), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("etcd", 7), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues.log")
@@ -81,9 +81,9 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T)
 
 func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
-	ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 6), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("etcd", 7), txn.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey.log")
@@ -91,14 +91,14 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAn
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
 
-	assert.Equal(t, txn.NewStringKey("consensus"), ssTable.startingKey)
-	assert.Equal(t, txn.NewStringKey("etcd"), ssTable.endingKey)
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 5), ssTable.startingKey)
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("etcd", 7), ssTable.endingKey)
 }
 
 func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(30)
-	ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 10), txn.NewStringValue("TiKV"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithTwoBlocks.log")
