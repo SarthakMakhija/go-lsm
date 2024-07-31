@@ -9,7 +9,7 @@ import (
 func TestAddAKeyWithBloomFilterAndChecksForItsPositiveExistence(t *testing.T) {
 	bloomFilterBuilder := NewBloomFilterBuilder()
 
-	key := txn.NewStringKey("consensus")
+	key := txn.NewStringKeyWithTimestamp("consensus", 10)
 	bloomFilterBuilder.Add(key)
 
 	bloomFilter := bloomFilterBuilder.Build(0.001)
@@ -19,17 +19,17 @@ func TestAddAKeyWithBloomFilterAndChecksForItsPositiveExistence(t *testing.T) {
 func TestAddAKeyWithBloomFilterAndChecksForTheExistenceOfANonExistingKey(t *testing.T) {
 	bloomFilterBuilder := NewBloomFilterBuilder()
 
-	key := txn.NewStringKey("consensus")
+	key := txn.NewStringKeyWithTimestamp("consensus", 20)
 	bloomFilterBuilder.Add(key)
 
 	bloomFilter := bloomFilterBuilder.Build(0.001)
-	assert.False(t, bloomFilter.MayContain(txn.NewStringKey("missing")))
+	assert.False(t, bloomFilter.MayContain(txn.NewStringKeyWithTimestamp("missing", 20)))
 }
 
 func TestEncodeBloomFilter(t *testing.T) {
 	bloomFilterBuilder := NewBloomFilterBuilder()
 
-	key := txn.NewStringKey("consensus")
+	key := txn.NewStringKeyWithTimestamp("consensus", 5)
 	bloomFilterBuilder.Add(key)
 
 	bloomFilter := bloomFilterBuilder.Build(0.001)
@@ -39,18 +39,18 @@ func TestEncodeBloomFilter(t *testing.T) {
 	decodedBloomFilter, err := DecodeToBloomFilter(encoded, 0.001)
 	assert.Nil(t, err)
 
-	assert.True(t, decodedBloomFilter.MayContain(key))
+	assert.True(t, decodedBloomFilter.MayContain(txn.NewStringKeyWithTimestamp("consensus", 6)))
 }
 
 func TestEncodeBloomFilterContainingAFewKeys(t *testing.T) {
 	keys := []txn.Key{
-		txn.NewStringKey("consensus"),
-		txn.NewStringKey("paxos"),
-		txn.NewStringKey("distributed"),
-		txn.NewStringKey("etcd"),
-		txn.NewStringKey("bolt"),
-		txn.NewStringKey("B+Tree"),
-		txn.NewStringKey("LSM"),
+		txn.NewStringKeyWithTimestamp("consensus", 5),
+		txn.NewStringKeyWithTimestamp("paxos", 6),
+		txn.NewStringKeyWithTimestamp("distributed", 7),
+		txn.NewStringKeyWithTimestamp("etcd", 8),
+		txn.NewStringKeyWithTimestamp("bolt", 9),
+		txn.NewStringKeyWithTimestamp("B+Tree", 10),
+		txn.NewStringKeyWithTimestamp("LSM", 11),
 	}
 
 	bloomFilterBuilder := NewBloomFilterBuilder()
@@ -65,7 +65,16 @@ func TestEncodeBloomFilterContainingAFewKeys(t *testing.T) {
 	decodedBloomFilter, err := DecodeToBloomFilter(encoded, 0.001)
 	assert.Nil(t, err)
 
-	for _, key := range keys {
+	queryKeysWithDifferentTimestamps := []txn.Key{
+		txn.NewStringKeyWithTimestamp("consensus", 10),
+		txn.NewStringKeyWithTimestamp("paxos", 20),
+		txn.NewStringKeyWithTimestamp("distributed", 30),
+		txn.NewStringKeyWithTimestamp("etcd", 40),
+		txn.NewStringKeyWithTimestamp("bolt", 50),
+		txn.NewStringKeyWithTimestamp("B+Tree", 60),
+		txn.NewStringKeyWithTimestamp("LSM", 70),
+	}
+	for _, key := range queryKeysWithDifferentTimestamps {
 		assert.True(t, decodedBloomFilter.MayContain(key))
 	}
 }
@@ -73,7 +82,7 @@ func TestEncodeBloomFilterContainingAFewKeys(t *testing.T) {
 func TestEncodeBloomFilterAndCheckForNonExistingKey(t *testing.T) {
 	bloomFilterBuilder := NewBloomFilterBuilder()
 
-	key := txn.NewStringKey("consensus")
+	key := txn.NewStringKeyWithTimestamp("consensus", 5)
 	bloomFilterBuilder.Add(key)
 
 	bloomFilter := bloomFilterBuilder.Build(0.001)
@@ -83,5 +92,5 @@ func TestEncodeBloomFilterAndCheckForNonExistingKey(t *testing.T) {
 	decodedBloomFilter, err := DecodeToBloomFilter(encoded, 0.001)
 	assert.Nil(t, err)
 
-	assert.False(t, decodedBloomFilter.MayContain(txn.NewStringKey("missing")))
+	assert.False(t, decodedBloomFilter.MayContain(txn.NewStringKeyWithTimestamp("missing", 5)))
 }
