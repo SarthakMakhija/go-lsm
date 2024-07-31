@@ -15,9 +15,9 @@ func TestEmptyMemtable(t *testing.T) {
 
 func TestMemtableWithASingleKey(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
 
-	value, ok := memTable.Get(txn.NewStringKey("consensus"))
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 5))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("raft"), value)
 }
@@ -41,44 +41,54 @@ func TestMemtableWithASingleKeyIncludingTimestampDoesNotReturnTheValueOfTheKeyWi
 
 func TestMemtableWithNonExistingKey(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
 
-	value, ok := memTable.Get(txn.NewStringKey("storage"))
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("storage", 4))
 	assert.False(t, ok)
 	assert.Equal(t, txn.EmptyValue, value)
 }
 
 func TestMemtableWithMultipleKeys(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKey("storage"), txn.NewStringValue("NVMe"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("storage", 5), txn.NewStringValue("NVMe"))
 
-	value, ok := memTable.Get(txn.NewStringKey("consensus"))
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 5))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("raft"), value)
 
-	value, ok = memTable.Get(txn.NewStringKey("storage"))
+	value, ok = memTable.Get(txn.NewStringKeyWithTimestamp("storage", 5))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("NVMe"), value)
 }
 
 func TestMemtableWithADelete(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	_ = memTable.Delete(txn.NewStringKey("consensus"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Delete(txn.NewStringKeyWithTimestamp("consensus", 6))
 
-	value, ok := memTable.Get(txn.NewStringKey("consensus"))
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 6))
+	assert.False(t, ok)
+	assert.Equal(t, txn.EmptyValue, value)
+}
+
+func TestMemtableWithADeleteAndAGetWithTimestampHigherThanThatOfTheKeyInMemtable(t *testing.T) {
+	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Delete(txn.NewStringKeyWithTimestamp("consensus", 6))
+
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 7))
 	assert.False(t, ok)
 	assert.Equal(t, txn.EmptyValue, value)
 }
 
 func TestMemtableScanInclusive1(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKey("epoch"), txn.NewStringValue("time"))
-	_ = memTable.Set(txn.NewStringKey("distributed"), txn.NewStringValue("Db"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("epoch", 6), txn.NewStringValue("time"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("distributed", 7), txn.NewStringValue("Db"))
 
-	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("epoch"), txn.NewStringKey("epoch")))
+	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("epoch", 8), txn.NewStringKeyWithTimestamp("epoch", 8)))
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringValue("time"), iterator.Value())
 
@@ -88,11 +98,11 @@ func TestMemtableScanInclusive1(t *testing.T) {
 
 func TestMemtableScanInclusive2(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKey("epoch"), txn.NewStringValue("time"))
-	_ = memTable.Set(txn.NewStringKey("distributed"), txn.NewStringValue("Db"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("epoch", 6), txn.NewStringValue("time"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("distributed", 7), txn.NewStringValue("Db"))
 
-	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("distributed"), txn.NewStringKey("zen")))
+	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("distributed", 8), txn.NewStringKeyWithTimestamp("zen", 8)))
 	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
@@ -108,11 +118,11 @@ func TestMemtableScanInclusive2(t *testing.T) {
 
 func TestMemtableScanInclusive3(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKey("epoch"), txn.NewStringValue("time"))
-	_ = memTable.Set(txn.NewStringKey("distributed"), txn.NewStringValue("Db"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("epoch", 6), txn.NewStringValue("time"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("distributed", 7), txn.NewStringValue("Db"))
 
-	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKey("consensus"), txn.NewStringKey("distributed")))
+	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringKeyWithTimestamp("distributed", 7)))
 	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
@@ -126,27 +136,7 @@ func TestMemtableScanInclusive3(t *testing.T) {
 	assert.False(t, iterator.IsValid())
 }
 
-func TestMemtableScanInclusiveWithTimestamp1(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 1), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("epoch", 2), txn.NewStringValue("time"))
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("distributed", 3), txn.NewStringValue("Db"))
-
-	iterator := memTable.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("distributed", 4), txn.NewStringKeyWithTimestamp("zen", 4)))
-	defer iterator.Close()
-
-	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringValue("Db"), iterator.Value())
-
-	_ = iterator.Next()
-	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringValue("time"), iterator.Value())
-
-	_ = iterator.Next()
-	assert.False(t, iterator.IsValid())
-}
-
-func TestMemtableScanInclusiveWithTimestamp2(t *testing.T) {
+func TestMemtableScanInclusive4(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 1), txn.NewStringValue("raft"))
 	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 2), txn.NewStringValue("paxos"))
@@ -167,7 +157,7 @@ func TestMemtableScanInclusiveWithTimestamp2(t *testing.T) {
 	assert.False(t, iterator.IsValid())
 }
 
-func TestMemtableScanInclusiveWithTimestamp3(t *testing.T) {
+func TestMemtableScanInclusive5(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft"))
 	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("paxos"))
