@@ -17,9 +17,9 @@ func TestMemtableWithWALWithASingleKey(t *testing.T) {
 	}()
 
 	memTable := NewMemtable(1, testMemtableSize, NewWALPresence(true, walDirectoryPath))
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
 
-	value, ok := memTable.Get(txn.NewStringKey("consensus"))
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 5))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("raft"), value)
 }
@@ -33,14 +33,14 @@ func TestMemtableWithWALWithMultipleKeys(t *testing.T) {
 	}()
 
 	memTable := NewMemtable(2, testMemtableSize, NewWALPresence(true, walDirectoryPath))
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKey("storage"), txn.NewStringValue("NVMe"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("storage", 6), txn.NewStringValue("NVMe"))
 
-	value, ok := memTable.Get(txn.NewStringKey("consensus"))
+	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 6))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("raft"), value)
 
-	value, ok = memTable.Get(txn.NewStringKey("storage"))
+	value, ok = memTable.Get(txn.NewStringKeyWithTimestamp("storage", 6))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("NVMe"), value)
 }
@@ -54,19 +54,19 @@ func TestMemtableRecoveryFromWAL(t *testing.T) {
 	}()
 
 	memTable := NewMemtable(3, testMemtableSize, NewWALPresence(true, walDirectoryPath))
-	_ = memTable.Set(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKey("storage"), txn.NewStringValue("NVMe"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Set(txn.NewStringKeyWithTimestamp("storage", 6), txn.NewStringValue("NVMe"))
 
 	memTable.wal.Close()
 
 	recoveredMemTable, err := recoverFromWAL(3, testMemtableSize, filepath.Join(walDirectoryPath, "3.wal"))
 	assert.Nil(t, err)
 
-	value, ok := recoveredMemTable.Get(txn.NewStringKey("consensus"))
+	value, ok := recoveredMemTable.Get(txn.NewStringKeyWithTimestamp("consensus", 5))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("raft"), value)
 
-	value, ok = recoveredMemTable.Get(txn.NewStringKey("storage"))
+	value, ok = recoveredMemTable.Get(txn.NewStringKeyWithTimestamp("storage", 6))
 	assert.True(t, ok)
 	assert.Equal(t, txn.NewStringValue("NVMe"), value)
 }
