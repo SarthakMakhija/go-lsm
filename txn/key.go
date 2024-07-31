@@ -38,6 +38,10 @@ func (key Key) IsLessThanOrEqualTo(other Key) bool {
 	return key.timestamp <= other.timestamp
 }
 
+func (key Key) IsEqualTo(other Key) bool {
+	return bytes.Compare(key.key, other.key) == 0 && key.timestamp == other.timestamp
+}
+
 func (key Key) CompareKeysWithDescendingTimestamp(other Key) int {
 	comparison := bytes.Compare(key.key, other.key)
 	if comparison != 0 {

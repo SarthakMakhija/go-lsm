@@ -79,3 +79,21 @@ func TestKeyComparisonGreaterThanBasedOnTimestamp(t *testing.T) {
 	key := NewStringKeyWithTimestamp("consensus", 10)
 	assert.Equal(t, 1, key.CompareKeysWithDescendingTimestamp(NewStringKeyWithTimestamp("consensus", 20)))
 }
+
+func TestKeyIsEqualToOther(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	otherKey := NewStringKeyWithTimestamp("consensus", 10)
+	assert.True(t, key.IsEqualTo(otherKey))
+}
+
+func TestKeyIsNotEqualToOtherBasedOnTimestamp(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	otherKey := NewStringKeyWithTimestamp("consensus", 11)
+	assert.False(t, key.IsEqualTo(otherKey))
+}
+
+func TestKeyIsNotEqualToOtherBasedOnKey(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	otherKey := NewStringKeyWithTimestamp("raft", 10)
+	assert.False(t, key.IsEqualTo(otherKey))
+}

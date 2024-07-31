@@ -42,7 +42,7 @@ func (iterator *testIteratorNoEndKey) Close() {
 
 func TestMergeIteratorWithASingleIterator(t *testing.T) {
 	iterator := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringKeyWithTimestamp("storage", 14)},
 		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iterator})
@@ -61,7 +61,7 @@ func TestMergeIteratorWithASingleIterator(t *testing.T) {
 
 func TestMergeIteratorWithASingleInvalidIterator(t *testing.T) {
 	iterator := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 2), txn.NewStringKeyWithTimestamp("storage", 5)},
 		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	iterator.currentIndex = 2
@@ -73,36 +73,36 @@ func TestMergeIteratorWithASingleInvalidIterator(t *testing.T) {
 
 func TestMergeIteratorWithATwoIterators(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 3), txn.NewStringKeyWithTimestamp("storage", 7)},
 		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("diskType", 4), txn.NewStringKeyWithTimestamp("distributed-db", 7)},
 		[]txn.Value{txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
 	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 3), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("raft"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("diskType"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("diskType", 4), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("SSD"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("distributed-db"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("distributed-db", 7), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("etcd"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("storage"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("storage", 7), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("NVMe"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
@@ -112,11 +112,11 @@ func TestMergeIteratorWithATwoIterators(t *testing.T) {
 
 func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringKeyWithTimestamp("diskType", 7), txn.NewStringKeyWithTimestamp("distributed-db", 8)},
 		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringKeyWithTimestamp("storage", 8)},
 		[]txn.Value{txn.NewStringValue("paxos"), txn.NewStringValue("NVMe")},
 	)
 	//iterator with the lower index has higher priority
@@ -124,25 +124,31 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 7), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("paxos"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("diskType"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 6), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), mergeIterator.Value())
+
+	_ = mergeIterator.Next()
+
+	assert.True(t, mergeIterator.IsValid())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("diskType", 7), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("SSD"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("distributed-db"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("distributed-db", 8), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("etcd"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("storage"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("storage", 8), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("NVMe"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
@@ -152,11 +158,11 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 
 func TestMergeIteratorWithATwoIteratorsHavingSameKey2(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 4), txn.NewStringKeyWithTimestamp("diskType", 5), txn.NewStringKeyWithTimestamp("distributed-db", 6)},
 		[]txn.Value{txn.NewStringValue("paxos"), txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("accurate"), txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("accurate", 2), txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringKeyWithTimestamp("storage", 6)},
 		[]txn.Value{txn.NewStringValue("consistency"), txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	//iterator with the lower index has higher priority
@@ -164,31 +170,37 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey2(t *testing.T) {
 	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("accurate"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("accurate", 2), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("consistency"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("consensus"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 5), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), mergeIterator.Value())
+
+	_ = mergeIterator.Next()
+
+	assert.True(t, mergeIterator.IsValid())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 4), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("paxos"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("diskType"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("diskType", 5), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("SSD"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("distributed-db"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("distributed-db", 6), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("etcd"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("storage"), mergeIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("storage", 6), mergeIterator.Key())
 	assert.Equal(t, txn.NewStringValue("NVMe"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
