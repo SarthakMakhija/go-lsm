@@ -31,9 +31,9 @@ func TestForceFullCompaction(t *testing.T) {
 
 	buildL0SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("paxos"))
-		ssTableBuilder.Add(txn.NewStringKey("distributed"), txn.NewStringValue("TiKV"))
-		ssTableBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("bbolt"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("paxos"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 7), txn.NewStringValue("TiKV"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("etcd", 8), txn.NewStringValue("bbolt"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
 
@@ -45,9 +45,9 @@ func TestForceFullCompaction(t *testing.T) {
 	}
 	buildL1SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKey("bolt"), txn.NewStringValue("b+tree"))
-		ssTableBuilder.Add(txn.NewStringKey("quorum"), txn.NewStringValue("n/2+1"))
-		ssTableBuilder.Add(txn.NewStringKey("unique"), txn.NewStringValue("map"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("bolt", 9), txn.NewStringValue("b+tree"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("quorum", 10), txn.NewStringValue("n/2+1"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("unique", 11), txn.NewStringValue("map"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
 
@@ -79,37 +79,37 @@ func TestForceFullCompaction(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("bolt"), iterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("bolt", 9), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("b+tree"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("consensus"), iterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 6), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("paxos"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("distributed"), iterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("distributed", 7), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("TiKV"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("etcd"), iterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("etcd", 8), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("bbolt"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("quorum"), iterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("quorum", 10), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("n/2+1"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("unique"), iterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("unique", 11), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("map"), iterator.Value())
 
 	_ = iterator.Next()
