@@ -23,8 +23,8 @@ func TestAppendToWALForId(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(walDirectoryPath, "10.wal")); os.IsNotExist(err) {
 		panic("WAL does not exist")
 	}
-	assert.Nil(t, wal.Append(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
-	assert.Nil(t, wal.Append(txn.NewStringKey("kv"), txn.NewStringValue("distributed")))
+	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("kv", 20), txn.NewStringValue("distributed")))
 }
 
 func TestAppendToWAL(t *testing.T) {
@@ -37,8 +37,8 @@ func TestAppendToWAL(t *testing.T) {
 		_ = os.Remove(walPath)
 	}()
 
-	assert.Nil(t, wal.Append(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
-	assert.Nil(t, wal.Append(txn.NewStringKey("kv"), txn.NewStringValue("distributed")))
+	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("kv", 30), txn.NewStringValue("distributed")))
 }
 
 func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
@@ -50,23 +50,27 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 		_ = os.Remove(walPath)
 	}()
 
-	assert.Nil(t, wal.Append(txn.NewStringKey("consensus"), txn.NewStringValue("raft")))
-	assert.Nil(t, wal.Append(txn.NewStringKey("kv"), txn.NewStringValue("distributed")))
+	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("consensus", 4), txn.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("kv", 5), txn.NewStringValue("distributed")))
 
 	_ = wal.Sync()
 	wal.Close()
 
 	keyValues := make(map[string]string)
+	keyTimestamps := make(map[string]uint64)
 	_, err = Recover(walPath, func(key txn.Key, value txn.Value) {
 		keyValues[key.RawString()] = value.String()
+		keyTimestamps[key.RawString()] = key.Timestamp()
 	})
 	assert.Nil(t, err)
 
 	value, ok := keyValues["consensus"]
 	assert.True(t, ok)
 	assert.Equal(t, "raft", value)
+	assert.Equal(t, keyTimestamps["consensus"], uint64(4))
 
 	value, ok = keyValues["kv"]
 	assert.True(t, ok)
 	assert.Equal(t, "distributed", value)
+	assert.Equal(t, keyTimestamps["kv"], uint64(5))
 }

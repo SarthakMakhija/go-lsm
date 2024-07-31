@@ -94,3 +94,7 @@ func (key Key) EncodedSizeInBytes() int {
 func (key Key) RawSizeInBytes() int {
 	return len(key.RawBytes())
 }
+
+func (key Key) Timestamp() uint64 {
+	return key.timestamp
+}
