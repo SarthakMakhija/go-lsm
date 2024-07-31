@@ -8,7 +8,7 @@ import (
 
 func TestEncodeAndDecodeBlockWithASingleKeyValue(t *testing.T) {
 	blockBuilder := NewBlockBuilder(1024)
-	blockBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
+	blockBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
 
 	block := blockBuilder.Build()
 	buffer := block.Encode()
@@ -26,8 +26,8 @@ func TestEncodeAndDecodeBlockWithASingleKeyValue(t *testing.T) {
 
 func TestEncodeAndDecodeBlockWithTwoKeyValues(t *testing.T) {
 	blockBuilder := NewBlockBuilder(1024)
-	blockBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("raft"))
-	blockBuilder.Add(txn.NewStringKey("etcd"), txn.NewStringValue("kv"))
+	blockBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	blockBuilder.Add(txn.NewStringKeyWithTimestamp("etcd", 6), txn.NewStringValue("kv"))
 
 	block := blockBuilder.Build()
 	buffer := block.Encode()
