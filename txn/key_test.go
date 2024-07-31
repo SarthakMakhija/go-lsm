@@ -5,18 +5,18 @@ import (
 	"testing"
 )
 
-func TestKeyIsEqualTo(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.True(t, key.IsRawKeyEqualTo(NewStringKey("consensus")))
+func TestRawKeyIsEqualTo(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.True(t, key.IsRawKeyEqualTo(NewStringKeyWithTimestamp("consensus", 20)))
 }
 
-func TestKeyIsNotEqualTo(t *testing.T) {
-	key := NewStringKey("consensus")
-	assert.False(t, key.IsRawKeyEqualTo(NewStringKey("raft")))
+func TestRawKeyIsNotEqualTo(t *testing.T) {
+	key := NewStringKeyWithTimestamp("consensus", 10)
+	assert.False(t, key.IsRawKeyEqualTo(NewStringKeyWithTimestamp("raft", 10)))
 }
 
 func TestKeySize(t *testing.T) {
-	key := NewStringKey("consensus")
+	key := NewStringKeyWithTimestamp("consensus", 10)
 	assert.Equal(t, 17, key.EncodedSizeInBytes())
 }
 
