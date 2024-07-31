@@ -5,14 +5,20 @@ import (
 	"testing"
 )
 
-func TestInvalidInclusiveRange(t *testing.T) {
+func TestInvalidInclusiveRangeGivenEndKeyIsSmallerThanTheStartKey(t *testing.T) {
 	assert.Panics(t, func() {
-		NewInclusiveKeyRange(NewStringKey("consensus"), NewStringKey("accurate"))
+		NewInclusiveKeyRange(NewStringKeyWithTimestamp("consensus", 10), NewStringKeyWithTimestamp("accurate", 10))
 	})
 }
 
-func TestInclusiveRang(t *testing.T) {
-	inclusiveRange := NewInclusiveKeyRange(NewStringKey("consensus"), NewStringKey("distributed"))
-	assert.Equal(t, NewStringKey("consensus"), inclusiveRange.Start())
-	assert.Equal(t, NewStringKey("distributed"), inclusiveRange.End())
+func TestInvalidInclusiveRangeEndKeyIsSmallerThanTheStartKeyBasedOnTimestamp(t *testing.T) {
+	assert.Panics(t, func() {
+		NewInclusiveKeyRange(NewStringKeyWithTimestamp("consensus", 10), NewStringKeyWithTimestamp("consensus", 5))
+	})
+}
+
+func TestInclusiveRange(t *testing.T) {
+	inclusiveRange := NewInclusiveKeyRange(NewStringKeyWithTimestamp("consensus", 10), NewStringKeyWithTimestamp("distributed", 5))
+	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 10), inclusiveRange.Start())
+	assert.Equal(t, NewStringKeyWithTimestamp("distributed", 5), inclusiveRange.End())
 }
