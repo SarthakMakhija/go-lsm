@@ -8,25 +8,25 @@ import (
 
 func TestInclusiveBoundedIteratorWithTwoIterators(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringKeyWithTimestamp("storage", 20)},
 		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("diskType", 30), txn.NewStringKeyWithTimestamp("distributed-db", 40)},
 		[]txn.Value{txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
-	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, txn.NewStringKey("diskType"))
+	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, txn.NewStringKeyWithTimestamp("diskType", 40))
 	defer inclusiveBoundedIterator.Close()
 
 	assert.True(t, inclusiveBoundedIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("consensus"), inclusiveBoundedIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 10), inclusiveBoundedIterator.Key())
 	assert.Equal(t, txn.NewStringValue("raft"), inclusiveBoundedIterator.Value())
 
 	_ = inclusiveBoundedIterator.Next()
 
 	assert.True(t, inclusiveBoundedIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("diskType"), inclusiveBoundedIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("diskType", 30), inclusiveBoundedIterator.Key())
 	assert.Equal(t, txn.NewStringValue("SSD"), inclusiveBoundedIterator.Value())
 
 	_ = inclusiveBoundedIterator.Next()
@@ -35,19 +35,40 @@ func TestInclusiveBoundedIteratorWithTwoIterators(t *testing.T) {
 
 func TestInclusiveBoundedIteratorWithTwoIteratorsAndADeletedKeyWithEmptyValue(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("consensus"), txn.NewStringKey("storage")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringKeyWithTimestamp("storage", 20)},
 		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKey("diskType"), txn.NewStringKey("distributed-db")},
+		[]txn.Key{txn.NewStringKeyWithTimestamp("diskType", 30), txn.NewStringKeyWithTimestamp("distributed-db", 40)},
 		[]txn.Value{txn.NewStringValue(""), txn.NewStringValue("etcd")},
 	)
 	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
-	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, txn.NewStringKey("diskType"))
+	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, txn.NewStringKeyWithTimestamp("diskType", 30))
 	defer inclusiveBoundedIterator.Close()
 
 	assert.True(t, inclusiveBoundedIterator.IsValid())
-	assert.Equal(t, txn.NewStringKey("consensus"), inclusiveBoundedIterator.Key())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 10), inclusiveBoundedIterator.Key())
+	assert.Equal(t, txn.NewStringValue("raft"), inclusiveBoundedIterator.Value())
+
+	_ = inclusiveBoundedIterator.Next()
+	assert.False(t, inclusiveBoundedIterator.IsValid())
+}
+
+func TestInclusiveBoundedIteratorWithTwoIteratorsAndAnInclusiveKeyWithSmallerTimestamp(t *testing.T) {
+	iteratorOne := newTestIteratorNoEndKey(
+		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringKeyWithTimestamp("storage", 20)},
+		[]txn.Value{txn.NewStringValue("raft"), txn.NewStringValue("NVMe")},
+	)
+	iteratorTwo := newTestIteratorNoEndKey(
+		[]txn.Key{txn.NewStringKeyWithTimestamp("diskType", 30), txn.NewStringKeyWithTimestamp("distributed-db", 40)},
+		[]txn.Value{txn.NewStringValue("SSD"), txn.NewStringValue("etcd")},
+	)
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, txn.NewStringKeyWithTimestamp("diskType", 20))
+	defer inclusiveBoundedIterator.Close()
+
+	assert.True(t, inclusiveBoundedIterator.IsValid())
+	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 10), inclusiveBoundedIterator.Key())
 	assert.Equal(t, txn.NewStringValue("raft"), inclusiveBoundedIterator.Value())
 
 	_ = inclusiveBoundedIterator.Next()
