@@ -32,7 +32,7 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 
 	buildL0SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKey("consensus"), txn.NewStringValue("paxos"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("paxos"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
 
@@ -44,7 +44,7 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 	}
 	buildL1SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKey("unique"), txn.NewStringValue("map"))
+		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("unique", 30), txn.NewStringValue("map"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
 
