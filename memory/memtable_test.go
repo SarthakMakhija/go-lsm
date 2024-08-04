@@ -191,12 +191,14 @@ func TestMemtableAllEntriesWithSameRawKeyWithDifferentTimestamps(t *testing.T) {
 	assert.Equal(t, []txn.Key{
 		txn.NewStringKeyWithTimestamp("bolt", 3),
 		txn.NewStringKeyWithTimestamp("consensus", 2),
+		txn.NewStringKeyWithTimestamp("consensus", 1),
 		txn.NewStringKeyWithTimestamp("etcd", 4),
 	}, keys)
 
 	assert.Equal(t, []txn.Value{
 		txn.NewStringValue("kv"),
 		txn.NewStringValue("paxos"),
+		txn.NewStringValue("raft"),
 		txn.NewStringValue("distributed"),
 	}, values)
 }

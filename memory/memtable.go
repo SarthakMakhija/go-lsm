@@ -103,12 +103,8 @@ func (memtable *Memtable) AllEntries(callback func(key txn.Key, value txn.Value)
 	defer func() {
 		_ = iterator.Close()
 	}()
-	var previousKey txn.Key
 	for iterator.SeekToFirst(); iterator.Valid(); iterator.Next() {
-		if !iterator.Key().IsRawKeyEqualTo(previousKey) {
-			callback(iterator.Key(), iterator.Value())
-			previousKey = iterator.Key()
-		}
+		callback(iterator.Key(), iterator.Value())
 	}
 }
 
