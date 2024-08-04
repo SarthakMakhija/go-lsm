@@ -174,7 +174,7 @@ func TestMemtableScanInclusive5(t *testing.T) {
 	assert.False(t, iterator.IsValid())
 }
 
-func TestMemtableAllEntries(t *testing.T) {
+func TestMemtableAllEntriesWithSameRawKeyWithDifferentTimestamps(t *testing.T) {
 	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 1), txn.NewStringValue("raft"))
 	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 2), txn.NewStringValue("paxos"))
@@ -191,14 +191,12 @@ func TestMemtableAllEntries(t *testing.T) {
 	assert.Equal(t, []txn.Key{
 		txn.NewStringKeyWithTimestamp("bolt", 3),
 		txn.NewStringKeyWithTimestamp("consensus", 2),
-		txn.NewStringKeyWithTimestamp("consensus", 1),
 		txn.NewStringKeyWithTimestamp("etcd", 4),
 	}, keys)
 
 	assert.Equal(t, []txn.Value{
 		txn.NewStringValue("kv"),
 		txn.NewStringValue("paxos"),
-		txn.NewStringValue("raft"),
 		txn.NewStringValue("distributed"),
 	}, values)
 }
