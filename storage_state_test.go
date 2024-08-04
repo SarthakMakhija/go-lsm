@@ -208,7 +208,7 @@ func TestStorageStateScanWithMemtable(t *testing.T) {
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
 	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
 
-	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("accurate", 10), txn.NewStringKeyWithTimestamp("etcd", 1)))
+	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("accurate", 10), txn.NewStringKeyWithTimestamp("etcd", 10)))
 	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
@@ -291,12 +291,6 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 9), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
-
-	_ = iterator.Next()
-
-	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 8), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("paxos"), iterator.Value())
 
 	_ = iterator.Next()
 
@@ -387,12 +381,6 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 8), iterator.Key())
 	assert.Equal(t, txn.NewStringValue("raft"), iterator.Value())
-
-	_ = iterator.Next()
-
-	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 7), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("paxos"), iterator.Value())
 
 	_ = iterator.Next()
 
