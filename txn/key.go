@@ -26,6 +26,13 @@ func DecodeFrom(buffer []byte) Key {
 	}
 }
 
+func NewKey(key []byte, timestamp uint64) Key {
+	return Key{
+		key:       key,
+		timestamp: timestamp,
+	}
+}
+
 func (key Key) IsLessThanOrEqualTo(other Key) bool {
 	comparison := bytes.Compare(key.key, other.key)
 	if comparison > 0 {

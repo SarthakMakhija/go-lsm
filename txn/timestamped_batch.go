@@ -1,6 +1,6 @@
 package txn
 
-type EntryKind int
+type Kind int
 
 const (
 	EntryKindPut    = 1
@@ -10,15 +10,15 @@ const (
 type Entry struct {
 	Key
 	Value
-	EntryKind
+	Kind
 }
 
 func (entry Entry) IsKindPut() bool {
-	return entry.EntryKind == EntryKindPut
+	return entry.Kind == EntryKindPut
 }
 
 func (entry Entry) IsKindDelete() bool {
-	return entry.EntryKind == EntryKindDelete
+	return entry.Kind == EntryKindDelete
 }
 
 func (entry Entry) SizeInBytes() int {

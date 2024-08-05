@@ -1,0 +1,74 @@
+package txn
+
+import (
+	"bytes"
+	"errors"
+)
+
+type KeyValuePair struct {
+	key   []byte
+	value Value
+	kind  Kind
+}
+
+var DuplicateKeyInBatchErr = errors.New("batch already contains the key")
+
+type RawBatch struct {
+	pairs []KeyValuePair
+}
+
+func NewRawBatch() *RawBatch {
+	return &RawBatch{}
+}
+
+func (batch *RawBatch) Put(key, value []byte) error {
+	if batch.Contains(key) {
+		return DuplicateKeyInBatchErr
+	}
+	batch.pairs = append(batch.pairs, KeyValuePair{
+		key:   key,
+		value: NewValue(value),
+		kind:  EntryKindPut,
+	})
+	return nil
+}
+
+func (batch *RawBatch) Delete(key []byte) {
+	batch.pairs = append(batch.pairs, KeyValuePair{
+		key:   key,
+		value: EmptyValue,
+		kind:  EntryKindDelete,
+	})
+}
+
+func (batch *RawBatch) Get(key []byte) (Value, bool) {
+	for _, pair := range batch.pairs {
+		if bytes.Compare(pair.key, key) == 0 {
+			return pair.value, true
+		}
+	}
+	return EmptyValue, false
+}
+
+func (batch *RawBatch) Contains(key []byte) bool {
+	_, ok := batch.Get(key)
+	return ok
+}
+
+func (batch *RawBatch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBatch {
+	timestampedBatch := NewTimestampedBatch()
+	for _, pair := range batch.pairs {
+		if pair.kind == EntryKindPut {
+			timestampedBatch.Put(NewKey(pair.key, commitTimestamp), pair.value)
+		} else if pair.kind == EntryKindDelete {
+			timestampedBatch.Delete(NewKey(pair.key, commitTimestamp))
+		} else {
+			panic("unsupported entry kind while converting the RawBatch to TimestampedBatch")
+		}
+	}
+	return timestampedBatch
+}
+
+func (batch *RawBatch) IsEmpty() bool {
+	return len(batch.pairs) == 0
+}
