@@ -13,15 +13,15 @@ type KeyValuePair struct {
 
 var DuplicateKeyInBatchErr = errors.New("batch already contains the key")
 
-type RawBatch struct {
+type Batch struct {
 	pairs []KeyValuePair
 }
 
-func NewRawBatch() *RawBatch {
-	return &RawBatch{}
+func NewBatch() *Batch {
+	return &Batch{}
 }
 
-func (batch *RawBatch) Put(key, value []byte) error {
+func (batch *Batch) Put(key, value []byte) error {
 	if batch.Contains(key) {
 		return DuplicateKeyInBatchErr
 	}
@@ -33,7 +33,7 @@ func (batch *RawBatch) Put(key, value []byte) error {
 	return nil
 }
 
-func (batch *RawBatch) Delete(key []byte) {
+func (batch *Batch) Delete(key []byte) {
 	batch.pairs = append(batch.pairs, KeyValuePair{
 		key:   key,
 		value: EmptyValue,
@@ -41,7 +41,7 @@ func (batch *RawBatch) Delete(key []byte) {
 	})
 }
 
-func (batch *RawBatch) Get(key []byte) (Value, bool) {
+func (batch *Batch) Get(key []byte) (Value, bool) {
 	for _, pair := range batch.pairs {
 		if bytes.Compare(pair.key, key) == 0 {
 			return pair.value, true
@@ -50,12 +50,16 @@ func (batch *RawBatch) Get(key []byte) (Value, bool) {
 	return EmptyValue, false
 }
 
-func (batch *RawBatch) Contains(key []byte) bool {
+func (batch *Batch) Contains(key []byte) bool {
 	_, ok := batch.Get(key)
 	return ok
 }
 
-func (batch *RawBatch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBatch {
+func (batch *Batch) IsEmpty() bool {
+	return len(batch.pairs) == 0
+}
+
+func (batch *Batch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBatch {
 	timestampedBatch := NewTimestampedBatch()
 	for _, pair := range batch.pairs {
 		if pair.kind == EntryKindPut {
@@ -63,12 +67,8 @@ func (batch *RawBatch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBa
 		} else if pair.kind == EntryKindDelete {
 			timestampedBatch.Delete(NewKey(pair.key, commitTimestamp))
 		} else {
-			panic("unsupported entry kind while converting the RawBatch to TimestampedBatch")
+			panic("unsupported entry kind while converting the Batch to TimestampedBatch")
 		}
 	}
 	return timestampedBatch
-}
-
-func (batch *RawBatch) IsEmpty() bool {
-	return len(batch.pairs) == 0
 }

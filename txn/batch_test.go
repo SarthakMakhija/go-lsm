@@ -6,18 +6,18 @@ import (
 )
 
 func TestEmptyBatch(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	assert.Equal(t, true, batch.IsEmpty())
 }
 
 func TestNonEmptyBatch(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 	assert.Equal(t, false, batch.IsEmpty())
 }
 
 func TestAddsDuplicateKeyInBatch(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 	err := batch.Put([]byte("HDD"), []byte("Hard disk"))
 
@@ -26,7 +26,7 @@ func TestAddsDuplicateKeyInBatch(t *testing.T) {
 }
 
 func TestGetTheValueOfAKeyFromBatch(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 
 	value, ok := batch.Get([]byte("HDD"))
@@ -35,7 +35,7 @@ func TestGetTheValueOfAKeyFromBatch(t *testing.T) {
 }
 
 func TestGetTheValueOfANonExistingKeyFromBatch(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 
 	_, ok := batch.Get([]byte("non-existing"))
@@ -43,7 +43,7 @@ func TestGetTheValueOfANonExistingKeyFromBatch(t *testing.T) {
 }
 
 func TestContainsTheKey(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 
 	contains := batch.Contains([]byte("HDD"))
@@ -51,7 +51,7 @@ func TestContainsTheKey(t *testing.T) {
 }
 
 func TestDoesNotContainTheKey(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 
 	contains := batch.Contains([]byte("SSD"))
@@ -59,7 +59,7 @@ func TestDoesNotContainTheKey(t *testing.T) {
 }
 
 func TestGetsTheTimestampedBatch(t *testing.T) {
-	batch := NewRawBatch()
+	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 
 	timestampedBatch := batch.ToTimestampedBatch(1)
