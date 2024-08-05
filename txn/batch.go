@@ -3,7 +3,6 @@ package txn
 import (
 	"bytes"
 	"errors"
-	"sort"
 )
 
 type KeyValuePair struct {
@@ -60,10 +59,6 @@ func (batch *Batch) IsEmpty() bool {
 	return len(batch.pairs) == 0
 }
 
-func (batch *Batch) Length() int {
-	return len(batch.pairs)
-}
-
 func (batch *Batch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBatch {
 	timestampedBatch := NewTimestampedBatch()
 	for _, pair := range batch.pairs {
@@ -76,15 +71,4 @@ func (batch *Batch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBatch
 		}
 	}
 	return timestampedBatch
-}
-
-func (batch *Batch) getAtIndex(index int) KeyValuePair {
-	return batch.pairs[index]
-}
-
-func (batch *Batch) sortOnKeys() *Batch {
-	sort.Slice(batch.pairs, func(i, j int) bool {
-		return bytes.Compare(batch.pairs[i].key, batch.pairs[j].key) < 0
-	})
-	return batch
 }
