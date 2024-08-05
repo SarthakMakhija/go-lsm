@@ -46,3 +46,24 @@ func (iterator *PendingWritesIterator) IsValid() bool {
 }
 
 func (iterator *PendingWritesIterator) Close() {}
+
+func (iterator *PendingWritesIterator) seek(key []byte) {
+	iterator.index = len(iterator.keyValuePairs)
+	low, high := 0, len(iterator.keyValuePairs)-1
+
+	for low <= high {
+		mid := low + (high-low)/2
+		keyValuePair := iterator.keyValuePairs[mid]
+		switch bytes.Compare(keyValuePair.key, key) {
+		case -1:
+			low = mid + 1
+		case 0:
+			iterator.index = mid
+			return
+		case 1:
+			iterator.index = mid //possible index
+			high = mid - 1
+		}
+	}
+	return
+}

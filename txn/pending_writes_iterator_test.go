@@ -61,3 +61,107 @@ func TestPendingWritesIteratorWithABatchContainingFewPairs(t *testing.T) {
 
 	assert.False(t, iterator.IsValid())
 }
+
+func TestPendingWritesIteratorSeekToAMatchingKey(t *testing.T) {
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	_ = batch.Put([]byte("storage"), []byte("SSD"))
+	_ = batch.Put([]byte("bolt"), []byte("kv"))
+
+	iterator := NewPendingWritesIterator(batch, 2)
+	iterator.seek([]byte("consensus"))
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey1(t *testing.T) {
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	_ = batch.Put([]byte("storage"), []byte("SSD"))
+	_ = batch.Put([]byte("bolt"), []byte("kv"))
+
+	iterator := NewPendingWritesIterator(batch, 2)
+	iterator.seek([]byte("distributed"))
+
+	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey2(t *testing.T) {
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	_ = batch.Put([]byte("storage"), []byte("SSD"))
+	_ = batch.Put([]byte("bolt"), []byte("kv"))
+
+	iterator := NewPendingWritesIterator(batch, 2)
+	iterator.seek([]byte("cart"))
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey3(t *testing.T) {
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	_ = batch.Put([]byte("storage"), []byte("SSD"))
+	_ = batch.Put([]byte("bolt"), []byte("kv"))
+
+	iterator := NewPendingWritesIterator(batch, 2)
+	iterator.seek([]byte("accurate"))
+
+	assert.True(t, iterator.IsValid())
+
+	assert.Equal(t, NewStringKeyWithTimestamp("bolt", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("kv"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestPendingWritesIteratorSeekToANonExistingKey(t *testing.T) {
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	_ = batch.Put([]byte("storage"), []byte("SSD"))
+	_ = batch.Put([]byte("bolt"), []byte("kv"))
+
+	iterator := NewPendingWritesIterator(batch, 2)
+	iterator.seek([]byte("tigerDb"))
+
+	assert.False(t, iterator.IsValid())
+}
