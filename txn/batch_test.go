@@ -6,12 +6,12 @@ import (
 )
 
 func TestBatchWithASingleEntry(t *testing.T) {
-	batch := NewBatch().Put(NewStringKeyWithTimestamp("consensus", 10), NewStringValue("raft"))
+	batch := NewTimestampedBatch().Put(NewStringKeyWithTimestamp("consensus", 10), NewStringValue("raft"))
 	assert.Equal(t, 1, len(batch.AllEntries()))
 }
 
 func TestBatchWithTwoEntries(t *testing.T) {
-	batch := NewBatch().
+	batch := NewTimestampedBatch().
 		Put(NewStringKeyWithTimestamp("consensus", 5), NewStringValue("raft")).
 		Delete(NewStringKeyWithTimestamp("consensus", 5))
 
@@ -19,6 +19,6 @@ func TestBatchWithTwoEntries(t *testing.T) {
 }
 
 func TestBatchWithThreeEntries(t *testing.T) {
-	batch := NewBatch().Put(NewStringKeyWithTimestamp("consensus", 10), NewStringValue("raft"))
+	batch := NewTimestampedBatch().Put(NewStringKeyWithTimestamp("consensus", 10), NewStringValue("raft"))
 	assert.Equal(t, 21, batch.SizeInBytes())
 }

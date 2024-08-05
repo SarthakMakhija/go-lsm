@@ -32,7 +32,7 @@ func TestStorageStateWithASinglePutAndHasNoImmutableMemtables(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft")))
 
 	assert.False(t, storageState.hasImmutableMemtables())
 }
@@ -41,7 +41,7 @@ func TestStorageStateWithASinglePutAndGet(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft")))
 
 	value, ok := storageState.Get(txn.NewStringKeyWithTimestamp("consensus", 11))
 
@@ -53,9 +53,9 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
 
 	value, ok := storageState.Get(txn.NewStringKeyWithTimestamp("consensus", 6))
 	assert.True(t, ok)
@@ -74,9 +74,9 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testi
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("paxos"))
@@ -109,9 +109,9 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testi
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("paxos"))
@@ -136,9 +136,9 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testi
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("paxos"))
@@ -163,8 +163,8 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Delete(txn.NewStringKeyWithTimestamp("consensus", 8)))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Delete(txn.NewStringKeyWithTimestamp("consensus", 8)))
 
 	value, ok := storageState.Get(txn.NewStringKeyWithTimestamp("consensus", 11))
 
@@ -176,9 +176,9 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
 
 	assert.True(t, storageState.hasImmutableMemtables())
 	assert.Equal(t, 3, len(storageState.immutableMemtables))
@@ -189,10 +189,10 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("B+Tree")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 7), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 8), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("B+Tree")))
 
 	value, ok := storageState.Get(txn.NewStringKeyWithTimestamp("data-structure", 10))
 	assert.True(t, ok)
@@ -204,9 +204,9 @@ func TestStorageStateScanWithMemtable(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("accurate", 10), txn.NewStringKeyWithTimestamp("etcd", 10)))
 	defer iterator.Close()
@@ -230,13 +230,13 @@ func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
 
 	iterator := storageState.Scan(txn.NewInclusiveKeyRange(
 		txn.NewStringKeyWithTimestamp("accurate", 10), txn.NewStringKeyWithTimestamp("etcd", 10)),
@@ -264,9 +264,9 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 9), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 10), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 11), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 9), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 10), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 11), txn.NewStringValue("LSM")))
 
 	assert.True(t, storageState.hasImmutableMemtables())
 
@@ -314,9 +314,9 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 21), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 22), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 21), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 22), txn.NewStringValue("LSM")))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("paxos"))
@@ -356,9 +356,9 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("paxos"))
@@ -405,9 +405,9 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("paxos"))
@@ -434,13 +434,13 @@ func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
 
 	iterator := storageState.Scan(
 		txn.NewInclusiveKeyRange(txn.NewStringKeyWithTimestamp("zen", 10), txn.NewStringKeyWithTimestamp("zen", 10)),
@@ -454,7 +454,7 @@ func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtabl
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(1 << 10))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
 
 	assert.False(t, storageState.hasImmutableMemtables())
 
@@ -469,9 +469,9 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 7), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 8), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 9), txn.NewStringValue("LSM")))
 
 	err := storageState.ForceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
@@ -483,9 +483,9 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *te
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
 
 	err := storageState.ForceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
@@ -517,9 +517,9 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 	storageState := NewStorageStateWithOptions(storageOptions)
 	defer storageState.Close()
 
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
-	storageState.Set(txn.NewBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("consensus", 8), txn.NewStringValue("raft")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("storage", 9), txn.NewStringValue("NVMe")))
+	storageState.Set(txn.NewTimestampedBatch().Put(txn.NewStringKeyWithTimestamp("data-structure", 10), txn.NewStringValue("LSM")))
 
 	time.Sleep(10 * time.Millisecond)
 

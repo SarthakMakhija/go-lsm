@@ -25,30 +25,29 @@ func (entry Entry) SizeInBytes() int {
 	return entry.Key.EncodedSizeInBytes() + entry.Value.SizeInBytes()
 }
 
-// Batch TODO: What if the batch has a get
-type Batch struct {
+type TimestampedBatch struct {
 	entries []Entry
 }
 
-func NewBatch() *Batch {
-	return &Batch{}
+func NewTimestampedBatch() *TimestampedBatch {
+	return &TimestampedBatch{}
 }
 
-func (batch *Batch) Put(key Key, value Value) *Batch {
+func (batch *TimestampedBatch) Put(key Key, value Value) *TimestampedBatch {
 	batch.entries = append(batch.entries, Entry{key, value, EntryKindPut})
 	return batch
 }
 
-func (batch *Batch) Delete(key Key) *Batch {
+func (batch *TimestampedBatch) Delete(key Key) *TimestampedBatch {
 	batch.entries = append(batch.entries, Entry{key, EmptyValue, EntryKindDelete})
 	return batch
 }
 
-func (batch *Batch) AllEntries() []Entry {
+func (batch *TimestampedBatch) AllEntries() []Entry {
 	return batch.entries
 }
 
-func (batch Batch) SizeInBytes() int {
+func (batch TimestampedBatch) SizeInBytes() int {
 	size := 0
 	for _, entry := range batch.entries {
 		size += entry.SizeInBytes()

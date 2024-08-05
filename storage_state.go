@@ -119,9 +119,9 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 
 // Set
 // TODO: Handle error in Set and Delete
-func (storageState *StorageState) Set(batch *txn.Batch) {
-	storageState.mayBeFreezeCurrentMemtable(int64(batch.SizeInBytes()))
-	for _, entry := range batch.AllEntries() {
+func (storageState *StorageState) Set(timestampedBatch *txn.TimestampedBatch) {
+	storageState.mayBeFreezeCurrentMemtable(int64(timestampedBatch.SizeInBytes()))
+	for _, entry := range timestampedBatch.AllEntries() {
 		if entry.IsKindPut() {
 			_ = storageState.currentMemtable.Set(entry.Key, entry.Value)
 		} else if entry.IsKindDelete() {
