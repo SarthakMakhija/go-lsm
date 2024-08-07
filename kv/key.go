@@ -110,3 +110,10 @@ func (key Key) RawSizeInBytes() int {
 func (key Key) Timestamp() uint64 {
 	return key.timestamp
 }
+
+type RawKey []byte
+
+func (key RawKey) IsLessThanOrEqualTo(other LessOrEqual) bool {
+	otherKey := other.(RawKey)
+	return bytes.Compare(key, otherKey) <= 0
+}

@@ -25,7 +25,7 @@ func NewOracle() *Oracle {
 	return oracle
 }
 
-func (oracle *Oracle) Stop() {
+func (oracle *Oracle) Close() {
 	oracle.beginTimestampMark.Stop()
 	oracle.commitTimestampMark.Stop()
 }
