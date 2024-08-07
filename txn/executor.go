@@ -59,7 +59,7 @@ type ExecutionRequest struct {
 
 type Future struct {
 	responseChannel chan struct{}
-	responseOnce    sync.Once
+	isDone          bool
 }
 
 func NewExecutionRequest(batch *kv.TimestampedBatch) ExecutionRequest {
@@ -72,13 +72,15 @@ func NewExecutionRequest(batch *kv.TimestampedBatch) ExecutionRequest {
 func NewFuture() *Future {
 	return &Future{
 		responseChannel: make(chan struct{}),
+		isDone:          false,
 	}
 }
 
 func (future *Future) markDone() {
-	future.responseOnce.Do(func() {
+	if !future.isDone {
 		close(future.responseChannel)
-	})
+		future.isDone = true
+	}
 }
 
 func (future *Future) Wait() {
