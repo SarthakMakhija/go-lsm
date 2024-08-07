@@ -132,7 +132,7 @@ func (storageState *StorageState) Set(timestampedBatch *txn.TimestampedBatch) {
 	}
 }
 
-func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange) iterator.Iterator {
+func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange[txn.Key]) iterator.Iterator {
 	memtableIterators := func() []iterator.Iterator {
 		iterators := make([]iterator.Iterator, len(storageState.immutableMemtables)+1)
 

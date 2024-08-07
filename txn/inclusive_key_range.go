@@ -1,13 +1,17 @@
 package txn
 
-type InclusiveKeyRange struct {
-	start Key
-	end   Key
+type LessOrEqual interface {
+	IsLessThanOrEqualTo(other LessOrEqual) bool
 }
 
-func NewInclusiveKeyRange(start, end Key) InclusiveKeyRange {
+type InclusiveKeyRange[T LessOrEqual] struct {
+	start T
+	end   T
+}
+
+func NewInclusiveKeyRange[T LessOrEqual](start, end T) InclusiveKeyRange[T] {
 	if start.IsLessThanOrEqualTo(end) {
-		return InclusiveKeyRange{
+		return InclusiveKeyRange[T]{
 			start: start,
 			end:   end,
 		}
@@ -15,10 +19,10 @@ func NewInclusiveKeyRange(start, end Key) InclusiveKeyRange {
 	panic("end key must be greater than or equal to start key in InclusiveKeyRange")
 }
 
-func (inclusiveKeyRange InclusiveKeyRange) Start() Key {
+func (inclusiveKeyRange InclusiveKeyRange[T]) Start() T {
 	return inclusiveKeyRange.start
 }
 
-func (inclusiveKeyRange InclusiveKeyRange) End() Key {
+func (inclusiveKeyRange InclusiveKeyRange[T]) End() T {
 	return inclusiveKeyRange.end
 }

@@ -14,7 +14,7 @@ func TestGetsTheBeginTimestamp(t *testing.T) {
 func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
 	oracle := NewOracle()
 	defer oracle.Stop()
-	
+
 	commitTimestamp := uint64(5)
 	oracle.nextTimestamp = commitTimestamp
 

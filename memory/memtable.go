@@ -94,7 +94,7 @@ func (memtable *Memtable) Delete(key txn.Key) error {
 	return memtable.Set(key, txn.EmptyValue)
 }
 
-func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveKeyRange) *MemtableIterator {
+func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveKeyRange[txn.Key]) *MemtableIterator {
 	return NewMemtableIterator(memtable.entries.NewIterator(), inclusiveRange)
 }
 
@@ -129,7 +129,7 @@ type MemtableIterator struct {
 	endKey           txn.Key
 }
 
-func NewMemtableIterator(internalIterator *external.Iterator, keyRange txn.InclusiveKeyRange) *MemtableIterator {
+func NewMemtableIterator(internalIterator *external.Iterator, keyRange txn.InclusiveKeyRange[txn.Key]) *MemtableIterator {
 	internalIterator.Seek(keyRange.Start())
 	return &MemtableIterator{
 		internalIterator: internalIterator,
