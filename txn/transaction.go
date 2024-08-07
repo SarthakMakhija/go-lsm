@@ -1,7 +1,7 @@
 package txn
 
 import (
-	go_lsm "go-lsm"
+	"go-lsm"
 	"go-lsm/iterator"
 	"go-lsm/kv"
 )
