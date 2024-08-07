@@ -2,7 +2,7 @@ package block
 
 import (
 	"encoding/binary"
-	"go-lsm/txn"
+	"go-lsm/kv"
 )
 
 type Block struct {
@@ -52,7 +52,7 @@ func (block Block) SeekToFirst() *Iterator {
 	return iterator
 }
 
-func (block Block) SeekToKey(key txn.Key) *Iterator {
+func (block Block) SeekToKey(key kv.Key) *Iterator {
 	iterator := &Iterator{
 		block: block,
 	}

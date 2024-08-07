@@ -3,7 +3,7 @@ package bloom
 import (
 	"github.com/bits-and-blooms/bitset"
 	"github.com/spaolacci/murmur3"
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"math"
 	"unsafe"
 )
@@ -40,7 +40,7 @@ func (filter Filter) Encode() ([]byte, error) {
 	return append(buffer, filter.numberOfHashFunctions), nil
 }
 
-func (filter Filter) MayContain(key txn.Key) bool {
+func (filter Filter) MayContain(key kv.Key) bool {
 	positions := filter.bitPositionsFor(key)
 	for index := 0; index < len(positions); index++ {
 		position := positions[index]
@@ -51,7 +51,7 @@ func (filter Filter) MayContain(key txn.Key) bool {
 	return true
 }
 
-func (filter Filter) bitPositionsFor(key txn.Key) []uint32 {
+func (filter Filter) bitPositionsFor(key kv.Key) []uint32 {
 	indices := make([]uint32, 0, filter.numberOfHashFunctions)
 
 	for index := uint8(0); index < filter.numberOfHashFunctions; index++ {

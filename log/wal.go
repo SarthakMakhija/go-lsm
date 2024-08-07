@@ -3,8 +3,8 @@ package log
 import (
 	"encoding/binary"
 	"fmt"
+	"go-lsm/kv"
 	"go-lsm/table/block"
-	"go-lsm/txn"
 	"io"
 	"os"
 	"path/filepath"
@@ -30,7 +30,7 @@ func NewWAL(path string) (*WAL, error) {
 	return &WAL{file: file}, nil
 }
 
-func Recover(path string, callback func(key txn.Key, value txn.Value)) (*WAL, error) {
+func Recover(path string, callback func(key kv.Key, value kv.Value)) (*WAL, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
@@ -46,13 +46,13 @@ func Recover(path string, callback func(key txn.Key, value txn.Value)) (*WAL, er
 		valueSize := binary.LittleEndian.Uint16(bytes[uint16(block.ReservedKeySize)+keySize:])
 		value := bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize) : uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize]
 
-		callback(txn.DecodeFrom(key), txn.NewValue(value))
+		callback(kv.DecodeFrom(key), kv.NewValue(value))
 		bytes = bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize:]
 	}
 	return &WAL{file: file}, nil
 }
 
-func (wal *WAL) Append(key txn.Key, value txn.Value) error {
+func (wal *WAL) Append(key kv.Key, value kv.Value) error {
 	buffer := make([]byte, key.EncodedSizeInBytes()+value.SizeInBytes()+block.ReservedKeySize+block.ReservedValueSize)
 
 	binary.LittleEndian.PutUint16(buffer, uint16(key.EncodedSizeInBytes()))

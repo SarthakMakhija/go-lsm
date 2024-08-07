@@ -1,7 +1,7 @@
 package external
 
 import (
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"sync/atomic"
 	"unsafe"
 )
@@ -55,7 +55,7 @@ func (arena *Arena) putNode(height int) uint32 {
 // val buffer. Returns an offset into buf. User is responsible for remembering
 // size of val. We could also store this size inside arena but the encoding and
 // decoding will incur some overhead.
-func (arena *Arena) putVal(v txn.Value) uint32 {
+func (arena *Arena) putVal(v kv.Value) uint32 {
 	l := v.SizeAsUint32()
 	n := arena.n.Add(l)
 
@@ -64,7 +64,7 @@ func (arena *Arena) putVal(v txn.Value) uint32 {
 	return m
 }
 
-func (arena *Arena) putKey(key txn.Key) uint32 {
+func (arena *Arena) putKey(key kv.Key) uint32 {
 	l := uint32(key.EncodedSizeInBytes())
 	n := arena.n.Add(l)
 
@@ -87,13 +87,13 @@ func (arena *Arena) getNode(offset uint32) *node {
 }
 
 // getKey returns byte slice at offset.
-func (arena *Arena) getKey(offset uint32, size uint16) txn.Key {
-	return txn.DecodeFrom(arena.buf[offset : offset+uint32(size)])
+func (arena *Arena) getKey(offset uint32, size uint16) kv.Key {
+	return kv.DecodeFrom(arena.buf[offset : offset+uint32(size)])
 }
 
 // getValue returns byte slice at offset. The given size should be just the value
 // size and should NOT include the meta bytes.
-func (arena *Arena) getValue(offset uint32, size uint32) (ret txn.Value) {
+func (arena *Arena) getValue(offset uint32, size uint32) (ret kv.Value) {
 	ret.DecodeFrom(arena.buf[offset : offset+size])
 	return
 }

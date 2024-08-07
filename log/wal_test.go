@@ -2,7 +2,7 @@ package log
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,8 +23,8 @@ func TestAppendToWALForId(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(walDirectoryPath, "10.wal")); os.IsNotExist(err) {
 		panic("WAL does not exist")
 	}
-	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("consensus", 10), txn.NewStringValue("raft")))
-	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("kv", 20), txn.NewStringValue("distributed")))
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("kv", 20), kv.NewStringValue("distributed")))
 }
 
 func TestAppendToWAL(t *testing.T) {
@@ -37,8 +37,8 @@ func TestAppendToWAL(t *testing.T) {
 		_ = os.Remove(walPath)
 	}()
 
-	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("raft")))
-	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("kv", 30), txn.NewStringValue("distributed")))
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("kv", 30), kv.NewStringValue("distributed")))
 }
 
 func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
@@ -50,15 +50,15 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 		_ = os.Remove(walPath)
 	}()
 
-	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("consensus", 4), txn.NewStringValue("raft")))
-	assert.Nil(t, wal.Append(txn.NewStringKeyWithTimestamp("kv", 5), txn.NewStringValue("distributed")))
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("consensus", 4), kv.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("kv", 5), kv.NewStringValue("distributed")))
 
 	_ = wal.Sync()
 	wal.Close()
 
 	keyValues := make(map[string]string)
 	keyTimestamps := make(map[string]uint64)
-	_, err = Recover(walPath, func(key txn.Key, value txn.Value) {
+	_, err = Recover(walPath, func(key kv.Key, value kv.Value) {
 		keyValues[key.RawString()] = value.String()
 		keyTimestamps[key.RawString()] = key.Timestamp()
 	})

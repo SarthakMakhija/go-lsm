@@ -1,12 +1,12 @@
 package iterator
 
 import (
-	"go-lsm/txn"
+	"go-lsm/kv"
 )
 
 type Iterator interface {
-	Key() txn.Key
-	Value() txn.Value
+	Key() kv.Key
+	Value() kv.Value
 	Next() error
 	IsValid() bool
 	Close()
@@ -16,12 +16,12 @@ type InclusiveBoundedIteratorType = *MergeIterator
 
 type InclusiveBoundedIterator struct {
 	inner           InclusiveBoundedIteratorType
-	inclusiveEndKey txn.Key
+	inclusiveEndKey kv.Key
 	isValid         bool
-	previousKey     txn.Key
+	previousKey     kv.Key
 }
 
-func NewInclusiveBoundedIterator(iterator InclusiveBoundedIteratorType, inclusiveEndKey txn.Key) *InclusiveBoundedIterator {
+func NewInclusiveBoundedIterator(iterator InclusiveBoundedIteratorType, inclusiveEndKey kv.Key) *InclusiveBoundedIterator {
 	inclusiveBoundedIterator := &InclusiveBoundedIterator{
 		inner:           iterator,
 		inclusiveEndKey: inclusiveEndKey,
@@ -33,11 +33,11 @@ func NewInclusiveBoundedIterator(iterator InclusiveBoundedIteratorType, inclusiv
 	return inclusiveBoundedIterator
 }
 
-func (iterator *InclusiveBoundedIterator) Key() txn.Key {
+func (iterator *InclusiveBoundedIterator) Key() kv.Key {
 	return iterator.inner.Key()
 }
 
-func (iterator *InclusiveBoundedIterator) Value() txn.Value {
+func (iterator *InclusiveBoundedIterator) Value() kv.Value {
 	return iterator.inner.Value()
 }
 

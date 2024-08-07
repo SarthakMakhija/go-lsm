@@ -1,4 +1,4 @@
-package txn
+package kv
 
 import (
 	"github.com/stretchr/testify/assert"

@@ -3,9 +3,9 @@ package go_lsm
 import (
 	"fmt"
 	"go-lsm/iterator"
+	"go-lsm/kv"
 	"go-lsm/memory"
 	"go-lsm/table"
-	"go-lsm/txn"
 	"os"
 	"path/filepath"
 	"slices"
@@ -90,7 +90,7 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	return storageState
 }
 
-func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
+func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 	value, ok := storageState.currentMemtable.Get(key)
 	if ok {
 		return value, ok
@@ -106,7 +106,7 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 		iterator.NewMergeIterator(storageState.l0SSTableIterators(
 			key,
 			func(ssTable table.SSTable) bool {
-				return ssTable.ContainsInclusive(txn.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
+				return ssTable.ContainsInclusive(kv.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
 			},
 		)),
 		key,
@@ -114,12 +114,12 @@ func (storageState *StorageState) Get(key txn.Key) (txn.Value, bool) {
 	if mergeIterator.IsValid() && mergeIterator.Key().IsRawKeyEqualTo(key) {
 		return mergeIterator.Value(), true
 	}
-	return txn.EmptyValue, false
+	return kv.EmptyValue, false
 }
 
 // Set
 // TODO: Handle error in Set and Delete
-func (storageState *StorageState) Set(timestampedBatch *txn.TimestampedBatch) {
+func (storageState *StorageState) Set(timestampedBatch *kv.TimestampedBatch) {
 	storageState.mayBeFreezeCurrentMemtable(int64(timestampedBatch.SizeInBytes()))
 	for _, entry := range timestampedBatch.AllEntries() {
 		if entry.IsKindPut() {
@@ -132,7 +132,7 @@ func (storageState *StorageState) Set(timestampedBatch *txn.TimestampedBatch) {
 	}
 }
 
-func (storageState *StorageState) Scan(inclusiveRange txn.InclusiveKeyRange[txn.Key]) iterator.Iterator {
+func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Key]) iterator.Iterator {
 	memtableIterators := func() []iterator.Iterator {
 		iterators := make([]iterator.Iterator, len(storageState.immutableMemtables)+1)
 
@@ -166,7 +166,7 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 
 	buildSSTable := func() (table.SSTable, error) {
 		ssTableBuilder := table.NewSSTableBuilderWithDefaultBlockSize()
-		memtableToFlush.AllEntries(func(key txn.Key, value txn.Value) {
+		memtableToFlush.AllEntries(func(key kv.Key, value kv.Value) {
 			ssTableBuilder.Add(key, value)
 		})
 		ssTable, err := ssTableBuilder.Build(
@@ -255,7 +255,7 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	)
 }
 
-func (storageState *StorageState) l0SSTableIterators(seekTo txn.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {
+func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {
 	iterators := make([]iterator.Iterator, len(storageState.l0SSTableIds))
 	index := 0
 

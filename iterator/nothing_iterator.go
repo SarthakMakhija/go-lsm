@@ -2,7 +2,7 @@ package iterator
 
 import (
 	"errors"
-	"go-lsm/txn"
+	"go-lsm/kv"
 )
 
 type NothingIterator struct{}
@@ -11,12 +11,12 @@ var errNoNextSupposedByNothingIterator = errors.New("no support for Next() by No
 
 var nothingIterator = &NothingIterator{}
 
-func (iterator NothingIterator) Key() txn.Key {
-	return txn.EmptyKey
+func (iterator NothingIterator) Key() kv.Key {
+	return kv.EmptyKey
 }
 
-func (iterator *NothingIterator) Value() txn.Value {
-	return txn.EmptyValue
+func (iterator *NothingIterator) Value() kv.Value {
+	return kv.EmptyValue
 }
 
 func (iterator *NothingIterator) Next() error {

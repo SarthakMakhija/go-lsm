@@ -2,18 +2,18 @@ package iterator
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"testing"
 )
 
 func TestAnIndexedIteratorBasedOnKey(t *testing.T) {
 	indexedIteratorOne := NewIndexedIterator(0, newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 10)},
-		[]txn.Value{txn.NewStringValue("raft")},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 10)},
+		[]kv.Value{kv.NewStringValue("raft")},
 	))
 	indexedIteratorOther := NewIndexedIterator(1, newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKeyWithTimestamp("distributed", 2)},
-		[]txn.Value{txn.NewStringValue("db")},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("distributed", 2)},
+		[]kv.Value{kv.NewStringValue("db")},
 	))
 
 	assert.True(t, indexedIteratorOne.IsPrioritizedOver(indexedIteratorOther))
@@ -21,12 +21,12 @@ func TestAnIndexedIteratorBasedOnKey(t *testing.T) {
 
 func TestAnIndexedIteratorBasedOnSameKeyWithDifferentIteratorIndex(t *testing.T) {
 	indexedIteratorOne := NewIndexedIterator(0, newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 5)},
-		[]txn.Value{txn.NewStringValue("raft")},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 5)},
+		[]kv.Value{kv.NewStringValue("raft")},
 	))
 	indexedIteratorOther := NewIndexedIterator(1, newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 5)},
-		[]txn.Value{txn.NewStringValue("db")},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 5)},
+		[]kv.Value{kv.NewStringValue("db")},
 	))
 
 	assert.True(t, indexedIteratorOne.IsPrioritizedOver(indexedIteratorOther))
@@ -34,12 +34,12 @@ func TestAnIndexedIteratorBasedOnSameKeyWithDifferentIteratorIndex(t *testing.T)
 
 func TestAnIndexedIteratorBasedOnSameKeyWithDifferentTimestamp(t *testing.T) {
 	indexedIteratorOne := NewIndexedIterator(0, newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 5)},
-		[]txn.Value{txn.NewStringValue("raft")},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 5)},
+		[]kv.Value{kv.NewStringValue("raft")},
 	))
 	indexedIteratorOther := NewIndexedIterator(1, newTestIteratorNoEndKey(
-		[]txn.Key{txn.NewStringKeyWithTimestamp("consensus", 6)},
-		[]txn.Value{txn.NewStringValue("db")},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 6)},
+		[]kv.Value{kv.NewStringValue("db")},
 	))
 
 	assert.True(t, indexedIteratorOther.IsPrioritizedOver(indexedIteratorOne))

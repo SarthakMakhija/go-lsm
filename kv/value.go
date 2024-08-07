@@ -1,4 +1,4 @@
-package txn
+package kv
 
 type Value struct {
 	value []byte

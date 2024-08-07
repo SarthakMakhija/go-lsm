@@ -2,23 +2,21 @@ package txn
 
 import (
 	"bytes"
+	"go-lsm/kv"
 	"sort"
 )
 
 type PendingWritesIterator struct {
-	keyValuePairs []KeyValuePair
+	keyValuePairs []kv.KeyValuePair
 	index         int
 	timestamp     uint64
 }
 
 // NewPendingWritesIterator TODO: Seek, Deleted keys, checking for range end
-func NewPendingWritesIterator(batch *Batch, timestamp uint64) *PendingWritesIterator {
-	keyValuePairs := make([]KeyValuePair, 0, len(batch.pairs))
-	for _, pair := range batch.pairs {
-		keyValuePairs = append(keyValuePairs, pair)
-	}
+func NewPendingWritesIterator(batch *kv.Batch, timestamp uint64) *PendingWritesIterator {
+	keyValuePairs := batch.CloneKeyValuePairs()
 	sort.Slice(keyValuePairs, func(i, j int) bool {
-		return bytes.Compare(keyValuePairs[i].key, keyValuePairs[j].key) < 0
+		return bytes.Compare(keyValuePairs[i].Key(), keyValuePairs[j].Key()) < 0
 	})
 	return &PendingWritesIterator{
 		keyValuePairs: keyValuePairs,
@@ -27,13 +25,13 @@ func NewPendingWritesIterator(batch *Batch, timestamp uint64) *PendingWritesIter
 	}
 }
 
-func (iterator *PendingWritesIterator) Key() Key {
+func (iterator *PendingWritesIterator) Key() kv.Key {
 	pair := iterator.keyValuePairs[iterator.index]
-	return NewKey(pair.key, iterator.timestamp)
+	return kv.NewKey(pair.Key(), iterator.timestamp)
 }
 
-func (iterator *PendingWritesIterator) Value() Value {
-	return iterator.keyValuePairs[iterator.index].value
+func (iterator *PendingWritesIterator) Value() kv.Value {
+	return iterator.keyValuePairs[iterator.index].Value()
 }
 
 func (iterator *PendingWritesIterator) Next() error {
@@ -54,7 +52,7 @@ func (iterator *PendingWritesIterator) seek(key []byte) {
 	for low <= high {
 		mid := low + (high-low)/2
 		keyValuePair := iterator.keyValuePairs[mid]
-		switch bytes.Compare(keyValuePair.key, key) {
+		switch bytes.Compare(keyValuePair.Key(), key) {
 		case -1:
 			low = mid + 1
 		case 0:

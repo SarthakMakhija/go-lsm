@@ -1,4 +1,4 @@
-package txn
+package kv
 
 type LessOrEqual interface {
 	IsLessThanOrEqualTo(other LessOrEqual) bool

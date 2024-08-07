@@ -2,18 +2,18 @@ package bloom
 
 import (
 	"github.com/bits-and-blooms/bitset"
-	"go-lsm/txn"
+	"go-lsm/kv"
 )
 
 type FilterBuilder struct {
-	keys []txn.Key
+	keys []kv.Key
 }
 
 func NewBloomFilterBuilder() *FilterBuilder {
 	return &FilterBuilder{}
 }
 
-func (builder *FilterBuilder) Add(key txn.Key) {
+func (builder *FilterBuilder) Add(key kv.Key) {
 	builder.keys = append(builder.keys, key)
 }
 

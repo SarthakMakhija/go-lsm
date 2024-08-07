@@ -2,9 +2,9 @@ package memory
 
 import (
 	"fmt"
+	"go-lsm/kv"
 	"go-lsm/log"
 	"go-lsm/memory/external"
-	"go-lsm/txn"
 )
 
 type WalPresence struct {
@@ -62,7 +62,7 @@ func recoverFromWAL(id uint64, memTableSizeInBytes int64, path string) (*Memtabl
 		memTableSizeInBytes: memTableSizeInBytes,
 		entries:             external.NewSkipList(memTableSizeInBytes),
 	}
-	wal, err := log.Recover(path, func(key txn.Key, value txn.Value) {
+	wal, err := log.Recover(path, func(key kv.Key, value kv.Value) {
 		memtable.entries.Put(key, value)
 	})
 	if err != nil {
@@ -72,15 +72,15 @@ func recoverFromWAL(id uint64, memTableSizeInBytes int64, path string) (*Memtabl
 	return memtable, nil
 }
 
-func (memtable *Memtable) Get(key txn.Key) (txn.Value, bool) {
+func (memtable *Memtable) Get(key kv.Key) (kv.Value, bool) {
 	value, ok := memtable.entries.Get(key)
 	if !ok || value.IsEmpty() {
-		return txn.EmptyValue, false
+		return kv.EmptyValue, false
 	}
 	return value, true
 }
 
-func (memtable *Memtable) Set(key txn.Key, value txn.Value) error {
+func (memtable *Memtable) Set(key kv.Key, value kv.Value) error {
 	if memtable.wal != nil {
 		if err := memtable.wal.Append(key, value); err != nil {
 			return err
@@ -90,15 +90,15 @@ func (memtable *Memtable) Set(key txn.Key, value txn.Value) error {
 	return nil
 }
 
-func (memtable *Memtable) Delete(key txn.Key) error {
-	return memtable.Set(key, txn.EmptyValue)
+func (memtable *Memtable) Delete(key kv.Key) error {
+	return memtable.Set(key, kv.EmptyValue)
 }
 
-func (memtable *Memtable) Scan(inclusiveRange txn.InclusiveKeyRange[txn.Key]) *MemtableIterator {
+func (memtable *Memtable) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Key]) *MemtableIterator {
 	return NewMemtableIterator(memtable.entries.NewIterator(), inclusiveRange)
 }
 
-func (memtable *Memtable) AllEntries(callback func(key txn.Key, value txn.Value)) {
+func (memtable *Memtable) AllEntries(callback func(key kv.Key, value kv.Value)) {
 	iterator := memtable.entries.NewIterator()
 	defer func() {
 		_ = iterator.Close()
@@ -126,10 +126,10 @@ func (memtable *Memtable) Id() uint64 {
 
 type MemtableIterator struct {
 	internalIterator *external.Iterator
-	endKey           txn.Key
+	endKey           kv.Key
 }
 
-func NewMemtableIterator(internalIterator *external.Iterator, keyRange txn.InclusiveKeyRange[txn.Key]) *MemtableIterator {
+func NewMemtableIterator(internalIterator *external.Iterator, keyRange kv.InclusiveKeyRange[kv.Key]) *MemtableIterator {
 	internalIterator.Seek(keyRange.Start())
 	return &MemtableIterator{
 		internalIterator: internalIterator,
@@ -137,11 +137,11 @@ func NewMemtableIterator(internalIterator *external.Iterator, keyRange txn.Inclu
 	}
 }
 
-func (iterator *MemtableIterator) Key() txn.Key {
+func (iterator *MemtableIterator) Key() kv.Key {
 	return iterator.internalIterator.Key()
 }
 
-func (iterator *MemtableIterator) Value() txn.Value {
+func (iterator *MemtableIterator) Value() kv.Value {
 	return iterator.internalIterator.Value()
 }
 

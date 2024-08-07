@@ -2,7 +2,7 @@ package block
 
 import (
 	"encoding/binary"
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"unsafe"
 )
 
@@ -16,7 +16,7 @@ const DefaultBlockSize = 4 * kb
 
 type Builder struct {
 	keyValueBeginOffsets []uint16
-	firstKey             txn.Key
+	firstKey             kv.Key
 	blockSize            uint
 	data                 []byte
 }
@@ -29,7 +29,7 @@ func NewBlockBuilder(blockSize uint) *Builder {
 	}
 }
 
-func (builder *Builder) Add(key txn.Key, value txn.Value) bool {
+func (builder *Builder) Add(key kv.Key, value kv.Value) bool {
 	if uint(builder.size()+key.EncodedSizeInBytes()+value.SizeInBytes()+Uint16Size*2 /* key_len, value_len */) > builder.blockSize {
 		return false
 	}

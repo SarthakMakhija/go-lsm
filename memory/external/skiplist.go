@@ -1,7 +1,7 @@
 package external
 
 import (
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"math"
 	"sync/atomic"
 	"unsafe"
@@ -50,7 +50,7 @@ type SkipList struct {
 // NewSkipList makes a new empty skiplist, with a given arena size
 func NewSkipList(arenaSize int64) *SkipList {
 	arena := newArena(arenaSize)
-	head := newNode(arena, txn.EmptyKey, txn.EmptyValue, maxHeight)
+	head := newNode(arena, kv.EmptyKey, kv.EmptyValue, maxHeight)
 	s := &SkipList{head: head, arena: arena}
 	s.height.Store(1)
 	s.ref.Store(1)
@@ -58,7 +58,7 @@ func NewSkipList(arenaSize int64) *SkipList {
 }
 
 // Put inserts the key-value pair.
-func (skipList *SkipList) Put(key txn.Key, value txn.Value) {
+func (skipList *SkipList) Put(key kv.Key, value kv.Value) {
 	// Since we allow over-write, we may not need to create a new node. We might not even need to
 	// increase the height. Let'skipList defer these actions.
 	listHeight := skipList.getHeight()
@@ -126,15 +126,15 @@ func (skipList *SkipList) Put(key txn.Key, value txn.Value) {
 
 // Get gets the value associated with the key. It returns a valid value if it finds equal or earlier
 // version of the same key.
-func (skipList *SkipList) Get(key txn.Key) (txn.Value, bool) {
+func (skipList *SkipList) Get(key kv.Key) (kv.Value, bool) {
 	foundNode, _ := skipList.findNear(key, false, true) // findGreaterOrEqual.
 	if foundNode == nil {
-		return txn.EmptyValue, false
+		return kv.EmptyValue, false
 	}
 
 	nextKey := skipList.arena.getKey(foundNode.keyOffset, foundNode.keySize)
 	if !key.IsRawKeyEqualTo(nextKey) {
-		return txn.EmptyValue, false
+		return kv.EmptyValue, false
 	}
 	valOffset, valSize := foundNode.getValueOffset()
 	return skipList.arena.getValue(valOffset, valSize), true
@@ -178,7 +178,7 @@ func (skipList *SkipList) decrRef() {
 	skipList.head = nil
 }
 
-func newNode(arena *Arena, key txn.Key, v txn.Value, height int) *node {
+func newNode(arena *Arena, key kv.Key, v kv.Value, height int) *node {
 	// The base level is already allocated in the node struct.
 	offset := arena.putNode(height)
 	node := arena.getNode(offset)
@@ -194,11 +194,11 @@ func (node *node) getValueOffset() (uint32, uint32) {
 	return decodeValue(value)
 }
 
-func (node *node) key(arena *Arena) txn.Key {
+func (node *node) key(arena *Arena) kv.Key {
 	return arena.getKey(node.keyOffset, node.keySize)
 }
 
-func (node *node) setValue(arena *Arena, v txn.Value) {
+func (node *node) setValue(arena *Arena, v kv.Value) {
 	valOffset := arena.putVal(v)
 	value := encodeValue(valOffset, v.SizeAsUint32())
 	node.value.Store(value)
@@ -230,7 +230,7 @@ func (skipList *SkipList) getNext(nd *node, height int) *node {
 // If less=false, it finds leftmost node such that node.key > key (if allowEqual=false) or
 // node.key >= key (if allowEqual=true).
 // Returns the node found. The bool returned is true if the node has key equal to given key.
-func (skipList *SkipList) findNear(key txn.Key, less bool, allowEqual bool) (*node, bool) {
+func (skipList *SkipList) findNear(key kv.Key, less bool, allowEqual bool) (*node, bool) {
 	x := skipList.head
 	level := int(skipList.getHeight() - 1)
 	for {
@@ -255,7 +255,7 @@ func (skipList *SkipList) findNear(key txn.Key, less bool, allowEqual bool) (*no
 		}
 
 		nextKey := next.key(skipList.arena)
-		cmp := txn.CompareKeys(key, nextKey)
+		cmp := kv.CompareKeys(key, nextKey)
 		if cmp > 0 {
 			// x.key < next.key < key. We can continue to move right.
 			x = next
@@ -302,7 +302,7 @@ func (skipList *SkipList) findNear(key txn.Key, less bool, allowEqual bool) (*no
 // The input "before" tells us where to start looking.
 // If we found a node with the same key, then we return outBefore = outAfter.
 // Otherwise, outBefore.key < key < outAfter.key.
-func (skipList *SkipList) findSpliceForLevel(key txn.Key, before *node, level int) (*node, *node) {
+func (skipList *SkipList) findSpliceForLevel(key kv.Key, before *node, level int) (*node, *node) {
 	for {
 		// Assume before.key < key.
 		next := skipList.getNext(before, level)
@@ -310,7 +310,7 @@ func (skipList *SkipList) findSpliceForLevel(key txn.Key, before *node, level in
 			return before, next
 		}
 		nextKey := next.key(skipList.arena)
-		cmp := txn.CompareKeys(key, nextKey)
+		cmp := kv.CompareKeys(key, nextKey)
 		if cmp == 0 {
 			// Equality case.
 			return next, next
@@ -375,12 +375,12 @@ func (s *Iterator) Close() error {
 func (s *Iterator) Valid() bool { return s.n != nil }
 
 // Key returns the key at the current position.
-func (s *Iterator) Key() txn.Key {
+func (s *Iterator) Key() kv.Key {
 	return s.list.arena.getKey(s.n.keyOffset, s.n.keySize)
 }
 
 // Value returns value.
-func (s *Iterator) Value() txn.Value {
+func (s *Iterator) Value() kv.Value {
 	valOffset, valSize := s.n.getValueOffset()
 	return s.list.arena.getValue(valOffset, valSize)
 }
@@ -396,7 +396,7 @@ func (s *Iterator) Next() {
 }
 
 // Seek advances to the first entry with a key >= target.
-func (s *Iterator) Seek(target txn.Key) {
+func (s *Iterator) Seek(target kv.Key) {
 	s.n, _ = s.list.findNear(target, false, true) // find >=.
 }
 

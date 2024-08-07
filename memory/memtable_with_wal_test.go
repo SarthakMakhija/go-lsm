@@ -2,7 +2,7 @@ package memory
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,11 +17,11 @@ func TestMemtableWithWALWithASingleKey(t *testing.T) {
 	}()
 
 	memTable := NewMemtable(1, testMemtableSize, NewWALPresence(true, walDirectoryPath))
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
-	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 5))
+	value, ok := memTable.Get(kv.NewStringKeyWithTimestamp("consensus", 5))
 	assert.True(t, ok)
-	assert.Equal(t, txn.NewStringValue("raft"), value)
+	assert.Equal(t, kv.NewStringValue("raft"), value)
 }
 
 func TestMemtableWithWALWithMultipleKeys(t *testing.T) {
@@ -33,16 +33,16 @@ func TestMemtableWithWALWithMultipleKeys(t *testing.T) {
 	}()
 
 	memTable := NewMemtable(2, testMemtableSize, NewWALPresence(true, walDirectoryPath))
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("storage", 6), txn.NewStringValue("NVMe"))
+	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
+	_ = memTable.Set(kv.NewStringKeyWithTimestamp("storage", 6), kv.NewStringValue("NVMe"))
 
-	value, ok := memTable.Get(txn.NewStringKeyWithTimestamp("consensus", 6))
+	value, ok := memTable.Get(kv.NewStringKeyWithTimestamp("consensus", 6))
 	assert.True(t, ok)
-	assert.Equal(t, txn.NewStringValue("raft"), value)
+	assert.Equal(t, kv.NewStringValue("raft"), value)
 
-	value, ok = memTable.Get(txn.NewStringKeyWithTimestamp("storage", 6))
+	value, ok = memTable.Get(kv.NewStringKeyWithTimestamp("storage", 6))
 	assert.True(t, ok)
-	assert.Equal(t, txn.NewStringValue("NVMe"), value)
+	assert.Equal(t, kv.NewStringValue("NVMe"), value)
 }
 
 func TestMemtableRecoveryFromWAL(t *testing.T) {
@@ -54,19 +54,19 @@ func TestMemtableRecoveryFromWAL(t *testing.T) {
 	}()
 
 	memTable := NewMemtable(3, testMemtableSize, NewWALPresence(true, walDirectoryPath))
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
-	_ = memTable.Set(txn.NewStringKeyWithTimestamp("storage", 6), txn.NewStringValue("NVMe"))
+	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
+	_ = memTable.Set(kv.NewStringKeyWithTimestamp("storage", 6), kv.NewStringValue("NVMe"))
 
 	memTable.wal.Close()
 
 	recoveredMemTable, err := recoverFromWAL(3, testMemtableSize, filepath.Join(walDirectoryPath, "3.wal"))
 	assert.Nil(t, err)
 
-	value, ok := recoveredMemTable.Get(txn.NewStringKeyWithTimestamp("consensus", 5))
+	value, ok := recoveredMemTable.Get(kv.NewStringKeyWithTimestamp("consensus", 5))
 	assert.True(t, ok)
-	assert.Equal(t, txn.NewStringValue("raft"), value)
+	assert.Equal(t, kv.NewStringValue("raft"), value)
 
-	value, ok = recoveredMemTable.Get(txn.NewStringKeyWithTimestamp("storage", 6))
+	value, ok = recoveredMemTable.Get(kv.NewStringKeyWithTimestamp("storage", 6))
 	assert.True(t, ok)
-	assert.Equal(t, txn.NewStringValue("NVMe"), value)
+	assert.Equal(t, kv.NewStringValue("NVMe"), value)
 }

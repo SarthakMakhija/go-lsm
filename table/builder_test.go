@@ -2,7 +2,7 @@ package table
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm/txn"
+	"go-lsm/kv"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,7 +10,7 @@ import (
 
 func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue.log")
@@ -25,7 +25,7 @@ func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	defer blockIterator.Close()
 
 	assert.True(t, blockIterator.IsValid())
-	assert.Equal(t, txn.NewStringValue("raft"), blockIterator.Value())
+	assert.Equal(t, kv.NewStringValue("raft"), blockIterator.Value())
 
 	_ = blockIterator.Next()
 	assert.False(t, blockIterator.IsValid())
@@ -33,22 +33,22 @@ func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 
 func TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey.log")
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 5), ssTable.startingKey)
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 5), ssTable.endingKey)
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 5), ssTable.startingKey)
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 5), ssTable.endingKey)
 }
 
 func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 6), txn.NewStringValue("TiKV"))
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("etcd", 7), txn.NewStringValue("bbolt"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues.log")
@@ -63,17 +63,17 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T)
 	defer blockIterator.Close()
 
 	assert.True(t, blockIterator.IsValid())
-	assert.Equal(t, txn.NewStringValue("raft"), blockIterator.Value())
+	assert.Equal(t, kv.NewStringValue("raft"), blockIterator.Value())
 
 	_ = blockIterator.Next()
 
 	assert.True(t, blockIterator.IsValid())
-	assert.Equal(t, txn.NewStringValue("TiKV"), blockIterator.Value())
+	assert.Equal(t, kv.NewStringValue("TiKV"), blockIterator.Value())
 
 	_ = blockIterator.Next()
 
 	assert.True(t, blockIterator.IsValid())
-	assert.Equal(t, txn.NewStringValue("bbolt"), blockIterator.Value())
+	assert.Equal(t, kv.NewStringValue("bbolt"), blockIterator.Value())
 
 	_ = blockIterator.Next()
 	assert.False(t, blockIterator.IsValid())
@@ -81,9 +81,9 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T)
 
 func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 6), txn.NewStringValue("TiKV"))
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("etcd", 7), txn.NewStringValue("bbolt"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey.log")
@@ -91,14 +91,14 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAn
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
 
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 5), ssTable.startingKey)
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("etcd", 7), ssTable.endingKey)
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 5), ssTable.startingKey)
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("etcd", 7), ssTable.endingKey)
 }
 
 func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(30)
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 5), txn.NewStringValue("raft"))
-	ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 10), txn.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 10), kv.NewStringValue("TiKV"))
 
 	tempDirectory := os.TempDir()
 	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithTwoBlocks.log")
@@ -106,7 +106,7 @@ func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
 
-	assertBlockWithASingleKeyValue := func(blockIndex int, value txn.Value) {
+	assertBlockWithASingleKeyValue := func(blockIndex int, value kv.Value) {
 		block, err := ssTable.readBlock(blockIndex)
 		assert.Nil(t, err)
 
@@ -120,6 +120,6 @@ func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
 		assert.False(t, blockIterator.IsValid())
 	}
 
-	assertBlockWithASingleKeyValue(0, txn.NewStringValue("raft"))
-	assertBlockWithASingleKeyValue(1, txn.NewStringValue("TiKV"))
+	assertBlockWithASingleKeyValue(0, kv.NewStringValue("raft"))
+	assertBlockWithASingleKeyValue(1, kv.NewStringValue("TiKV"))
 }

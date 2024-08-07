@@ -2,60 +2,61 @@ package txn
 
 import (
 	"github.com/stretchr/testify/assert"
+	"go-lsm/kv"
 	"testing"
 )
 
 func TestPendingWritesIteratorWithAnEmptyBatch(t *testing.T) {
-	iterator := NewPendingWritesIterator(NewBatch(), 2)
+	iterator := NewPendingWritesIterator(kv.NewBatch(), 2)
 	assert.False(t, iterator.IsValid())
 }
 
 func TestPendingWritesIteratorWithABatchContainingOneKeyValuePair(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
 
 	iterator := NewPendingWritesIterator(batch, 2)
 
-	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
 
 	_ = iterator.Next()
 	assert.False(t, iterator.IsValid())
 }
 
 func TestPendingWritesIteratorWithABatchContainingOneDeletedKeyValuePair(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	batch.Delete([]byte("consensus"))
 
 	iterator := NewPendingWritesIterator(batch, 2)
 
-	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
-	assert.Equal(t, NewValue(nil), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, kv.NewValue(nil), iterator.Value())
 
 	_ = iterator.Next()
 	assert.False(t, iterator.IsValid())
 }
 
 func TestPendingWritesIteratorWithABatchContainingFewPairs(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
 	_ = batch.Put([]byte("storage"), []byte("SSD"))
 	_ = batch.Put([]byte("bolt"), []byte("kv"))
 
 	iterator := NewPendingWritesIterator(batch, 2)
 
-	assert.Equal(t, NewStringKeyWithTimestamp("bolt", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("kv"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("bolt", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("kv"), iterator.Value())
 
 	_ = iterator.Next()
 
-	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
 
 	_ = iterator.Next()
 
-	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("SSD"), iterator.Value())
 
 	_ = iterator.Next()
 
@@ -63,7 +64,7 @@ func TestPendingWritesIteratorWithABatchContainingFewPairs(t *testing.T) {
 }
 
 func TestPendingWritesIteratorSeekToAMatchingKey(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
 	_ = batch.Put([]byte("storage"), []byte("SSD"))
 	_ = batch.Put([]byte("bolt"), []byte("kv"))
@@ -72,13 +73,13 @@ func TestPendingWritesIteratorSeekToAMatchingKey(t *testing.T) {
 	iterator.seek([]byte("consensus"))
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
 
 	_ = iterator.Next()
 
-	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("SSD"), iterator.Value())
 
 	_ = iterator.Next()
 
@@ -86,7 +87,7 @@ func TestPendingWritesIteratorSeekToAMatchingKey(t *testing.T) {
 }
 
 func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey1(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
 	_ = batch.Put([]byte("storage"), []byte("SSD"))
 	_ = batch.Put([]byte("bolt"), []byte("kv"))
@@ -94,8 +95,8 @@ func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey1(t *testing.T
 	iterator := NewPendingWritesIterator(batch, 2)
 	iterator.seek([]byte("distributed"))
 
-	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("SSD"), iterator.Value())
 
 	_ = iterator.Next()
 
@@ -103,7 +104,7 @@ func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey1(t *testing.T
 }
 
 func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey2(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
 	_ = batch.Put([]byte("storage"), []byte("SSD"))
 	_ = batch.Put([]byte("bolt"), []byte("kv"))
@@ -112,13 +113,13 @@ func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey2(t *testing.T
 	iterator.seek([]byte("cart"))
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
 
 	_ = iterator.Next()
 
-	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("SSD"), iterator.Value())
 
 	_ = iterator.Next()
 
@@ -126,7 +127,7 @@ func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey2(t *testing.T
 }
 
 func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey3(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
 	_ = batch.Put([]byte("storage"), []byte("SSD"))
 	_ = batch.Put([]byte("bolt"), []byte("kv"))
@@ -136,18 +137,18 @@ func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey3(t *testing.T
 
 	assert.True(t, iterator.IsValid())
 
-	assert.Equal(t, NewStringKeyWithTimestamp("bolt", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("kv"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("bolt", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("kv"), iterator.Value())
 
 	_ = iterator.Next()
 
-	assert.Equal(t, NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("raft"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
 
 	_ = iterator.Next()
 
-	assert.Equal(t, NewStringKeyWithTimestamp("storage", 2), iterator.Key())
-	assert.Equal(t, NewStringValue("SSD"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("storage", 2), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("SSD"), iterator.Value())
 
 	_ = iterator.Next()
 
@@ -155,7 +156,7 @@ func TestPendingWritesIteratorSeekToAKeyGreaterThanTheSpecifiedKey3(t *testing.T
 }
 
 func TestPendingWritesIteratorSeekToANonExistingKey(t *testing.T) {
-	batch := NewBatch()
+	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
 	_ = batch.Put([]byte("storage"), []byte("SSD"))
 	_ = batch.Put([]byte("bolt"), []byte("kv"))

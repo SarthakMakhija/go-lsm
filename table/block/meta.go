@@ -3,13 +3,13 @@ package block
 import (
 	"bytes"
 	"encoding/binary"
-	"go-lsm/txn"
+	"go-lsm/kv"
 )
 
 type Meta struct {
 	BlockStartingOffset uint32
-	StartingKey         txn.Key
-	EndingKey           txn.Key
+	StartingKey         kv.Key
+	EndingKey           kv.Key
 }
 
 type MetaList struct {
@@ -71,7 +71,7 @@ func (metaList *MetaList) Length() int {
 	return len(metaList.list)
 }
 
-func (metaList *MetaList) MaybeBlockMetaContaining(key txn.Key) (Meta, int) {
+func (metaList *MetaList) MaybeBlockMetaContaining(key kv.Key) (Meta, int) {
 	low, high := 0, metaList.Length()-1
 	possibleIndex := low
 	for low <= high {
@@ -110,8 +110,8 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 
 		blockList = append(blockList, Meta{
 			BlockStartingOffset: offset,
-			StartingKey:         txn.DecodeFrom(startingKey),
-			EndingKey:           txn.DecodeFrom(endingKey),
+			StartingKey:         kv.DecodeFrom(startingKey),
+			EndingKey:           kv.DecodeFrom(endingKey),
 		})
 		index := endKeyBegin + int(endingKeySize)
 		buffer = buffer[index:]
@@ -121,16 +121,16 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 	}
 }
 
-func (metaList *MetaList) StartingKeyOfFirstBlock() (txn.Key, bool) {
+func (metaList *MetaList) StartingKeyOfFirstBlock() (kv.Key, bool) {
 	if metaList.Length() > 0 {
 		return metaList.list[0].StartingKey, true
 	}
-	return txn.Key{}, false
+	return kv.Key{}, false
 }
 
-func (metaList *MetaList) EndingKeyOfLastBlock() (txn.Key, bool) {
+func (metaList *MetaList) EndingKeyOfLastBlock() (kv.Key, bool) {
 	if metaList.Length() > 0 {
 		return metaList.list[metaList.Length()-1].EndingKey, true
 	}
-	return txn.Key{}, false
+	return kv.Key{}, false
 }

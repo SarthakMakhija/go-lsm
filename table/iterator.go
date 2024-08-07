@@ -1,8 +1,8 @@
 package table
 
 import (
+	"go-lsm/kv"
 	"go-lsm/table/block"
-	"go-lsm/txn"
 )
 
 type Iterator struct {
@@ -11,11 +11,11 @@ type Iterator struct {
 	blockIterator *block.Iterator
 }
 
-func (iterator *Iterator) Key() txn.Key {
+func (iterator *Iterator) Key() kv.Key {
 	return iterator.blockIterator.Key()
 }
 
-func (iterator *Iterator) Value() txn.Value {
+func (iterator *Iterator) Value() kv.Value {
 	return iterator.blockIterator.Value()
 }
 

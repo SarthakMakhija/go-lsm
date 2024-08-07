@@ -1,4 +1,4 @@
-package txn
+package kv
 
 import (
 	"bytes"
@@ -9,6 +9,14 @@ type KeyValuePair struct {
 	key   []byte
 	value Value
 	kind  Kind
+}
+
+func (kv KeyValuePair) Key() []byte {
+	return kv.key
+}
+
+func (kv KeyValuePair) Value() Value {
+	return kv.value
 }
 
 var DuplicateKeyInBatchErr = errors.New("batch already contains the key")
@@ -57,6 +65,18 @@ func (batch *Batch) Contains(key []byte) bool {
 
 func (batch *Batch) IsEmpty() bool {
 	return len(batch.pairs) == 0
+}
+
+func (batch *Batch) Length() int {
+	return len(batch.pairs)
+}
+
+func (batch *Batch) CloneKeyValuePairs() []KeyValuePair {
+	keyValuePairs := make([]KeyValuePair, 0, batch.Length())
+	for _, pair := range batch.pairs {
+		keyValuePairs = append(keyValuePairs, pair)
+	}
+	return keyValuePairs
 }
 
 func (batch *Batch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBatch {

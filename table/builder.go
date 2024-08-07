@@ -3,17 +3,17 @@ package table
 import (
 	"bytes"
 	"encoding/binary"
+	"go-lsm/kv"
 	"go-lsm/table/block"
 	"go-lsm/table/bloom"
-	"go-lsm/txn"
 )
 
 type SSTableBuilder struct {
 	blockBuilder       *block.Builder
 	blockMetaList      *block.MetaList
 	bloomFilterBuilder *bloom.FilterBuilder
-	startingKey        txn.Key
-	endingKey          txn.Key
+	startingKey        kv.Key
+	endingKey          kv.Key
 	allBlocksData      []byte
 	blockSize          uint
 }
@@ -31,7 +31,7 @@ func NewSSTableBuilder(blockSize uint) *SSTableBuilder {
 	}
 }
 
-func (builder *SSTableBuilder) Add(key txn.Key, value txn.Value) {
+func (builder *SSTableBuilder) Add(key kv.Key, value kv.Value) {
 	if builder.startingKey.IsRawKeyEmpty() {
 		builder.startingKey = key
 	}
@@ -108,7 +108,7 @@ func (builder *SSTableBuilder) finishBlock() {
 	builder.allBlocksData = append(builder.allBlocksData, encodedBlock...)
 }
 
-func (builder *SSTableBuilder) startNewBlock(key txn.Key) {
+func (builder *SSTableBuilder) startNewBlock(key kv.Key) {
 	builder.blockBuilder = block.NewBlockBuilder(builder.blockSize)
 	builder.startingKey = key
 	builder.endingKey = key

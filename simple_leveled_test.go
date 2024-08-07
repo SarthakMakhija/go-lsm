@@ -3,8 +3,8 @@ package go_lsm
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"go-lsm/kv"
 	"go-lsm/table"
-	"go-lsm/txn"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +32,7 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 
 	buildL0SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 20), txn.NewStringValue("paxos"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("paxos"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
 
@@ -44,7 +44,7 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 	}
 	buildL1SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("unique", 30), txn.NewStringValue("map"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("unique", 30), kv.NewStringValue("map"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
 

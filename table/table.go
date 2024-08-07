@@ -3,9 +3,9 @@ package table
 import (
 	"encoding/binary"
 	"fmt"
+	"go-lsm/kv"
 	"go-lsm/table/block"
 	"go-lsm/table/bloom"
-	"go-lsm/txn"
 )
 
 type SSTable struct {
@@ -15,8 +15,8 @@ type SSTable struct {
 	file                 *File
 	blockMetaBeginOffset uint32
 	blockSize            uint
-	startingKey          txn.Key
-	endingKey            txn.Key
+	startingKey          kv.Key
+	endingKey            kv.Key
 }
 
 func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
@@ -92,7 +92,7 @@ func (table SSTable) SeekToFirst() (*Iterator, error) {
 	}, nil
 }
 
-func (table SSTable) SeekToKey(key txn.Key) (*Iterator, error) {
+func (table SSTable) SeekToKey(key kv.Key) (*Iterator, error) {
 	_, blockIndex := table.blockMetaList.MaybeBlockMetaContaining(key)
 	readBlock, err := table.readBlock(blockIndex)
 	if err != nil {
@@ -117,7 +117,7 @@ func (table SSTable) SeekToKey(key txn.Key) (*Iterator, error) {
 	}, nil
 }
 
-func (table SSTable) ContainsInclusive(inclusiveKeyRange txn.InclusiveKeyRange[txn.Key]) bool {
+func (table SSTable) ContainsInclusive(inclusiveKeyRange kv.InclusiveKeyRange[kv.Key]) bool {
 	if inclusiveKeyRange.Start().CompareKeysWithDescendingTimestamp(table.endingKey) > 0 {
 		return false
 	}
@@ -127,7 +127,7 @@ func (table SSTable) ContainsInclusive(inclusiveKeyRange txn.InclusiveKeyRange[t
 	return true
 }
 
-func (table SSTable) MayContain(key txn.Key) bool {
+func (table SSTable) MayContain(key kv.Key) bool {
 	return table.bloomFilter.MayContain(key)
 }
 

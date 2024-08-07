@@ -3,8 +3,8 @@ package go_lsm
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"go-lsm/kv"
 	"go-lsm/table"
-	"go-lsm/txn"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,9 +31,9 @@ func TestForceFullCompaction(t *testing.T) {
 
 	buildL0SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("consensus", 6), txn.NewStringValue("paxos"))
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("distributed", 7), txn.NewStringValue("TiKV"))
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("etcd", 8), txn.NewStringValue("bbolt"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
 
@@ -45,9 +45,9 @@ func TestForceFullCompaction(t *testing.T) {
 	}
 	buildL1SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("bolt", 9), txn.NewStringValue("b+tree"))
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("quorum", 10), txn.NewStringValue("n/2+1"))
-		ssTableBuilder.Add(txn.NewStringKeyWithTimestamp("unique", 11), txn.NewStringValue("map"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("bolt", 9), kv.NewStringValue("b+tree"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("quorum", 10), kv.NewStringValue("n/2+1"))
+		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("unique", 11), kv.NewStringValue("map"))
 
 		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
 
@@ -79,38 +79,38 @@ func TestForceFullCompaction(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("bolt", 9), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("b+tree"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("bolt", 9), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("b+tree"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("consensus", 6), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("paxos"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 6), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("paxos"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("distributed", 7), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("TiKV"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("distributed", 7), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("TiKV"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("etcd", 8), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("bbolt"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("etcd", 8), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("bbolt"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("quorum", 10), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("n/2+1"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("quorum", 10), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("n/2+1"), iterator.Value())
 
 	_ = iterator.Next()
 
 	assert.True(t, iterator.IsValid())
-	assert.Equal(t, txn.NewStringKeyWithTimestamp("unique", 11), iterator.Key())
-	assert.Equal(t, txn.NewStringValue("map"), iterator.Value())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("unique", 11), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("map"), iterator.Value())
 
 	_ = iterator.Next()
 	assert.False(t, iterator.IsValid())
