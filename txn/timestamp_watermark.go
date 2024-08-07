@@ -29,24 +29,24 @@ type Mark struct {
 	outNotification chan struct{}
 }
 
-// TimestampWaterMark keeps track of the timestamps that are processed.
+// TransactionTimestampWaterMark keeps track of the timestamps that are processed.
 // It could be beginTimestamp or the commitTimestamp.
 // Let's say a txn.ReadWriteTransaction begins with a timestamp = 2.
 // It will invoke Begin method to indicate that a transaction with timestamp = 2 has started.
 // At some later point in time, the same transaction will commit, assuming it does not have any RW conflict.
 // Let's consider that is commits with the timestamp = 5. It will invoke Finish method passing 5 as the argument.
-// This will indicate to the TimestampWaterMark that transactions up till timestamp = 5 are done.
+// This will indicate to the TransactionTimestampWaterMark that transactions up till timestamp = 5 are done.
 // This information can be used for blocking new transactions until transactions upto a given timestamp are done.
 // The idea is from [Badger](https://github.com/dgraph-io/badger).
-type TimestampWaterMark struct {
+type TransactionTimestampWaterMark struct {
 	doneTill    atomic.Uint64
 	markChannel chan Mark
 	stopChannel chan struct{}
 }
 
-// NewTransactionTimestampMark creates a new instance of TimestampWaterMark
-func NewTransactionTimestampMark() *TimestampWaterMark {
-	transactionMark := &TimestampWaterMark{
+// NewTransactionTimestampWaterMark creates a new instance of TransactionTimestampWaterMark
+func NewTransactionTimestampWaterMark() *TransactionTimestampWaterMark {
+	transactionMark := &TransactionTimestampWaterMark{
 		markChannel: make(chan Mark),
 		stopChannel: make(chan struct{}),
 	}
@@ -55,28 +55,28 @@ func NewTransactionTimestampMark() *TimestampWaterMark {
 }
 
 // Begin sends a mark to the markChannel indicating that a transaction with the given timestamp has started.
-func (watermark *TimestampWaterMark) Begin(timestamp uint64) {
+func (watermark *TransactionTimestampWaterMark) Begin(timestamp uint64) {
 	watermark.markChannel <- Mark{timestamp: timestamp, done: false}
 }
 
 // Finish sends a mark to the markChannel indicating that a transaction with the given timestamp is done.
-func (watermark *TimestampWaterMark) Finish(timestamp uint64) {
+func (watermark *TransactionTimestampWaterMark) Finish(timestamp uint64) {
 	watermark.markChannel <- Mark{timestamp: timestamp, done: true}
 }
 
-// Stop stops the TimestampWaterMark.
-func (watermark *TimestampWaterMark) Stop() {
+// Stop stops the TransactionTimestampWaterMark.
+func (watermark *TransactionTimestampWaterMark) Stop() {
 	watermark.stopChannel <- struct{}{}
 }
 
 // DoneTill returns the timestamp till which the processing is done.
-func (watermark *TimestampWaterMark) DoneTill() uint64 {
+func (watermark *TransactionTimestampWaterMark) DoneTill() uint64 {
 	return watermark.doneTill.Load()
 }
 
 // WaitForMark is used to wait till the transaction timestamp >= timestamp is processed.
 // It does this by sending a mark to the `markChannel` and waiting for a response on the `waitChannel`.
-func (watermark *TimestampWaterMark) WaitForMark(
+func (watermark *TransactionTimestampWaterMark) WaitForMark(
 	ctx context.Context,
 	timestamp uint64,
 ) error {
@@ -100,12 +100,12 @@ func (watermark *TimestampWaterMark) WaitForMark(
 // Let's consider the following case:
 // Two transactions with commitTimestamps 4, 6 are running.
 // The transaction with the commitTimestamp 6 invokes Finish(), followed by the transaction with the commitTimestamp 4.
-// TimestampWaterMark can not consider the transaction with commitTimestamp = 6 as done because a transaction with the
+// TransactionTimestampWaterMark can not consider the transaction with commitTimestamp = 6 as done because a transaction with the
 // commitTimestamp of 4 is not done yet.
 // It maintains a binary heap of transaction timestamps and anytime it identifies that a transaction is done,
-// the transaction timestamp is popped off the heap and the doneTill field of TimestampWaterMark is updated.
+// the transaction timestamp is popped off the heap and the doneTill field of TransactionTimestampWaterMark is updated.
 // This ensures that doneTill mark is updated in the following order: 4 followed by 6.
-func (watermark *TimestampWaterMark) spin() {
+func (watermark *TransactionTimestampWaterMark) spin() {
 	var orderedTransactionTimestamps TimestampHeap
 	pendingTransactionRequestsByTimestamp := make(map[uint64]int)
 	notificationChannelsByTimestamp := make(map[uint64][]chan struct{})

@@ -9,7 +9,7 @@ import (
 )
 
 func TestTransactionTimestampMarkWithASingleTransaction(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 	transactionTimestampMark.Begin(1)
 	transactionTimestampMark.Finish(1)
 
@@ -19,7 +19,7 @@ func TestTransactionTimestampMarkWithASingleTransaction(t *testing.T) {
 }
 
 func TestTransactionTimestampMarkWithTwoTransactions(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 	transactionTimestampMark.Begin(1)
 	transactionTimestampMark.Begin(2)
 
@@ -32,7 +32,7 @@ func TestTransactionTimestampMarkWithTwoTransactions(t *testing.T) {
 }
 
 func TestTransactionTimestampMarkWithAFewTransactions(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 	transactionTimestampMark.Begin(1)
 	transactionTimestampMark.Begin(1)
 	transactionTimestampMark.Begin(1)
@@ -49,7 +49,7 @@ func TestTransactionTimestampMarkWithAFewTransactions(t *testing.T) {
 }
 
 func TestTransactionTimestampMarkWithTwoConcurrentTransactions(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -73,7 +73,7 @@ func TestTransactionTimestampMarkWithTwoConcurrentTransactions(t *testing.T) {
 }
 
 func TestTransactionTimestampMarkWithConcurrentTransactions(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 
 	var wg sync.WaitGroup
 	wg.Add(100)
@@ -94,7 +94,7 @@ func TestTransactionTimestampMarkWithConcurrentTransactions(t *testing.T) {
 }
 
 func TestTransactionMarkAndWaitForATimestamp(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 	go func() {
 		transactionTimestampMark.Begin(1)
 		time.Sleep(10 * time.Millisecond)
@@ -107,7 +107,7 @@ func TestTransactionMarkAndWaitForATimestamp(t *testing.T) {
 }
 
 func TestTransactionMarkAndWaitForAnAlreadyFinishedTimestamp(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 	transactionTimestampMark.Begin(1)
 	transactionTimestampMark.Finish(1)
 
@@ -116,7 +116,7 @@ func TestTransactionMarkAndWaitForAnAlreadyFinishedTimestamp(t *testing.T) {
 }
 
 func TestTransactionMarkAndTimeoutWaitingForAnUnfinishedTimestamp(t *testing.T) {
-	transactionTimestampMark := NewTransactionTimestampMark()
+	transactionTimestampMark := NewTransactionTimestampWaterMark()
 	transactionTimestampMark.Begin(1)
 	transactionTimestampMark.Finish(1)
 
