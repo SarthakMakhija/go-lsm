@@ -11,13 +11,15 @@ type Oracle struct {
 	nextTimestamp       uint64
 	beginTimestampMark  *TransactionTimestampWaterMark
 	commitTimestampMark *TransactionTimestampWaterMark
+	executor            *Executor
 }
 
-func NewOracle() *Oracle {
+func NewOracle(executor *Executor) *Oracle {
 	oracle := &Oracle{
 		nextTimestamp:       1,
 		beginTimestampMark:  NewTransactionTimestampWaterMark(),
 		commitTimestampMark: NewTransactionTimestampWaterMark(),
+		executor:            executor,
 	}
 
 	oracle.beginTimestampMark.Finish(oracle.nextTimestamp - 1)
@@ -28,6 +30,7 @@ func NewOracle() *Oracle {
 func (oracle *Oracle) Close() {
 	oracle.beginTimestampMark.Stop()
 	oracle.commitTimestampMark.Stop()
+	oracle.executor.stop()
 }
 
 func (oracle *Oracle) beginTimestamp() uint64 {

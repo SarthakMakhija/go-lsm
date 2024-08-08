@@ -9,7 +9,7 @@ import (
 
 func TestReadonlyTransactionWithEmptyState(t *testing.T) {
 	storageState := go_lsm.NewStorageState()
-	oracle := NewOracle()
+	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
@@ -24,7 +24,7 @@ func TestReadonlyTransactionWithEmptyState(t *testing.T) {
 
 func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
 	storageState := go_lsm.NewStorageState()
-	oracle := NewOracle()
+	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
@@ -48,7 +48,7 @@ func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
 
 func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTimestamp(t *testing.T) {
 	storageState := go_lsm.NewStorageState()
-	oracle := NewOracle()
+	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
@@ -73,7 +73,7 @@ func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTi
 
 func TestReadonlyTransactionWithScan(t *testing.T) {
 	storageState := go_lsm.NewStorageState()
-	oracle := NewOracle()
+	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
@@ -103,7 +103,7 @@ func TestReadonlyTransactionWithScan(t *testing.T) {
 
 func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testing.T) {
 	storageState := go_lsm.NewStorageState()
-	oracle := NewOracle()
+	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
