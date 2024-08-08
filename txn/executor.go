@@ -38,7 +38,7 @@ func (executor *Executor) start() {
 	}
 }
 
-func (executor *Executor) submit(batch *kv.TimestampedBatch) *Future {
+func (executor *Executor) submit(batch kv.TimestampedBatch) *Future {
 	executionRequest := NewExecutionRequest(batch)
 	executor.incomingChannel <- executionRequest
 	return executionRequest.future
@@ -53,7 +53,7 @@ func (executor *Executor) stop() {
 //////// ExecutionRequest & Future ////////////////
 
 type ExecutionRequest struct {
-	batch  *kv.TimestampedBatch
+	batch  kv.TimestampedBatch
 	future *Future
 }
 
@@ -62,7 +62,7 @@ type Future struct {
 	isDone          bool
 }
 
-func NewExecutionRequest(batch *kv.TimestampedBatch) ExecutionRequest {
+func NewExecutionRequest(batch kv.TimestampedBatch) ExecutionRequest {
 	return ExecutionRequest{
 		batch:  batch,
 		future: NewFuture(),

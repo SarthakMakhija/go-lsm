@@ -33,7 +33,10 @@ func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
 
 	commitTimestamp := uint64(5)
 	oracle.nextTimestamp = commitTimestamp + 1
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", commitTimestamp), kv.NewStringValue("raft")))
+
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadonlyTransaction(oracle, storageState)
@@ -58,7 +61,9 @@ func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTi
 	transaction := NewReadonlyTransaction(oracle, storageState)
 
 	commitTimestamp := uint64(6)
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("raft", commitTimestamp), kv.NewStringValue("consensus algorithm")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("raft"), []byte("consensus algorithm"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	_, ok := transaction.Get([]byte("raft"))
@@ -77,9 +82,12 @@ func TestReadonlyTransactionWithScan(t *testing.T) {
 
 	commitTimestamp := uint64(5)
 	oracle.nextTimestamp = commitTimestamp + 1
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", commitTimestamp), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", commitTimestamp), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("kv", commitTimestamp), kv.NewStringValue("distributed")))
+
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	_ = batch.Put([]byte("kv"), []byte("distributed"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadonlyTransaction(oracle, storageState)
@@ -102,12 +110,18 @@ func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testi
 		oracle.Close()
 	}()
 
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("unknown"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 4))
+
 	commitTimestamp := uint64(5)
 	oracle.nextTimestamp = commitTimestamp + 1
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 4), kv.NewStringValue("unknown")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", commitTimestamp), kv.NewStringValue("VSR")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", commitTimestamp), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("kv", commitTimestamp), kv.NewStringValue("distributed")))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("VSR"))
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	_ = batch.Put([]byte("kv"), []byte("distributed"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadonlyTransaction(oracle, storageState)

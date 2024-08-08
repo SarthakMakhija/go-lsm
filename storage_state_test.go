@@ -32,8 +32,10 @@ func TestStorageStateWithASinglePutAndHasNoImmutableMemtables(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringValue("raft")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
 
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10))
 	assert.False(t, storageState.hasImmutableMemtables())
 }
 
@@ -41,10 +43,12 @@ func TestStorageStateWithASinglePutAndGet(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringValue("raft")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10))
 
 	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("consensus", 11))
-
 	assert.True(t, ok)
 	assert.Equal(t, kv.NewStringValue("raft"), value)
 }
@@ -53,9 +57,17 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 7), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 8), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 6))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 
 	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("consensus", 6))
 	assert.True(t, ok)
@@ -74,9 +86,17 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testi
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 7), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 8), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 6))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
@@ -109,9 +129,17 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testi
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 7), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 8), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 6))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
@@ -136,9 +164,17 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testi
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 7), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 8), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 6))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
@@ -163,8 +199,13 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Delete(kv.NewStringKeyWithTimestamp("consensus", 8)))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 6))
+
+	batch = kv.NewBatch()
+	batch.Delete([]byte("consensus"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 
 	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("consensus", 11))
 
@@ -176,9 +217,17 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 7), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 8), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 6))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 
 	assert.True(t, storageState.hasImmutableMemtables())
 	assert.Equal(t, 3, len(storageState.immutableMemtables))
@@ -189,10 +238,21 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 7), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 8), kv.NewStringValue("LSM")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 9), kv.NewStringValue("B+Tree")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 6))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("B+Tree"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
 
 	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("data-structure", 10))
 	assert.True(t, ok)
@@ -204,9 +264,17 @@ func TestStorageStateScanWithMemtable(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 8), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 9), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
 
 	iterator := storageState.Scan(kv.NewInclusiveKeyRange(kv.NewStringKeyWithTimestamp("accurate", 10), kv.NewStringKeyWithTimestamp("etcd", 10)))
 	defer iterator.Close()
@@ -230,13 +298,19 @@ func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("raft")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 8), kv.NewStringValue("NVMe")))
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 9), kv.NewStringValue("LSM")))
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
 
 	iterator := storageState.Scan(kv.NewInclusiveKeyRange(
 		kv.NewStringKeyWithTimestamp("accurate", 10), kv.NewStringKeyWithTimestamp("etcd", 10)),
@@ -264,9 +338,17 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 9), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 10), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 11), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 11))
 
 	assert.True(t, storageState.hasImmutableMemtables())
 
@@ -314,9 +396,17 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 21), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 22), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 20))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 21))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 22))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("paxos"))
@@ -356,9 +446,17 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 9), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 10), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("paxos"))
@@ -405,9 +503,17 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 9), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 10), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10))
 
 	ssTableBuilder := table.NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("paxos"))
@@ -434,13 +540,19 @@ func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 	storageState := NewStorageState()
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("raft")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 8), kv.NewStringValue("NVMe")))
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
 	storageState.forceFreezeCurrentMemtable()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 9), kv.NewStringValue("LSM")))
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
 
 	iterator := storageState.Scan(
 		kv.NewInclusiveKeyRange(kv.NewStringKeyWithTimestamp("zen", 10), kv.NewStringKeyWithTimestamp("zen", 10)),
@@ -454,10 +566,11 @@ func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtabl
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(1 << 10))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("raft")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
 
 	assert.False(t, storageState.hasImmutableMemtables())
-
 	assert.Panics(t, func() {
 		_ = storageState.ForceFlushNextImmutableMemtable()
 	})
@@ -469,9 +582,17 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 8), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 9), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 7))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
 
 	err := storageState.ForceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
@@ -483,9 +604,17 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *te
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 9), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 10), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10))
 
 	err := storageState.ForceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
@@ -517,9 +646,17 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 	storageState := NewStorageStateWithOptions(storageOptions)
 	defer storageState.Close()
 
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("raft")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("storage", 9), kv.NewStringValue("NVMe")))
-	storageState.Set(kv.NewTimestampedBatch().Put(kv.NewStringKeyWithTimestamp("data-structure", 10), kv.NewStringValue("LSM")))
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 8))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10))
 
 	time.Sleep(10 * time.Millisecond)
 

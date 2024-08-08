@@ -15,7 +15,7 @@ func TestSetsABatchWithOneKeyValueUsingExecutor(t *testing.T) {
 	_ = batch.Put([]byte("kv"), []byte("distributed"))
 
 	executor := NewExecutor(state)
-	future := executor.submit(batch.ToTimestampedBatch(5))
+	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5))
 	future.Wait()
 
 	value, ok := state.Get(kv.NewKey([]byte("kv"), 6))
@@ -32,7 +32,7 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor(t *testing.T) {
 	_ = batch.Put([]byte("kv"), []byte("distributed"))
 
 	executor := NewExecutor(state)
-	future := executor.submit(batch.ToTimestampedBatch(5))
+	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5))
 	future.Wait()
 
 	value, ok := state.Get(kv.NewKey([]byte("raft"), 6))
@@ -51,14 +51,14 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor1(t *testing.T) {
 	executeSet := func(executor *Executor) {
 		batch := kv.NewBatch()
 		_ = batch.Put([]byte("raft"), []byte("consensus"))
-		future := executor.submit(batch.ToTimestampedBatch(5))
+		future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5))
 		future.Wait()
 	}
 
 	executeDelete := func(executor *Executor) {
 		batch := kv.NewBatch()
 		batch.Delete([]byte("raft"))
-		future := executor.submit(batch.ToTimestampedBatch(6))
+		future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5))
 		future.Wait()
 	}
 

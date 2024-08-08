@@ -78,17 +78,3 @@ func (batch *Batch) CloneKeyValuePairs() []KeyValuePair {
 	}
 	return keyValuePairs
 }
-
-func (batch *Batch) ToTimestampedBatch(commitTimestamp uint64) *TimestampedBatch {
-	timestampedBatch := NewTimestampedBatch()
-	for _, pair := range batch.pairs {
-		if pair.kind == EntryKindPut {
-			timestampedBatch.Put(NewKey(pair.key, commitTimestamp), pair.value)
-		} else if pair.kind == EntryKindDelete {
-			timestampedBatch.Delete(NewKey(pair.key, commitTimestamp))
-		} else {
-			panic("unsupported entry kind while converting the Batch to TimestampedBatch")
-		}
-	}
-	return timestampedBatch
-}

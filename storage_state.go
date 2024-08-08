@@ -119,7 +119,7 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 
 // Set
 // TODO: Handle error in Set and Delete
-func (storageState *StorageState) Set(timestampedBatch *kv.TimestampedBatch) {
+func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) {
 	storageState.mayBeFreezeCurrentMemtable(int64(timestampedBatch.SizeInBytes()))
 	for _, entry := range timestampedBatch.AllEntries() {
 		if entry.IsKindPut() {

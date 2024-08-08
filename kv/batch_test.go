@@ -62,7 +62,7 @@ func TestGetsTheTimestampedBatch(t *testing.T) {
 	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 
-	timestampedBatch := batch.ToTimestampedBatch(1)
+	timestampedBatch := NewTimestampedBatchFrom(*batch, 1)
 	assert.Equal(t, 1, len(timestampedBatch.AllEntries()))
 	assert.Equal(t, uint64(1), timestampedBatch.AllEntries()[0].Timestamp())
 	assert.Equal(t, "HDD", timestampedBatch.AllEntries()[0].RawString())

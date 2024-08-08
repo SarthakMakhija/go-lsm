@@ -6,19 +6,26 @@ import (
 )
 
 func TestBatchWithASingleEntry(t *testing.T) {
-	batch := NewTimestampedBatch().Put(NewStringKeyWithTimestamp("consensus", 10), NewStringValue("raft"))
-	assert.Equal(t, 1, len(batch.AllEntries()))
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+
+	timestampedBatch := NewTimestampedBatchFrom(*batch, 10)
+	assert.Equal(t, 1, len(timestampedBatch.AllEntries()))
 }
 
 func TestBatchWithTwoEntries(t *testing.T) {
-	batch := NewTimestampedBatch().
-		Put(NewStringKeyWithTimestamp("consensus", 5), NewStringValue("raft")).
-		Delete(NewStringKeyWithTimestamp("consensus", 5))
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+	batch.Delete([]byte("consensus"))
 
-	assert.Equal(t, 2, len(batch.AllEntries()))
+	timestampedBatch := NewTimestampedBatchFrom(*batch, 5)
+	assert.Equal(t, 2, len(timestampedBatch.AllEntries()))
 }
 
 func TestBatchWithThreeEntries(t *testing.T) {
-	batch := NewTimestampedBatch().Put(NewStringKeyWithTimestamp("consensus", 10), NewStringValue("raft"))
-	assert.Equal(t, 21, batch.SizeInBytes())
+	batch := NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("raft"))
+
+	timestampedBatch := NewTimestampedBatchFrom(*batch, 5)
+	assert.Equal(t, 21, timestampedBatch.SizeInBytes())
 }

@@ -29,18 +29,18 @@ type TimestampedBatch struct {
 	entries []Entry
 }
 
-func NewTimestampedBatch() *TimestampedBatch {
-	return &TimestampedBatch{}
-}
-
-func (batch *TimestampedBatch) Put(key Key, value Value) *TimestampedBatch {
-	batch.entries = append(batch.entries, Entry{key, value, EntryKindPut})
-	return batch
-}
-
-func (batch *TimestampedBatch) Delete(key Key) *TimestampedBatch {
-	batch.entries = append(batch.entries, Entry{key, EmptyValue, EntryKindDelete})
-	return batch
+func NewTimestampedBatchFrom(batch Batch, commitTimestamp uint64) TimestampedBatch {
+	timestampedBatch := &TimestampedBatch{}
+	for _, pair := range batch.pairs {
+		if pair.kind == EntryKindPut {
+			timestampedBatch.put(NewKey(pair.key, commitTimestamp), pair.value)
+		} else if pair.kind == EntryKindDelete {
+			timestampedBatch.delete(NewKey(pair.key, commitTimestamp))
+		} else {
+			panic("unsupported entry kind while converting the Batch to TimestampedBatch")
+		}
+	}
+	return *timestampedBatch
 }
 
 func (batch *TimestampedBatch) AllEntries() []Entry {
@@ -53,4 +53,14 @@ func (batch TimestampedBatch) SizeInBytes() int {
 		size += entry.SizeInBytes()
 	}
 	return size
+}
+
+func (batch *TimestampedBatch) put(key Key, value Value) *TimestampedBatch {
+	batch.entries = append(batch.entries, Entry{key, value, EntryKindPut})
+	return batch
+}
+
+func (batch *TimestampedBatch) delete(key Key) *TimestampedBatch {
+	batch.entries = append(batch.entries, Entry{key, EmptyValue, EntryKindDelete})
+	return batch
 }
