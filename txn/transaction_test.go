@@ -139,3 +139,94 @@ func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testi
 
 	assert.False(t, iterator.IsValid())
 }
+
+func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
+	storageState := go_lsm.NewStorageState()
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	oracle.commitTimestampMark.Finish(2)
+	transaction := NewReadwriteTransaction(oracle, storageState)
+
+	_, err := transaction.Commit()
+
+	assert.Error(t, err)
+	assert.Equal(t, EmptyTransactionErr, err)
+}
+
+func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
+	storageState := go_lsm.NewStorageState()
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	transaction := NewReadwriteTransaction(oracle, storageState)
+	_ = transaction.Set([]byte("HDD"), []byte("Hard disk"))
+	future, _ := transaction.Commit()
+	future.Wait()
+
+	anotherTransaction := NewReadwriteTransaction(oracle, storageState)
+	_ = anotherTransaction.Set([]byte("SSD"), []byte("Solid state drive"))
+	future, _ = anotherTransaction.Commit()
+	future.Wait()
+
+	readonlyTransaction := NewReadonlyTransaction(oracle, storageState)
+
+	value, ok := readonlyTransaction.Get([]byte("HDD"))
+	assert.Equal(t, true, ok)
+	assert.Equal(t, "Hard disk", value.String())
+
+	value, ok = readonlyTransaction.Get([]byte("SSD"))
+	assert.Equal(t, true, ok)
+	assert.Equal(t, "Solid state drive", value.String())
+
+	_, ok = readonlyTransaction.Get([]byte("non-existing"))
+	assert.Equal(t, false, ok)
+}
+
+func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
+	storageState := go_lsm.NewStorageState()
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	transaction := NewReadwriteTransaction(oracle, storageState)
+	_ = transaction.Set([]byte("HDD"), []byte("Hard disk"))
+
+	value, ok := transaction.Get([]byte("HDD"))
+	assert.Equal(t, true, ok)
+	assert.Equal(t, "Hard disk", value.String())
+
+	future, _ := transaction.Commit()
+	future.Wait()
+}
+
+func TestTracksReadsInAReadwriteTransaction(t *testing.T) {
+	storageState := go_lsm.NewStorageState()
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	transaction := NewReadwriteTransaction(oracle, storageState)
+	_ = transaction.Set([]byte("HDD"), []byte("Hard disk"))
+	transaction.Get([]byte("SSD"))
+
+	future, _ := transaction.Commit()
+	future.Wait()
+
+	assert.Equal(t, 1, len(transaction.reads))
+	assert.Equal(t, kv.RawKey("SSD"), transaction.reads[0])
+}
