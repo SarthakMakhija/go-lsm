@@ -30,6 +30,7 @@ func (executor *Executor) start() {
 		select {
 		case executionRequest := <-executor.incomingChannel:
 			executor.state.Set(executionRequest.batch)
+			executionRequest.callback()
 			executionRequest.future.markDone()
 		case <-executor.stopChannel:
 			close(executor.incomingChannel)
@@ -38,8 +39,8 @@ func (executor *Executor) start() {
 	}
 }
 
-func (executor *Executor) submit(batch kv.TimestampedBatch) *Future {
-	executionRequest := NewExecutionRequest(batch)
+func (executor *Executor) submit(batch kv.TimestampedBatch, callback func()) *Future {
+	executionRequest := NewExecutionRequest(batch, callback)
 	executor.incomingChannel <- executionRequest
 	return executionRequest.future
 }
@@ -53,8 +54,9 @@ func (executor *Executor) stop() {
 //////// ExecutionRequest & Future ////////////////
 
 type ExecutionRequest struct {
-	batch  kv.TimestampedBatch
-	future *Future
+	batch    kv.TimestampedBatch
+	callback func()
+	future   *Future
 }
 
 type Future struct {
@@ -62,10 +64,11 @@ type Future struct {
 	isDone          bool
 }
 
-func NewExecutionRequest(batch kv.TimestampedBatch) ExecutionRequest {
+func NewExecutionRequest(batch kv.TimestampedBatch, callback func()) ExecutionRequest {
 	return ExecutionRequest{
-		batch:  batch,
-		future: NewFuture(),
+		batch:    batch,
+		callback: callback,
+		future:   NewFuture(),
 	}
 }
 

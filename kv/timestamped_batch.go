@@ -43,7 +43,7 @@ func NewTimestampedBatchFrom(batch Batch, commitTimestamp uint64) TimestampedBat
 	return *timestampedBatch
 }
 
-func (batch *TimestampedBatch) AllEntries() []Entry {
+func (batch TimestampedBatch) AllEntries() []Entry {
 	return batch.entries
 }
 
