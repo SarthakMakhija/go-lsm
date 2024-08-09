@@ -54,15 +54,25 @@ func (transaction *Transaction) Get(key []byte) (kv.Value, bool) {
 	return transaction.state.Get(versionedKey)
 }
 
-func (transaction *Transaction) Scan(keyRange kv.InclusiveKeyRange[kv.RawKey]) iterator.Iterator {
+func (transaction *Transaction) Scan(keyRange kv.InclusiveKeyRange[kv.RawKey]) (iterator.Iterator, error) {
 	versionedKeyRange := kv.NewInclusiveKeyRange(
 		kv.NewKey(keyRange.Start(), transaction.beginTimestamp),
 		kv.NewKey(keyRange.End(), transaction.beginTimestamp),
 	)
 	if transaction.readonly {
-		return transaction.state.Scan(versionedKeyRange)
+		return transaction.state.Scan(versionedKeyRange), nil
 	}
-	return nil
+	pendingWritesIteratorMergedWithStateIterator := iterator.NewMergeIterator(
+		[]iterator.Iterator{
+			NewPendingWritesIterator(transaction.batch, transaction.beginTimestamp, keyRange),
+			transaction.state.Scan(versionedKeyRange),
+		},
+	)
+	transactionIterator, err := NewTransactionIterator(transaction, pendingWritesIteratorMergedWithStateIterator)
+	if err != nil {
+		return nil, err
+	}
+	return transactionIterator, nil
 }
 
 func (transaction *Transaction) Set(key, value []byte) error {
@@ -70,6 +80,14 @@ func (transaction *Transaction) Set(key, value []byte) error {
 		panic("transaction is readonly")
 	}
 	return transaction.batch.Put(key, value)
+}
+
+func (transaction *Transaction) Delete(key []byte) error {
+	if transaction.readonly {
+		panic("transaction is readonly")
+	}
+	transaction.batch.Delete(key)
+	return nil
 }
 
 func (transaction *Transaction) Commit() (*Future, error) {

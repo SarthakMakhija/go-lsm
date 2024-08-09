@@ -91,7 +91,7 @@ func TestReadonlyTransactionWithScan(t *testing.T) {
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadonlyTransaction(oracle, storageState)
-	iterator := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("draft"), kv.RawKey("quadrant")))
+	iterator, _ := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("draft"), kv.RawKey("quadrant")))
 
 	assert.Equal(t, "kv", iterator.Key().RawString())
 	assert.Equal(t, "distributed", iterator.Value().String())
@@ -125,7 +125,7 @@ func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testi
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadonlyTransaction(oracle, storageState)
-	iterator := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("bolt"), kv.RawKey("quadrant")))
+	iterator, _ := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("bolt"), kv.RawKey("quadrant")))
 
 	assert.Equal(t, "consensus", iterator.Key().RawString())
 	assert.Equal(t, "VSR", iterator.Value().String())
@@ -211,7 +211,7 @@ func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
 	future.Wait()
 }
 
-func TestTracksReadsInAReadwriteTransaction(t *testing.T) {
+func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
 	storageState := go_lsm.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
@@ -229,4 +229,133 @@ func TestTracksReadsInAReadwriteTransaction(t *testing.T) {
 
 	assert.Equal(t, 1, len(transaction.reads))
 	assert.Equal(t, kv.RawKey("SSD"), transaction.reads[0])
+}
+
+func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testing.T) {
+	storageState := go_lsm.NewStorageState()
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	batch := kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("unknown"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 4))
+
+	commitTimestamp := uint64(5)
+	oracle.nextTimestamp = commitTimestamp + 1
+
+	batch = kv.NewBatch()
+	_ = batch.Put([]byte("consensus"), []byte("VSR"))
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	_ = batch.Put([]byte("kv"), []byte("distributed"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, commitTimestamp))
+	oracle.commitTimestampMark.Finish(commitTimestamp)
+
+	transaction := NewReadwriteTransaction(oracle, storageState)
+	iterator, _ := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("bolt"), kv.RawKey("quadrant")))
+
+	assert.Equal(t, "consensus", iterator.Key().RawString())
+	assert.Equal(t, "VSR", iterator.Value().String())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, "kv", iterator.Key().RawString())
+	assert.Equal(t, "distributed", iterator.Value().String())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
+	storageState := go_lsm.NewStorageState()
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	commitTimestamp := uint64(5)
+	oracle.nextTimestamp = commitTimestamp + 1
+
+	batch := kv.NewBatch()
+	batch.Delete([]byte("quadrant"))
+	_ = batch.Put([]byte("consensus"), []byte("VSR"))
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	_ = batch.Put([]byte("kv"), []byte("distributed"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, commitTimestamp))
+	oracle.commitTimestampMark.Finish(commitTimestamp)
+
+	transaction := NewReadwriteTransaction(oracle, storageState)
+	iterator, _ := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("bolt"), kv.RawKey("rocks")))
+
+	assert.Equal(t, "consensus", iterator.Key().RawString())
+	assert.Equal(t, "VSR", iterator.Value().String())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, "kv", iterator.Key().RawString())
+	assert.Equal(t, "distributed", iterator.Value().String())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestTracksReadsInAReadwriteTransactionWithScan(t *testing.T) {
+	storageState := go_lsm.NewStorageState()
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	commitTimestamp := uint64(5)
+	oracle.nextTimestamp = commitTimestamp + 1
+
+	batch := kv.NewBatch()
+	batch.Delete([]byte("quadrant"))
+	_ = batch.Put([]byte("consensus"), []byte("VSR"))
+	_ = batch.Put([]byte("storage"), []byte("NVMe"))
+	_ = batch.Put([]byte("kv"), []byte("distributed"))
+	storageState.Set(kv.NewTimestampedBatchFrom(*batch, commitTimestamp))
+	oracle.commitTimestampMark.Finish(commitTimestamp)
+
+	transaction := NewReadwriteTransaction(oracle, storageState)
+	_ = transaction.Set([]byte("hdd"), []byte("Hard disk"))
+
+	iterator, _ := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("bolt"), kv.RawKey("tiger-beetle")))
+
+	assert.Equal(t, "consensus", iterator.Key().RawString())
+	assert.Equal(t, "VSR", iterator.Value().String())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, "hdd", iterator.Key().RawString())
+	assert.Equal(t, "Hard disk", iterator.Value().String())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, "kv", iterator.Key().RawString())
+	assert.Equal(t, "distributed", iterator.Value().String())
+
+	_ = iterator.Next()
+
+	assert.Equal(t, "storage", iterator.Key().RawString())
+	assert.Equal(t, "NVMe", iterator.Value().String())
+
+	_ = iterator.Next()
+	assert.False(t, iterator.IsValid())
+
+	allTrackedReads := transaction.reads
+	assert.Equal(t, 4, len(allTrackedReads))
+
+	assert.Equal(t, "consensus", string(allTrackedReads[0]))
+	assert.Equal(t, "hdd", string(allTrackedReads[1]))
+	assert.Equal(t, "kv", string(allTrackedReads[2]))
+	assert.Equal(t, "storage", string(allTrackedReads[3]))
 }

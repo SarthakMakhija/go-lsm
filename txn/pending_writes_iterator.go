@@ -7,27 +7,30 @@ import (
 )
 
 type PendingWritesIterator struct {
-	keyValuePairs []kv.KeyValuePair
-	index         int
-	timestamp     uint64
+	keyValuePairs     []kv.KeyValuePair
+	index             int
+	beginTimestamp    uint64
+	inclusiveKeyRange kv.InclusiveKeyRange[kv.RawKey]
 }
 
-// NewPendingWritesIterator TODO: Seek, Deleted keys, checking for range end
-func NewPendingWritesIterator(batch *kv.Batch, timestamp uint64) *PendingWritesIterator {
+func NewPendingWritesIterator(batch *kv.Batch, beginTimestamp uint64, keyRange kv.InclusiveKeyRange[kv.RawKey]) *PendingWritesIterator {
 	keyValuePairs := batch.CloneKeyValuePairs()
 	sort.Slice(keyValuePairs, func(i, j int) bool {
 		return bytes.Compare(keyValuePairs[i].Key(), keyValuePairs[j].Key()) < 0
 	})
-	return &PendingWritesIterator{
-		keyValuePairs: keyValuePairs,
-		index:         0,
-		timestamp:     timestamp,
+	iterator := &PendingWritesIterator{
+		keyValuePairs:     keyValuePairs,
+		index:             0,
+		beginTimestamp:    beginTimestamp,
+		inclusiveKeyRange: keyRange,
 	}
+	iterator.seek(keyRange.Start())
+	return iterator
 }
 
 func (iterator *PendingWritesIterator) Key() kv.Key {
 	pair := iterator.keyValuePairs[iterator.index]
-	return kv.NewKey(pair.Key(), iterator.timestamp)
+	return kv.NewKey(pair.Key(), iterator.beginTimestamp)
 }
 
 func (iterator *PendingWritesIterator) Value() kv.Value {
@@ -40,7 +43,8 @@ func (iterator *PendingWritesIterator) Next() error {
 }
 
 func (iterator *PendingWritesIterator) IsValid() bool {
-	return iterator.index < len(iterator.keyValuePairs)
+	return iterator.index < len(iterator.keyValuePairs) &&
+		kv.RawKey(iterator.Key().RawBytes()).IsLessThanOrEqualTo(iterator.inclusiveKeyRange.End())
 }
 
 func (iterator *PendingWritesIterator) Close() {}
