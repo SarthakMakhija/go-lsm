@@ -5,6 +5,7 @@ import (
 	"go-lsm"
 	"go-lsm/iterator"
 	"go-lsm/kv"
+	"sync"
 )
 
 var EmptyTransactionErr = errors.New("transaction batch is empty, invoke Set in a transaction before committing")
@@ -16,6 +17,7 @@ type Transaction struct {
 	readonly       bool
 	batch          *kv.Batch
 	reads          []kv.RawKey
+	readLock       sync.Mutex
 }
 
 func NewReadonlyTransaction(oracle *Oracle, state *go_lsm.StorageState) *Transaction {
@@ -45,7 +47,7 @@ func (transaction *Transaction) Get(key []byte) (kv.Value, bool) {
 	if transaction.readonly {
 		return transaction.state.Get(versionedKey)
 	}
-	transaction.reads = append(transaction.reads, key)
+	transaction.trackReads(key)
 	if value, ok := transaction.batch.Get(key); ok {
 		return value, true
 	}
@@ -89,4 +91,10 @@ func (transaction *Transaction) Commit() (*Future, error) {
 		transaction.oracle.commitTimestampMark.Finish(commitTimestamp)
 	}
 	return transaction.oracle.executor.submit(kv.NewTimestampedBatchFrom(*transaction.batch, commitTimestamp), commitCallback), nil
+}
+
+func (transaction *Transaction) trackReads(key kv.RawKey) {
+	transaction.readLock.Lock()
+	transaction.reads = append(transaction.reads, key)
+	transaction.readLock.Unlock()
 }
