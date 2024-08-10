@@ -1,4 +1,4 @@
-package go_lsm
+package state
 
 import (
 	"github.com/stretchr/testify/assert"

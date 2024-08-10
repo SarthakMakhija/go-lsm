@@ -1,4 +1,4 @@
-package go_lsm
+package state
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ type Level struct {
 
 type StorageOptions struct {
 	MemTableSizeInBytes   int64
-	SSTableSizeInBytes    int64
+	SSTableSizeInBytes    int64 //TODO: Do we need it?
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration

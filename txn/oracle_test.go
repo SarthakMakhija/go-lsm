@@ -2,12 +2,12 @@ package txn
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm"
+	"go-lsm/state"
 	"testing"
 )
 
 func TestGetsTheBeginTimestamp(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -19,7 +19,7 @@ func TestGetsTheBeginTimestamp(t *testing.T) {
 }
 
 func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -35,7 +35,7 @@ func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
 }
 
 func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -51,7 +51,7 @@ func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked
 }
 
 func TestGetsCommitTimestampForTwoTransactions(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -77,7 +77,7 @@ func TestGetsCommitTimestampForTwoTransactions(t *testing.T) {
 }
 
 func TestGetsCommitTimestampForTwoTransactionsGivenOneTransactionReadsTheKeyAfterTheOtherWrites(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -104,7 +104,7 @@ func TestGetsCommitTimestampForTwoTransactionsGivenOneTransactionReadsTheKeyAfte
 }
 
 func TestResultsInConflictErrorForOneTransaction(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {

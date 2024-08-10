@@ -2,14 +2,14 @@ package txn
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm"
 	"go-lsm/iterator"
 	"go-lsm/kv"
+	"go-lsm/state"
 	"testing"
 )
 
 func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -53,7 +53,7 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing
 }
 
 func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSystem(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -92,7 +92,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSys
 }
 
 func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInTheSystem(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -127,7 +127,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInT
 }
 
 func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystemWithABoundCheck(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {

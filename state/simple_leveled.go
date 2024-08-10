@@ -1,4 +1,4 @@
-package go_lsm
+package state
 
 type SimpleLeveledCompactionOptions struct {
 	sizeRatioPercentage          uint

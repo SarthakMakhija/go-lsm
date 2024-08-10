@@ -1,21 +1,21 @@
 package txn
 
 import (
-	"go-lsm"
 	"go-lsm/kv"
+	"go-lsm/state"
 	"sync"
 )
 
 const incomingChannelSize = 1 * 1024
 
 type Executor struct {
-	state           *go_lsm.StorageState
+	state           *state.StorageState
 	incomingChannel chan ExecutionRequest
 	stopChannel     chan struct{}
 	stopOnce        sync.Once
 }
 
-func NewExecutor(state *go_lsm.StorageState) *Executor {
+func NewExecutor(state *state.StorageState) *Executor {
 	executor := &Executor{
 		state:           state,
 		incomingChannel: make(chan ExecutionRequest, incomingChannelSize),

@@ -2,9 +2,9 @@ package txn
 
 import (
 	"errors"
-	"go-lsm"
 	"go-lsm/iterator"
 	"go-lsm/kv"
+	"go-lsm/state"
 	"sync"
 )
 
@@ -12,7 +12,7 @@ var EmptyTransactionErr = errors.New("transaction batch is empty, invoke Set in 
 
 type Transaction struct {
 	oracle         *Oracle
-	state          *go_lsm.StorageState
+	state          *state.StorageState
 	beginTimestamp uint64
 	readonly       bool
 	batch          *kv.Batch
@@ -20,7 +20,7 @@ type Transaction struct {
 	readLock       sync.Mutex
 }
 
-func NewReadonlyTransaction(oracle *Oracle, state *go_lsm.StorageState) *Transaction {
+func NewReadonlyTransaction(oracle *Oracle, state *state.StorageState) *Transaction {
 	return &Transaction{
 		oracle:         oracle,
 		state:          state,
@@ -31,7 +31,7 @@ func NewReadonlyTransaction(oracle *Oracle, state *go_lsm.StorageState) *Transac
 	}
 }
 
-func NewReadwriteTransaction(oracle *Oracle, state *go_lsm.StorageState) *Transaction {
+func NewReadwriteTransaction(oracle *Oracle, state *state.StorageState) *Transaction {
 	return &Transaction{
 		oracle:         oracle,
 		state:          state,

@@ -2,13 +2,13 @@ package txn
 
 import (
 	"github.com/stretchr/testify/assert"
-	"go-lsm"
 	"go-lsm/kv"
+	"go-lsm/state"
 	"testing"
 )
 
 func TestReadonlyTransactionWithEmptyState(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -23,7 +23,7 @@ func TestReadonlyTransactionWithEmptyState(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -47,7 +47,7 @@ func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTimestamp(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -72,7 +72,7 @@ func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTi
 }
 
 func TestReadonlyTransactionWithScan(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -102,7 +102,7 @@ func TestReadonlyTransactionWithScan(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -141,7 +141,7 @@ func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testi
 }
 
 func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -159,7 +159,7 @@ func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
 }
 
 func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -192,7 +192,7 @@ func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
 }
 
 func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -212,7 +212,7 @@ func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
 }
 
 func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -232,7 +232,7 @@ func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
 }
 
 func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -271,7 +271,7 @@ func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testin
 }
 
 func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
@@ -306,7 +306,7 @@ func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
 }
 
 func TestTracksReadsInAReadwriteTransactionWithScan(t *testing.T) {
-	storageState := go_lsm.NewStorageState()
+	storageState := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
