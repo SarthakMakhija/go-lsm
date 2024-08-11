@@ -130,6 +130,7 @@ func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) {
 			panic("Unsupported entry type")
 		}
 	}
+	storageState.currentMemtable.Sync()
 }
 
 func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Key]) iterator.Iterator {

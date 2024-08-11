@@ -108,6 +108,12 @@ func (memtable *Memtable) AllEntries(callback func(key kv.Key, value kv.Value)) 
 	}
 }
 
+func (memtable *Memtable) Sync() {
+	if memtable.wal != nil {
+		_ = memtable.wal.Sync()
+	}
+}
+
 func (memtable *Memtable) IsEmpty() bool {
 	return memtable.entries.Empty()
 }
