@@ -8,4 +8,4 @@ Rewrite of the existing [workshop](https://github.com/SarthakMakhija/storage-eng
 Inspired by [LSM in a Week](https://skyzh.github.io/mini-lsm/00-preface.html)
 
 
-<img width="936" alt="Screenshot 2024-08-10 at 8 36 04 PM" src="https://github.com/user-attachments/assets/81a8d269-4350-4931-984b-c2ad5eb56b9b">
+![LSM development items](https://github.com/user-attachments/assets/526f73f1-70f2-4229-9b7e-6bc93c1789a9)
