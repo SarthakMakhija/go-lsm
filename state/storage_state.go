@@ -67,6 +67,7 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
+	//TODO: What if options.EnableWAL is false
 	walDirectoryPath := filepath.Join(options.Path, "wal")
 	if _, err := os.Stat(walDirectoryPath); os.IsNotExist(err) {
 		_ = os.MkdirAll(walDirectoryPath, os.ModePerm)
@@ -184,10 +185,13 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 	if err != nil {
 		return err
 	}
+
 	storageState.immutableMemtables = storageState.immutableMemtables[1:]
 	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or levels
 	storageState.ssTables[memtableToFlush.Id()] = ssTable
-	//TODO: WAl remove, manifest, concurrency support
+	memtableToFlush.DeleteWAL()
+
+	//TODO: manifest, concurrency support
 	return nil
 }
 

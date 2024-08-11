@@ -1,6 +1,7 @@
 package log
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"os"
@@ -73,4 +74,29 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "distributed", value)
 	assert.Equal(t, keyTimestamps["kv"], uint64(5))
+}
+
+func TestDeleteWALFile(t *testing.T) {
+	walPath := filepath.Join(os.TempDir(), "TestDeleteWALFile.log")
+	wal, err := NewWAL(walPath)
+
+	assert.Nil(t, err)
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft")))
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("kv", 30), kv.NewStringValue("distributed")))
+
+	wal.DeleteFile()
+
+	_, err = os.Stat(walPath)
+	assert.NotNil(t, err)
+	assert.True(t, errors.Is(err, os.ErrNotExist))
+}
+
+func TestWALPath(t *testing.T) {
+	walPath := filepath.Join(os.TempDir(), "TestWALPath.log")
+	wal, err := NewWAL(walPath)
+	assert.Nil(t, err)
+
+	path, err := wal.Path()
+	assert.Nil(t, err)
+	assert.Equal(t, walPath, path)
 }

@@ -1,6 +1,7 @@
 package state
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/table"
@@ -16,6 +17,7 @@ func testStorageStateOptions(memtableSizeInBytes int64) StorageOptions {
 		Path:                  ".",
 		MaximumMemtables:      10,
 		FlushMemtableDuration: 1 * time.Minute,
+		EnableWAL:             true,
 	}
 }
 
@@ -25,12 +27,16 @@ func testStorageStateOptionsWithDirectory(memtableSizeInBytes int64, directory s
 		Path:                  directory,
 		MaximumMemtables:      10,
 		FlushMemtableDuration: 1 * time.Minute,
+		EnableWAL:             true,
 	}
 }
 
 func TestStorageStateWithASinglePutAndHasNoImmutableMemtables(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -41,7 +47,10 @@ func TestStorageStateWithASinglePutAndHasNoImmutableMemtables(t *testing.T) {
 
 func TestStorageStateWithASinglePutAndGet(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -55,7 +64,10 @@ func TestStorageStateWithASinglePutAndGet(t *testing.T) {
 
 func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -84,7 +96,10 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 
 func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -127,7 +142,10 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testi
 
 func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -162,7 +180,10 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testi
 
 func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -197,7 +218,10 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testi
 
 func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -215,7 +239,10 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 
 func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -236,7 +263,10 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 
 func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -262,7 +292,10 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 
 func TestStorageStateScanWithMemtable(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -296,7 +329,10 @@ func TestStorageStateScanWithMemtable(t *testing.T) {
 
 func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -336,7 +372,10 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	tempDirectory := os.TempDir()
 
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -394,7 +433,10 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
 	tempDirectory := os.TempDir()
 
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -444,7 +486,10 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 	tempDirectory := os.TempDir()
 
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -501,7 +546,10 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 	tempDirectory := os.TempDir()
 
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -538,7 +586,10 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 
 func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 	storageState := NewStorageState()
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -564,7 +615,10 @@ func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 
 func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtable(t *testing.T) {
 	storageState := NewStorageStateWithOptions(testStorageStateOptions(1 << 10))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -580,7 +634,10 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	tempDirectory := os.TempDir()
 
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -594,15 +651,31 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
 	storageState.Set(kv.NewTimestampedBatchFrom(*batch, 9))
 
+	assert.True(t, storageState.hasImmutableMemtables())
+	assert.Equal(t, 2, len(storageState.immutableMemtables))
+
+	walPathOfFirstImmutableMemtable, _ := storageState.immutableMemtables[0].WalPath()
+	assert.Equal(t, walPathOfFirstImmutableMemtable, filepath.Join(storageState.walDirectoryPath, "1.wal"))
+
+	walPathOfSecondImmutableMemtable, _ := storageState.immutableMemtables[1].WalPath()
+	assert.Equal(t, walPathOfSecondImmutableMemtable, filepath.Join(storageState.walDirectoryPath, "2.wal"))
+
 	err := storageState.ForceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
+
+	_, err = os.Stat(walPathOfFirstImmutableMemtable)
+	assert.NotNil(t, err)
+	assert.True(t, errors.Is(err, os.ErrNotExist))
 }
 
 func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *testing.T) {
 	tempDirectory := os.TempDir()
 
 	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))
@@ -642,9 +715,13 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 		Path:                  tempDirectory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
+		EnableWAL:             true,
 	}
 	storageState := NewStorageStateWithOptions(storageOptions)
-	defer storageState.Close()
+	defer func() {
+		_ = os.RemoveAll(storageState.walDirectoryPath)
+		storageState.Close()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("consensus"), []byte("raft"))

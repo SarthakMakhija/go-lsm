@@ -6,6 +6,7 @@ import (
 	"go-lsm/kv"
 	"go-lsm/table/block"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -69,6 +70,17 @@ func (wal *WAL) Sync() error {
 	return wal.file.Sync()
 }
 
-func (wal WAL) Close() {
+func (wal *WAL) DeleteFile() {
+	err := os.Remove(wal.file.Name())
+	if err != nil {
+		log.Printf("failed to delete WAL log file %v: %v", wal.file.Name(), err)
+	}
+}
+
+func (wal *WAL) Close() {
 	_ = wal.file.Close()
+}
+
+func (wal *WAL) Path() (string, error) {
+	return filepath.Abs(wal.file.Name())
 }

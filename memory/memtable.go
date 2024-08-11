@@ -114,6 +114,12 @@ func (memtable *Memtable) Sync() {
 	}
 }
 
+func (memtable *Memtable) DeleteWAL() {
+	if memtable.wal != nil {
+		memtable.wal.DeleteFile()
+	}
+}
+
 func (memtable *Memtable) IsEmpty() bool {
 	return memtable.entries.Empty()
 }
@@ -128,6 +134,13 @@ func (memtable *Memtable) CanFit(requiredSizeInBytes int64) bool {
 
 func (memtable *Memtable) Id() uint64 {
 	return memtable.id
+}
+
+func (memtable *Memtable) WalPath() (string, error) {
+	if memtable.wal != nil {
+		return memtable.wal.Path()
+	}
+	return "", nil
 }
 
 type MemtableIterator struct {
