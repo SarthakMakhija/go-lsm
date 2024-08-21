@@ -79,6 +79,12 @@ func (wal *WAL) Append(key kv.Key, value kv.Value) error {
 }
 
 // Sync performs a fsync operation on WAL.
+// Any write to the file is not made durable immediately. Durability means the write much reach the underlying storage (/disk).
+// The file.Write operation writes the data to the OS page cache, which is flushed to disk at a later point in time.
+// To ensure durability, [fsync](https://man7.org/linux/man-pages/man2/fsync.2.html) system call is needed.
+// However, fsync on every write reduces the system throughput. So, there are a few options:
+// 1) Perform batch writes and execute fsync on batch commit.
+// 2) Perform fsync at a fixed internal.
 func (wal *WAL) Sync() error {
 	return wal.file.Sync()
 }
