@@ -1,7 +1,6 @@
 clean:
 	go clean -testcache
 
-
 build:
 	go build -v ./...
 
