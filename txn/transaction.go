@@ -10,6 +10,24 @@ import (
 
 var EmptyTransactionErr = errors.New("transaction batch is empty, invoke Set in a transaction before committing")
 
+/*
+The transaction implementation in the system follows serialized-snapshot-isolation.
+A brief background on serialized-snapshot-isolation:
+1) Every transaction is given a begin-timestamp. Timestamp is represented as a logical clock.
+2) A transaction can read a key with a commit-timestamp < begin-timestamp. This guarantees that the transaction is always reading
+   committed data.
+3) When a transaction is ready to commit, and there are no conflicts, it is given a commit-timestamp.
+4) ReadWrite transactions keep a track of the keys read by them.
+   Implementations like [Badger](https://github.com/dgraph-io/badger) keep track of key-hashes inside ReadWrite transactions.
+5) Two transactions conflict if there is a read-write conflict. A transaction T2 conflicts with another transaction T1, if,
+   T1 has committed to any of the keys read by T2 with a commit-timestamp greater than the begin-timestamp of T2.
+6) Readonly transactions never abort.
+7) It prevents: dirty-read, fuzzy-read, phantom-read, write-skew and lost-update.
+8) Serialized-snapshot-isolation involves keeping a track of `ReadyToCommitTransaction`. Check `Oracle`.
+
+More details are available [here](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/).
+*/
+
 type Transaction struct {
 	oracle         *Oracle
 	state          *state.StorageState
