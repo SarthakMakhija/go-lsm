@@ -100,10 +100,7 @@ func (key Key) IsRawKeyEmpty() bool {
 // EncodedBytes returns the encoded format of the Key.
 // The encoded format of Key includes:
 //
-//	_____________________
-//
 // | Raw Key| timestamp |
-// |________|___________|
 func (key Key) EncodedBytes() []byte {
 	if key.IsRawKeyEmpty() {
 		return nil
