@@ -5,30 +5,30 @@ import (
 	"errors"
 )
 
-// KeyValuePair represents the key/value pair with Kind.
-type KeyValuePair struct {
+// RawKeyValuePair represents the key/value pair with Kind.
+type RawKeyValuePair struct {
 	key   []byte
 	value Value
 	kind  Kind
 }
 
 // Key returns the key.
-func (kv KeyValuePair) Key() []byte {
+func (kv RawKeyValuePair) Key() []byte {
 	return kv.key
 }
 
 // Value returns the value.
-func (kv KeyValuePair) Value() Value {
+func (kv RawKeyValuePair) Value() Value {
 	return kv.value
 }
 
 var DuplicateKeyInBatchErr = errors.New("batch already contains the key")
 
-// Batch is a collection of KeyValuePair.
+// Batch is a collection of RawKeyValuePair.
 // Batch is typically used in a transaction (txn.Transaction). All the inserts within a transaction (read/write transaction)
 // are batched and finally the entire Batch is committed.
 type Batch struct {
-	pairs []KeyValuePair
+	pairs []RawKeyValuePair
 }
 
 // NewBatch creates an empty Batch.
@@ -42,7 +42,7 @@ func (batch *Batch) Put(key, value []byte) error {
 	if batch.Contains(key) {
 		return DuplicateKeyInBatchErr
 	}
-	batch.pairs = append(batch.pairs, KeyValuePair{
+	batch.pairs = append(batch.pairs, RawKeyValuePair{
 		key:   key,
 		value: NewValue(value),
 		kind:  EntryKindPut,
@@ -50,9 +50,9 @@ func (batch *Batch) Put(key, value []byte) error {
 	return nil
 }
 
-// Delete is an append operation. It results in another KeyValuePair in batch with kind as EntryKindDelete.
+// Delete is an append operation. It results in another RawKeyValuePair in batch with kind as EntryKindDelete.
 func (batch *Batch) Delete(key []byte) {
-	batch.pairs = append(batch.pairs, KeyValuePair{
+	batch.pairs = append(batch.pairs, RawKeyValuePair{
 		key:   key,
 		value: EmptyValue,
 		kind:  EntryKindDelete,
@@ -80,14 +80,14 @@ func (batch *Batch) IsEmpty() bool {
 	return len(batch.pairs) == 0
 }
 
-// Length returns the number of KeyValuePair(s) in the Batch.
+// Length returns the number of RawKeyValuePair(s) in the Batch.
 func (batch *Batch) Length() int {
 	return len(batch.pairs)
 }
 
-// CloneKeyValuePairs clones the KeyValuePair(s) present in the Batch.
-func (batch *Batch) CloneKeyValuePairs() []KeyValuePair {
-	keyValuePairs := make([]KeyValuePair, 0, batch.Length())
+// CloneKeyValuePairs clones the RawKeyValuePair(s) present in the Batch.
+func (batch *Batch) CloneKeyValuePairs() []RawKeyValuePair {
+	keyValuePairs := make([]RawKeyValuePair, 0, batch.Length())
 	for _, pair := range batch.pairs {
 		keyValuePairs = append(keyValuePairs, pair)
 	}

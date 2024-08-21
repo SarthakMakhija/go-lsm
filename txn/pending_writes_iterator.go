@@ -7,7 +7,7 @@ import (
 )
 
 type PendingWritesIterator struct {
-	keyValuePairs     []kv.KeyValuePair
+	keyValuePairs     []kv.RawKeyValuePair
 	index             int
 	beginTimestamp    uint64
 	inclusiveKeyRange kv.InclusiveKeyRange[kv.RawKey]
