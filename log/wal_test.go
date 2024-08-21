@@ -30,7 +30,7 @@ func TestAppendToWALForId(t *testing.T) {
 
 func TestAppendToWAL(t *testing.T) {
 	walPath := filepath.Join(os.TempDir(), "TestAppendToWAL.log")
-	wal, err := NewWAL(walPath)
+	wal, err := newWAL(walPath)
 
 	assert.Nil(t, err)
 	defer func() {
@@ -44,7 +44,7 @@ func TestAppendToWAL(t *testing.T) {
 
 func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 	walPath := filepath.Join(os.TempDir(), "TestAppendToWALAndRecoverFromWALPath.log")
-	wal, err := NewWAL(walPath)
+	wal, err := newWAL(walPath)
 
 	assert.Nil(t, err)
 	defer func() {
@@ -78,7 +78,7 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 
 func TestDeleteWALFile(t *testing.T) {
 	walPath := filepath.Join(os.TempDir(), "TestDeleteWALFile.log")
-	wal, err := NewWAL(walPath)
+	wal, err := newWAL(walPath)
 
 	assert.Nil(t, err)
 	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft")))
@@ -93,7 +93,7 @@ func TestDeleteWALFile(t *testing.T) {
 
 func TestWALPath(t *testing.T) {
 	walPath := filepath.Join(os.TempDir(), "TestWALPath.log")
-	wal, err := NewWAL(walPath)
+	wal, err := newWAL(walPath)
 	assert.Nil(t, err)
 
 	path, err := wal.Path()
