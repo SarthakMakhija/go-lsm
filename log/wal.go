@@ -32,9 +32,9 @@ func NewWALForId(id uint64, walDirectoryPath string) (*WAL, error) {
 //  1. Read the whole file.
 //  2. Implement a page-aligned WAL, which means the data in the WAL will be aligned to the page (say, 4KB application page).
 //     Read page by page. This implementation will however result in fragmentation in WAL (during writing).
-//  3. Read as per the encoding of data. Instead of reading the whole file, multiple file reads will be issued, to read the key size,
-//     key, value size and value.
-//  4. Implement WAL as a memory-mapped file.
+//  3. Read as per the encoding of data. Instead of reading the whole file, multiple file reads will be issued: to read the key size,
+//     key, value size and value. [Cassandra](https://github.com/apache/cassandra) implements WAL using this approach.
+//  4. Implement WAL as a memory-mapped file. [Badger](https://github.com/dgraph-io/badger) implements WAL as memory-mapped file.
 func Recover(path string, callback func(key kv.Key, value kv.Value)) (*WAL, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_APPEND, 0666)
 	if err != nil {
