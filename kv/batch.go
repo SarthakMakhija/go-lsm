@@ -50,7 +50,7 @@ func (batch *Batch) Put(key, value []byte) error {
 	return nil
 }
 
-// Delete is an append operation. It results in another RawKeyValuePair in batch with kind as EntryKindDelete.
+// Delete is modeled as an append operation. It results in another RawKeyValuePair in batch with kind as EntryKindDelete.
 func (batch *Batch) Delete(key []byte) {
 	batch.pairs = append(batch.pairs, RawKeyValuePair{
 		key:   key,
