@@ -33,7 +33,7 @@ func NewDb(options state.StorageOptions) *Db {
 	}
 }
 
-// Read supports read operation by passing an instance of txn.NewReadonlyTransaction to the callback.
+// Read supports read operation by passing an instance of txn.Transaction (via txn.NewReadonlyTransaction) to the callback.
 func (db *Db) Read(callback func(transaction *txn.Transaction)) error {
 	if db.stopped.Load() {
 		return DbAlreadyStoppedErr
@@ -45,7 +45,7 @@ func (db *Db) Read(callback func(transaction *txn.Transaction)) error {
 	return nil
 }
 
-// Read supports read operation by passing an instance of txn.NewReadwriteTransaction to the callback.
+// Write supports writes operation by passing an instance of txn.Transaction via (txn.NewReadwriteTransaction) to the callback.
 func (db *Db) Write(callback func(transaction *txn.Transaction)) (*txn.Future, error) {
 	if db.stopped.Load() {
 		return nil, DbAlreadyStoppedErr

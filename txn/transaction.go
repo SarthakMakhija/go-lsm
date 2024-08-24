@@ -134,10 +134,10 @@ func (transaction *Transaction) Delete(key []byte) error {
 
 // Commit commits the transaction. It panics if the transaction is Readonly or kv.Batch is empty.
 // Commit involves the following:
-// 1) Acquiring an executorLock to ensure that the transaction are sent to the TransactionExecutor in the order they invoke Commit.
+// 1) Acquiring an executorLock to ensure that the transaction are sent to the Executor in the order they invoke Commit.
 // 2) Getting the commit timestamp for the transaction. Commit timestamp is only provided if the transaction does not have any RW conflict.
 // 3) Submitting the kv.TimestampedBatch to the Executor.
-// 4) Passing a commit callback to the kv.TimestampedBatch which is invoked when the entire batch is applied.
+// 4) Passing a commit callback along with kv.TimestampedBatch to the Executor which is invoked when the entire batch is applied.
 // 5) The commit callback informs the `commitTimestampMark` of Oracle that a transaction with `commitTimestamp` is done.
 func (transaction *Transaction) Commit() (*Future, error) {
 	if transaction.readonly {
