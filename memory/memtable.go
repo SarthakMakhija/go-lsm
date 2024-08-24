@@ -24,7 +24,7 @@ func NewWALPresence(enableWAL bool, walDirectoryPath string) WalPresence {
 // Memtable is an in-memory data structure which holds versioned key kv.Key and kv.Value pairs.
 // Memtable uses [Skiplist](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/#skiplist-and-mvcc) as its storage
 // data structure.
-// The Skiplist is shamelessly take from [Badger](https://github.com/dgraph-io/badger).
+// The Skiplist (external.SkipList) is shamelessly take from [Badger](https://github.com/dgraph-io/badger).
 // It is a lock-free implementation of Skiplist.
 // It is important to have a lock-free implementation,
 // otherwise scan operation will take lock(s) (/read-locks) and it will start interfering with write operations.
@@ -186,11 +186,14 @@ func (memtable *Memtable) WalPath() (string, error) {
 	return "", nil
 }
 
+// MemtableIterator represents an iterator over Memtable.
+// It is a wrapper over the iterator provided by external.SkipList.
 type MemtableIterator struct {
 	internalIterator *external.Iterator
 	endKey           kv.Key
 }
 
+// NewMemtableIterator creates a new instance of MemtableIterator, seeks to the key start of the keyRange.
 func NewMemtableIterator(internalIterator *external.Iterator, keyRange kv.InclusiveKeyRange[kv.Key]) *MemtableIterator {
 	internalIterator.Seek(keyRange.Start())
 	return &MemtableIterator{
@@ -199,23 +202,30 @@ func NewMemtableIterator(internalIterator *external.Iterator, keyRange kv.Inclus
 	}
 }
 
+// Key returns the kv.Key.
 func (iterator *MemtableIterator) Key() kv.Key {
 	return iterator.internalIterator.Key()
 }
 
+// Value returns the kv.Value.
 func (iterator *MemtableIterator) Value() kv.Value {
 	return iterator.internalIterator.Value()
 }
 
+// Next moves the iterator ahead.
 func (iterator *MemtableIterator) Next() error {
 	iterator.internalIterator.Next()
 	return nil
 }
 
+// IsValid returns true if the external.Iterator is valid and key represented by internalIterator is lessThanOrEqualTo
+// the end key of the keyRange.
+// Please check IsLessThanOrEqualTo of kv.Key.
 func (iterator *MemtableIterator) IsValid() bool {
 	return iterator.internalIterator.Valid() && iterator.internalIterator.Key().IsLessThanOrEqualTo(iterator.endKey)
 }
 
+// Close closes the MemtableIterator.
 func (iterator *MemtableIterator) Close() {
 	_ = iterator.internalIterator.Close()
 }
