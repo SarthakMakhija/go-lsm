@@ -4,6 +4,7 @@ import (
 	"go-lsm/kv"
 )
 
+// Iterator represents a common interface for all the iterators available in the system.
 type Iterator interface {
 	Key() kv.Key
 	Value() kv.Value

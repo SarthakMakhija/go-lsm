@@ -158,11 +158,11 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 
 func TestMergeIteratorWithATwoIteratorsHavingSameKey2(t *testing.T) {
 	iteratorOne := newTestIteratorNoEndKey(
-		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 4), kv.NewStringKeyWithTimestamp("diskType", 5), kv.NewStringKeyWithTimestamp("distributed-db", 6)},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringKeyWithTimestamp("diskType", 5), kv.NewStringKeyWithTimestamp("distributed-db", 6)},
 		[]kv.Value{kv.NewStringValue("paxos"), kv.NewStringValue("SSD"), kv.NewStringValue("etcd")},
 	)
 	iteratorTwo := newTestIteratorNoEndKey(
-		[]kv.Key{kv.NewStringKeyWithTimestamp("accurate", 2), kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringKeyWithTimestamp("storage", 6)},
+		[]kv.Key{kv.NewStringKeyWithTimestamp("accurate", 2), kv.NewStringKeyWithTimestamp("consensus", 4), kv.NewStringKeyWithTimestamp("storage", 6)},
 		[]kv.Value{kv.NewStringValue("consistency"), kv.NewStringValue("raft"), kv.NewStringValue("NVMe")},
 	)
 	//iterator with the lower index has higher priority
@@ -177,13 +177,13 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey2(t *testing.T) {
 
 	assert.True(t, mergeIterator.IsValid())
 	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 5), mergeIterator.Key())
-	assert.Equal(t, kv.NewStringValue("raft"), mergeIterator.Value())
+	assert.Equal(t, kv.NewStringValue("paxos"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
 	assert.True(t, mergeIterator.IsValid())
 	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 4), mergeIterator.Key())
-	assert.Equal(t, kv.NewStringValue("paxos"), mergeIterator.Value())
+	assert.Equal(t, kv.NewStringValue("raft"), mergeIterator.Value())
 
 	_ = mergeIterator.Next()
 
