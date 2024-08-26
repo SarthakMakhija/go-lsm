@@ -6,24 +6,37 @@ import (
 	"go-lsm/kv"
 )
 
+// Meta represents a block metadata including the starting (/first), ending (/last) key of the block and the starting offset
+// of the block.
 type Meta struct {
 	BlockStartingOffset uint32
 	StartingKey         kv.Key
 	EndingKey           kv.Key
 }
 
+// MetaList is a collection of metadata about multiple blocks.
 type MetaList struct {
 	list []Meta
 }
 
+// NewBlockMetaList creates a new instance of MetaList.
 func NewBlockMetaList() *MetaList {
 	return &MetaList{}
 }
 
+// Add adds the block meta to the list.
 func (metaList *MetaList) Add(meta Meta) {
 	metaList.list = append(metaList.list, meta)
 }
 
+// Encode encodes the meta-list.
+// Encoding includes:
+/*
+  ---------------------------------------------------------------------------------------------------------------
+ | 4 bytes for the number of blocks | 4 bytes for block start offset | Encoded starting key | Encoded ending key |
+  ---------------------------------------------------------------------------------------------------------------
+                                    <-------------------------------------for each block------------------------>
+*/
 func (metaList *MetaList) Encode() []byte {
 	numberOfBlocks := make([]byte, Uint32Size)
 	binary.LittleEndian.PutUint32(numberOfBlocks, uint32(len(metaList.list)))
@@ -60,6 +73,7 @@ func (metaList *MetaList) Encode() []byte {
 	return resultingBuffer.Bytes()
 }
 
+// GetAt returns the meta at the given index.
 func (metaList *MetaList) GetAt(index int) (Meta, bool) {
 	if index < len(metaList.list) {
 		return metaList.list[index], true
@@ -67,10 +81,14 @@ func (metaList *MetaList) GetAt(index int) (Meta, bool) {
 	return Meta{}, false
 }
 
+// Length returns the length of meta-list.
 func (metaList *MetaList) Length() int {
 	return len(metaList.list)
 }
 
+// MaybeBlockMetaContaining returns the block meta that may contain the given key.
+// It compares the key with the StartingKey of the block meta.
+// It returns the instance of Meta where the given key is greater than or equal to the starting key.
 func (metaList *MetaList) MaybeBlockMetaContaining(key kv.Key) (Meta, int) {
 	low, high := 0, metaList.Length()-1
 	possibleIndex := low
@@ -90,6 +108,8 @@ func (metaList *MetaList) MaybeBlockMetaContaining(key kv.Key) (Meta, int) {
 	return metaList.list[possibleIndex], possibleIndex
 }
 
+// DecodeToBlockMetaList decodes the MetaList from the byte slice.
+// Please look at MetaList.Encode() to understand the encoding of MetaList.
 func DecodeToBlockMetaList(buffer []byte) *MetaList {
 	numberOfBlocks := binary.LittleEndian.Uint32(buffer[:])
 	blockList := make([]Meta, 0, numberOfBlocks)
@@ -121,6 +141,7 @@ func DecodeToBlockMetaList(buffer []byte) *MetaList {
 	}
 }
 
+// StartingKeyOfFirstBlock returns the starting key of the first block.
 func (metaList *MetaList) StartingKeyOfFirstBlock() (kv.Key, bool) {
 	if metaList.Length() > 0 {
 		return metaList.list[0].StartingKey, true
@@ -128,6 +149,7 @@ func (metaList *MetaList) StartingKeyOfFirstBlock() (kv.Key, bool) {
 	return kv.Key{}, false
 }
 
+// EndingKeyOfLastBlock returns the ending key of the last block.
 func (metaList *MetaList) EndingKeyOfLastBlock() (kv.Key, bool) {
 	if metaList.Length() > 0 {
 		return metaList.list[metaList.Length()-1].EndingKey, true
