@@ -20,7 +20,8 @@ const DefaultBlockSize = 4 * kb
 // data contains the encoded key/value pairs.
 //
 // Each block contains encoded key/value pairs, and keyValueBeginOffsets. The reason for storing keyValueBeginOffsets is to allow
-// binary search for a key within a block. Please check Block.SeekToKey().
+// binary search for a key within a block. The keyValueBeginOffsets are always in increasing order, hence binary search can be used.
+// Please check Block.SeekToKey().
 type Builder struct {
 	keyValueBeginOffsets []uint16
 	firstKey             kv.Key
