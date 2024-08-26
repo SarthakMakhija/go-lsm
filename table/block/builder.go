@@ -19,7 +19,7 @@ const DefaultBlockSize = 4 * kb
 // firstKey is the first key of the block.
 // data contains the encoded key/value pairs.
 //
-// Each block contains key/value pairs, and keyValueBeginOffsets. The reason for storing keyValueBeginOffsets is to allow
+// Each block contains encoded key/value pairs, and keyValueBeginOffsets. The reason for storing keyValueBeginOffsets is to allow
 // binary search for a key within a block. Please check Block.SeekToKey().
 type Builder struct {
 	keyValueBeginOffsets []uint16
@@ -73,11 +73,13 @@ func (builder *Builder) Build() Block {
 	if builder.isEmpty() {
 		panic("cannot build an empty Block")
 	}
-	return NewBlock(builder.data, builder.keyValueBeginOffsets)
+	return newBlock(builder.data, builder.keyValueBeginOffsets)
 }
 
 // size returns the size of the builder.
 // The size includes: the size of encoded key/values (builder.data) + size of N keyValueBeginOffsets.
 func (builder *Builder) size() int {
-	return len(builder.data) + len(builder.keyValueBeginOffsets)*Uint16Size
+	return len(builder.data) +
+		len(builder.keyValueBeginOffsets)*Uint16Size +
+		Uint16Size //block uses last 2 bytes for the number of begin offsets
 }
