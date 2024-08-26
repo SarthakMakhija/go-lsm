@@ -40,6 +40,14 @@ func (filter Filter) Encode() ([]byte, error) {
 	return append(buffer, filter.numberOfHashFunctions), nil
 }
 
+func (filter Filter) set(key kv.Key) {
+	positions := filter.bitPositionsFor(key)
+	for index := 0; index < len(positions); index++ {
+		position := positions[index]
+		filter.bitVector.Set(uint(position))
+	}
+}
+
 func (filter Filter) MayContain(key kv.Key) bool {
 	positions := filter.bitPositionsFor(key)
 	for index := 0; index < len(positions); index++ {

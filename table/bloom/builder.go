@@ -25,11 +25,7 @@ func (builder *FilterBuilder) Build(falsePositiveRate float64) Filter {
 		bitVector:             bitset.New(uint(vectorSize)),
 	}
 	for _, key := range builder.keys {
-		positions := filter.bitPositionsFor(key)
-		for index := 0; index < len(positions); index++ {
-			position := positions[index]
-			filter.bitVector.Set(uint(position))
-		}
+		filter.set(key)
 	}
 	return filter
 }
