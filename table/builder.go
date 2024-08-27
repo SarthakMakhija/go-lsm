@@ -62,7 +62,7 @@ func (builder *SSTableBuilder) Add(key kv.Key, value kv.Value) {
 /**
   ----------------------------------------------------------------------------------------------------------------------------------------------------------
 | data block | data block |...| data block | metadata section | 4 bytes for meta starting offset | bloom filter section | 4 bytes for bloom starting offset |
-|										   |				  |									 |					                                        |
+|										   |				  |									 |		                |                                   |			                                        |
  ----------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error) {
@@ -100,14 +100,14 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 	startingKey, _ := builder.blockMetaList.StartingKeyOfFirstBlock()
 	endingKey, _ := builder.blockMetaList.EndingKeyOfLastBlock()
 	return SSTable{
-		id:                   id,
-		file:                 file,
-		blockMetaList:        builder.blockMetaList,
-		bloomFilter:          filter,
-		blockMetaBeginOffset: uint32(len(builder.allBlocksData)),
-		blockSize:            builder.blockSize,
-		startingKey:          startingKey,
-		endingKey:            endingKey,
+		id:                    id,
+		file:                  file,
+		blockMetaList:         builder.blockMetaList,
+		bloomFilter:           filter,
+		blockMetaOffsetMarker: uint32(len(builder.allBlocksData)),
+		blockSize:             builder.blockSize,
+		startingKey:           startingKey,
+		endingKey:             endingKey,
 	}, nil
 }
 

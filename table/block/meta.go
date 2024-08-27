@@ -6,7 +6,7 @@ import (
 	"go-lsm/kv"
 )
 
-// Meta represents a block metadata including the starting (/first), ending (/last) key of the block and the starting offset
+// Meta represents a block metadata including the starting (/first), ending (/last) key and the starting offset
 // of the block.
 type Meta struct {
 	BlockStartingOffset uint32
