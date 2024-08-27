@@ -77,7 +77,7 @@ func (filter Filter) MayContain(key kv.Key) bool {
 	return true
 }
 
-// bitPositionsFor returns the bit vector positions (/indices) for the key which must either be add or checked.
+// bitPositionsFor returns the bit vector positions (/indices) for the key which must either be added or checked.
 func (filter Filter) bitPositionsFor(key kv.Key) []uint32 {
 	indices := make([]uint32, 0, filter.numberOfHashFunctions)
 

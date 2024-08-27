@@ -5,11 +5,14 @@ import (
 	"os"
 )
 
+// File represents SSTable file.
 type File struct {
 	file *os.File
 	size int64
 }
 
+// Create creates a new SSTable file with encoded SSTable data.
+// It opens the file in readonly mode and returns the file handle.
 func Create(path string, data []byte) (*File, error) {
 	err := syncWrite(path, data)
 	if err != nil {
@@ -18,6 +21,8 @@ func Create(path string, data []byte) (*File, error) {
 	return openReadonly(path, data)
 }
 
+// Open opens the file at the filePath in readonly mode.
+// Is used when loading the state.StorageState.
 func Open(filePath string) (*File, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -33,6 +38,8 @@ func Open(filePath string) (*File, error) {
 	}, nil
 }
 
+// Read reads the file of buffer size from the given offset.
+// It requires a seek to the given offset from the file start, and then a read operation into the buffer.
 func (file *File) Read(offset int64, buffer []byte) (int, error) {
 	if _, err := file.file.Seek(offset, io.SeekStart); err != nil {
 		return 0, err
@@ -44,10 +51,13 @@ func (file *File) Read(offset int64, buffer []byte) (int, error) {
 	return n, nil
 }
 
+// Size returns the file size.
 func (file *File) Size() int64 {
 	return file.size
 }
 
+// syncWrite performs fsync operation after writing the data to the file.
+// The file is closed after syncWrite.
 func syncWrite(path string, data []byte) error {
 	file, err := os.Create(path)
 	if err != nil {
@@ -68,6 +78,7 @@ func syncWrite(path string, data []byte) error {
 	return nil
 }
 
+// openReadonly opens the file in readonly mode.
 func openReadonly(path string, data []byte) (*File, error) {
 	file, err := os.Open(path)
 	if err != nil {
