@@ -24,7 +24,7 @@ type KeyValue struct {
 	Value []byte
 }
 
-// NewDb creates a new instance of Db.
+// NewDb creates a new instance of key/value Db.
 func NewDb(options state.StorageOptions) *Db {
 	storageState := state.NewStorageStateWithOptions(options)
 	return &Db{
@@ -34,6 +34,7 @@ func NewDb(options state.StorageOptions) *Db {
 }
 
 // Read supports read operation by passing an instance of txn.Transaction (via txn.NewReadonlyTransaction) to the callback.
+// The passed transaction is a Readonly txn.Transaction which will panic on any form of write and commit operations.
 func (db *Db) Read(callback func(transaction *txn.Transaction)) error {
 	if db.stopped.Load() {
 		return DbAlreadyStoppedErr
@@ -46,6 +47,7 @@ func (db *Db) Read(callback func(transaction *txn.Transaction)) error {
 }
 
 // Write supports writes operation by passing an instance of txn.Transaction via (txn.NewReadwriteTransaction) to the callback.
+// The passed transaction is a Readwrite txn.Transaction which supports both read and write operations.
 func (db *Db) Write(callback func(transaction *txn.Transaction)) (*txn.Future, error) {
 	if db.stopped.Load() {
 		return nil, DbAlreadyStoppedErr
@@ -59,6 +61,7 @@ func (db *Db) Write(callback func(transaction *txn.Transaction)) (*txn.Future, e
 
 // Scan supports scan operation by taking an instance of kv.InclusiveKeyRange.
 // It returns a slice of KeyValue in increasing order, if no error occurs.
+// This implementation only supports kv.InclusiveKeyRange, there is no support for Open and HalfOpen ranges.
 func (db *Db) Scan(keyRange kv.InclusiveKeyRange[kv.RawKey]) ([]KeyValue, error) {
 	if db.stopped.Load() {
 		return nil, DbAlreadyStoppedErr
