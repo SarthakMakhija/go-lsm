@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"go-lsm/future"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -25,26 +26,30 @@ type Manifest struct {
 
 // CreateNewOrRecoverFrom either creates a new Manifest or recovers from an existing manifest file.
 // Also, starts a single goroutine that writes to manifest file.
-func CreateNewOrRecoverFrom(directoryPath string) (*Manifest, error) {
+func CreateNewOrRecoverFrom(directoryPath string) (*Manifest, []Event, error) {
 	path := filepath.Join(directoryPath, "manifest")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		_, err := os.Create(path)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	manifest := &Manifest{
 		file:         file,
 		stopChannel:  make(chan struct{}),
 		eventChannel: make(chan EventContext, recordChannelSize),
 	}
+	events, err := manifest.attemptRecovery()
+	if err != nil {
+		_ = file.Close()
+		return nil, nil, err
+	}
 	manifest.spin()
-	return manifest, nil
-	//TODO: Recovery
+	return manifest, events, nil
 }
 
 // Submit submits an event to the event channel.
@@ -71,7 +76,7 @@ func (manifest *Manifest) spin() {
 				_ = manifest.file.Close()
 				return
 			case eventContext := <-manifest.eventChannel:
-				buf, err := eventContext.event.serialize()
+				buf, err := eventContext.event.encode()
 				if err != nil {
 					slog.Warn("error while serializing event: %s", err)
 					continue
@@ -83,4 +88,16 @@ func (manifest *Manifest) spin() {
 			}
 		}
 	}()
+}
+
+// attemptRecovery attempts recovery of events from the Manifest file.
+// This implementation reads the whole file and passes the byte slice to decodeEventsFrom() method.
+// This implementation does not perform truncation (or compaction) of Manifest file, which means if the system runs for sometime,
+// the size of the file will increase.
+func (manifest *Manifest) attemptRecovery() ([]Event, error) {
+	bytes, err := io.ReadAll(manifest.file)
+	if err != nil {
+		return nil, err
+	}
+	return decodeEventsFrom(bytes), nil
 }
