@@ -2,6 +2,7 @@ package go_lsm
 
 import (
 	"errors"
+	"go-lsm/future"
 	"go-lsm/kv"
 	"go-lsm/state"
 	"go-lsm/txn"
@@ -48,7 +49,7 @@ func (db *Db) Read(callback func(transaction *txn.Transaction)) error {
 
 // Write supports writes operation by passing an instance of txn.Transaction via (txn.NewReadwriteTransaction) to the callback.
 // The passed transaction is a Readwrite txn.Transaction which supports both read and write operations.
-func (db *Db) Write(callback func(transaction *txn.Transaction)) (*txn.Future, error) {
+func (db *Db) Write(callback func(transaction *txn.Transaction)) (*future.Future, error) {
 	if db.stopped.Load() {
 		return nil, DbAlreadyStoppedErr
 	}

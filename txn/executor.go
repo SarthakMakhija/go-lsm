@@ -1,6 +1,7 @@
 package txn
 
 import (
+	"go-lsm/future"
 	"go-lsm/kv"
 	"go-lsm/state"
 	"sync"
@@ -42,7 +43,7 @@ func (executor *Executor) start() {
 		case executionRequest := <-executor.incomingChannel:
 			executor.state.Set(executionRequest.batch)
 			executionRequest.callback()
-			executionRequest.future.markDone()
+			executionRequest.future.MarkDone()
 		case <-executor.stopChannel:
 			close(executor.incomingChannel)
 			return
@@ -53,7 +54,7 @@ func (executor *Executor) start() {
 // submit submits the kv.TimestampedBatch along with callback to the Executor.
 // kv.TimestampedBatch and callback is wrapped in ExecutionRequest.
 // It returns an instance of Future to allow the clients to wait until the transactional batch is applied to the state machine.
-func (executor *Executor) submit(batch kv.TimestampedBatch, callback func()) *Future {
+func (executor *Executor) submit(batch kv.TimestampedBatch, callback func()) *future.Future {
 	executionRequest := NewExecutionRequest(batch, callback)
 	executor.incomingChannel <- executionRequest
 	return executionRequest.future
@@ -66,20 +67,13 @@ func (executor *Executor) stop() {
 	})
 }
 
-//////// ExecutionRequest & Future ////////////////
+//////// ExecutionRequest ////////////
 
 // ExecutionRequest wraps the kv.TimestampedBatch along with a callback.
 type ExecutionRequest struct {
 	batch    kv.TimestampedBatch
 	callback func()
-	future   *Future
-}
-
-// Future is a response to the submission of kv.TimestampedBatch. It allows the clients to wait until the batch is applied to
-// the state machine.
-type Future struct {
-	responseChannel chan struct{}
-	isDone          bool
+	future   *future.Future
 }
 
 // NewExecutionRequest creates a new instance of ExecutionRequest.
@@ -87,27 +81,6 @@ func NewExecutionRequest(batch kv.TimestampedBatch, callback func()) ExecutionRe
 	return ExecutionRequest{
 		batch:    batch,
 		callback: callback,
-		future:   NewFuture(),
+		future:   future.NewFuture(),
 	}
-}
-
-// NewFuture creates a new instance of Future.
-func NewFuture() *Future {
-	return &Future{
-		responseChannel: make(chan struct{}),
-		isDone:          false,
-	}
-}
-
-// markDone marks the Future as done.
-func (future *Future) markDone() {
-	if !future.isDone {
-		close(future.responseChannel)
-		future.isDone = true
-	}
-}
-
-// Wait waits until the Future is maked as done.
-func (future *Future) Wait() {
-	<-future.responseChannel
 }

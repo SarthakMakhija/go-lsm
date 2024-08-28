@@ -1,5 +1,3 @@
-//go:build test
-
 package kv
 
 // NewStringValue creates a new instance of Value.

@@ -1,5 +1,3 @@
-//go:build test
-
 package kv
 
 // NewStringKeyWithTimestamp creates a new instance of Key.

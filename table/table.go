@@ -8,7 +8,7 @@ import (
 	"go-lsm/table/bloom"
 )
 
-// SSTable represents the SSTable on disk.
+// SSTable represents SSTable on disk.
 type SSTable struct {
 	id                    uint64
 	blockMetaList         *block.MetaList

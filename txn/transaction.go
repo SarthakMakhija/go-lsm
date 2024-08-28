@@ -2,6 +2,7 @@ package txn
 
 import (
 	"errors"
+	"go-lsm/future"
 	"go-lsm/iterator"
 	"go-lsm/kv"
 	"go-lsm/state"
@@ -139,7 +140,7 @@ func (transaction *Transaction) Delete(key []byte) error {
 // 3) Submitting the kv.TimestampedBatch to the Executor.
 // 4) Passing a commit callback along with kv.TimestampedBatch to the Executor which is invoked when the entire batch is applied.
 // 5) The commit callback informs the `commitTimestampMark` of Oracle that a transaction with `commitTimestamp` is done.
-func (transaction *Transaction) Commit() (*Future, error) {
+func (transaction *Transaction) Commit() (*future.Future, error) {
 	if transaction.readonly {
 		panic("transaction is readonly")
 	}
