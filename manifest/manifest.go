@@ -10,14 +10,15 @@ import (
 
 const recordChannelSize = 8 * 1024
 
-// EventContext represents an event with a future. The future id marked done when the event is applied to manifest file.
+// EventContext represents an event with a future.
+// The future is marked done when the event is applied to manifest file.
 type EventContext struct {
 	event  Event
 	future *future.Future
 }
 
 // Manifest records different events in the system.
-// Different events are described by Event interface.
+// The events are described by the Event interface.
 type Manifest struct {
 	file         *os.File
 	stopChannel  chan struct{}
@@ -25,7 +26,7 @@ type Manifest struct {
 }
 
 // CreateNewOrRecoverFrom either creates a new Manifest or recovers from an existing manifest file.
-// Also, starts a single goroutine that writes to manifest file.
+// Also, starts a single goroutine that writes events to the manifest file.
 func CreateNewOrRecoverFrom(directoryPath string) (*Manifest, []Event, error) {
 	path := filepath.Join(directoryPath, "manifest")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -67,7 +68,13 @@ func (manifest *Manifest) Stop() {
 
 // spin runs a goroutine that receives events from eventChannel and applies them serially in the manifest file.
 // It is an implementation of [singular update queue](https://martinfowler.com/articles/patterns-of-distributed-systems/singular-update-queue.html).
-// This also means that events are eventually applied to Manifest.
+// This implementation means that events are eventually applied to Manifest.
+// There is also a possibility of event loss with this design.
+// Consider the following example:
+// A new memtable was created and at the same time a memtable was flushed to SSTable.
+// This would result in submission of two events to Manifest.
+// However, the events would be applied eventually. It is possible that the key/value database
+// shuts down before both the events are applied.
 func (manifest *Manifest) spin() {
 	go func() {
 		for {
@@ -83,6 +90,9 @@ func (manifest *Manifest) spin() {
 				}
 				if _, err = manifest.file.Write(buf); err != nil {
 					slog.Warn("error while writing event: %s", err)
+				}
+				if err = manifest.file.Sync(); err != nil {
+					slog.Warn("error while performing fsync on the manifest file: %s", err)
 				}
 				eventContext.future.MarkDone()
 			}
