@@ -10,65 +10,77 @@ import (
 var nothingCallback = func() {}
 
 func TestSetsABatchWithOneKeyValueUsingExecutor(t *testing.T) {
-	state := state.NewStorageState()
-	defer state.Close()
+	storageState, _ := state.NewStorageState()
+	defer func() {
+		storageState.Close()
+		storageState.DeleteManifest()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("kv"), []byte("distributed"))
 
-	executor := NewExecutor(state)
+	executor := NewExecutor(storageState)
 	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), nothingCallback)
 	future.Wait()
 
-	value, ok := state.Get(kv.NewKey([]byte("kv"), 6))
+	value, ok := storageState.Get(kv.NewKey([]byte("kv"), 6))
 	assert.True(t, ok)
 	assert.Equal(t, "distributed", value.String())
 }
 
 func TestSetsABatchWithOneKeyValueUsingExecutorAndRunsTheCallback(t *testing.T) {
-	state := state.NewStorageState()
-	defer state.Close()
+	storageState, _ := state.NewStorageState()
+	defer func() {
+		storageState.Close()
+		storageState.DeleteManifest()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("kv"), []byte("distributed"))
 
 	var applied bool
-	executor := NewExecutor(state)
+	executor := NewExecutor(storageState)
 	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), func() {
 		applied = true
 	})
 	future.Wait()
 
-	value, ok := state.Get(kv.NewKey([]byte("kv"), 6))
+	value, ok := storageState.Get(kv.NewKey([]byte("kv"), 6))
 	assert.True(t, applied)
 	assert.True(t, ok)
 	assert.Equal(t, "distributed", value.String())
 }
 
 func TestSetsABatchWithMultipleKeyValuesUsingExecutor(t *testing.T) {
-	state := state.NewStorageState()
-	defer state.Close()
+	storageState, _ := state.NewStorageState()
+	defer func() {
+		storageState.Close()
+		storageState.DeleteManifest()
+	}()
 
 	batch := kv.NewBatch()
 	_ = batch.Put([]byte("raft"), []byte("consensus"))
 	_ = batch.Put([]byte("kv"), []byte("distributed"))
 
-	executor := NewExecutor(state)
+	executor := NewExecutor(storageState)
 	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), nothingCallback)
 	future.Wait()
 
-	value, ok := state.Get(kv.NewKey([]byte("raft"), 6))
+	value, ok := storageState.Get(kv.NewKey([]byte("raft"), 6))
 	assert.True(t, ok)
 	assert.Equal(t, "consensus", value.String())
 
-	value, ok = state.Get(kv.NewKey([]byte("kv"), 6))
+	value, ok = storageState.Get(kv.NewKey([]byte("kv"), 6))
 	assert.True(t, ok)
 	assert.Equal(t, "distributed", value.String())
 }
 
 func TestSetsABatchWithMultipleKeyValuesUsingExecutor1(t *testing.T) {
-	state := state.NewStorageState()
-	defer state.Close()
+	storageState, _ := state.NewStorageState()
+	defer func() {
+		storageState.Close()
+		storageState.DeleteManifest()
+	}()
 
 	executeSet := func(executor *Executor) {
 		batch := kv.NewBatch()
@@ -84,10 +96,10 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor1(t *testing.T) {
 		future.Wait()
 	}
 
-	executor := NewExecutor(state)
+	executor := NewExecutor(storageState)
 	executeSet(executor)
 	executeDelete(executor)
 
-	_, ok := state.Get(kv.NewKey([]byte("raft"), 6))
+	_, ok := storageState.Get(kv.NewKey([]byte("raft"), 6))
 	assert.False(t, ok)
 }

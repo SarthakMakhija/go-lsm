@@ -32,10 +32,11 @@ func testStorageStateOptionsWithDirectory(memtableSizeInBytes int64, directory s
 }
 
 func TestStorageStateWithASinglePutAndHasNoImmutableMemtables(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -46,10 +47,11 @@ func TestStorageStateWithASinglePutAndHasNoImmutableMemtables(t *testing.T) {
 }
 
 func TestStorageStateWithASinglePutAndGet(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -63,10 +65,11 @@ func TestStorageStateWithASinglePutAndGet(t *testing.T) {
 }
 
 func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -95,10 +98,11 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -141,10 +145,11 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testi
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -179,10 +184,11 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables2(t *testi
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -217,10 +223,11 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testi
 }
 
 func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -238,10 +245,11 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 }
 
 func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
-	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptions(200))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -262,10 +270,11 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
-	storageState := NewStorageStateWithOptions(testStorageStateOptions(200))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptions(200))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -291,10 +300,11 @@ func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t 
 }
 
 func TestStorageStateScanWithMemtable(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -328,10 +338,11 @@ func TestStorageStateScanWithMemtable(t *testing.T) {
 }
 
 func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -371,10 +382,11 @@ func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
 func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -432,10 +444,11 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -485,10 +498,11 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables2(t *testing.T) {
 func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -545,10 +559,11 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables3(t *testing.T) {
 func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(200, tempDirectory))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -585,10 +600,11 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 }
 
 func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
-	storageState := NewStorageState()
+	storageState, _ := NewStorageState()
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -614,10 +630,11 @@ func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {
 }
 
 func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtable(t *testing.T) {
-	storageState := NewStorageStateWithOptions(testStorageStateOptions(1 << 10))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptions(1 << 10))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -633,10 +650,11 @@ func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtabl
 func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -671,10 +689,11 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *testing.T) {
 	tempDirectory := os.TempDir()
 
-	storageState := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectory(250, tempDirectory))
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()
@@ -717,10 +736,11 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 		FlushMemtableDuration: 1 * time.Millisecond,
 		EnableWAL:             true,
 	}
-	storageState := NewStorageStateWithOptions(storageOptions)
+	storageState, _ := NewStorageStateWithOptions(storageOptions)
 	defer func() {
 		_ = os.RemoveAll(storageState.walDirectoryPath)
 		storageState.Close()
+		storageState.DeleteManifest()
 	}()
 
 	batch := kv.NewBatch()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-lsm/iterator"
 	"go-lsm/kv"
+	"go-lsm/manifest"
 	"go-lsm/memory"
 	"go-lsm/table"
 	"os"
@@ -38,6 +39,7 @@ type StorageState struct {
 	currentMemtable                *memory.Memtable
 	immutableMemtables             []*memory.Memtable
 	idGenerator                    *SSTableIdGenerator
+	manifest                       *manifest.Manifest
 	l0SSTableIds                   []uint64
 	levels                         []*Level
 	ssTables                       map[uint64]table.SSTable
@@ -47,7 +49,7 @@ type StorageState struct {
 	walDirectoryPath               string
 }
 
-func NewStorageState() *StorageState {
+func NewStorageState() (*StorageState, error) {
 	return NewStorageStateWithOptions(StorageOptions{
 		MemTableSizeInBytes:   1 << 20,
 		Path:                  ".",
@@ -63,7 +65,7 @@ func NewStorageState() *StorageState {
 }
 
 // NewStorageStateWithOptions TODO: Recover from WAL
-func NewStorageStateWithOptions(options StorageOptions) *StorageState {
+func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
@@ -76,10 +78,16 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 	for level := 1; level <= int(options.compactionOptions.maxLevels); level++ {
 		levels[level-1] = &Level{levelNumber: level}
 	}
+
+	manifestRecorder, _, err := manifest.CreateNewOrRecoverFrom(options.Path)
+	if err != nil {
+		return nil, err
+	}
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
 		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, memory.NewWALPresence(options.EnableWAL, walDirectoryPath)),
 		idGenerator:                    idGenerator,
+		manifest:                       manifestRecorder,
 		ssTables:                       make(map[uint64]table.SSTable),
 		levels:                         levels,
 		closeChannel:                   make(chan struct{}),
@@ -87,8 +95,9 @@ func NewStorageStateWithOptions(options StorageOptions) *StorageState {
 		options:                        options,
 		walDirectoryPath:               walDirectoryPath,
 	}
+	storageState.manifest.Submit(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 	storageState.spawnMemtableFlush()
-	return storageState
+	return storageState, nil
 }
 
 func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
@@ -189,15 +198,17 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 	storageState.immutableMemtables = storageState.immutableMemtables[1:]
 	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or levels
 	storageState.ssTables[memtableToFlush.Id()] = ssTable
+	storageState.manifest.Submit(manifest.NewSSTableFlushed(ssTable.Id()))
 	memtableToFlush.DeleteWAL()
 
-	//TODO: manifest, concurrency support
+	//TODO: concurrency support
 	return nil
 }
 
 // Close TODO: Complete the implementation
 func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
+	storageState.manifest.Stop()
 	//Wait for flush immutable tables goroutine to return
 	<-storageState.flushMemtableCompletionChannel
 }
@@ -236,7 +247,6 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 	return ids
 }
 
-// TODO: Manifest
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
 func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes int64) {
@@ -247,6 +257,7 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes
 			storageState.options.MemTableSizeInBytes,
 			memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
 		)
+		storageState.manifest.Submit(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 	}
 }
 
@@ -258,6 +269,7 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 		storageState.options.MemTableSizeInBytes,
 		memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
 	)
+	storageState.manifest.Submit(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 }
 
 func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {
@@ -296,4 +308,8 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			}
 		}
 	}()
+}
+
+func (storageState *StorageState) DeleteManifest() {
+	storageState.manifest.Delete()
 }

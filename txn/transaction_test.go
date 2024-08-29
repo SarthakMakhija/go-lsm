@@ -8,11 +8,12 @@ import (
 )
 
 func TestReadonlyTransactionWithEmptyState(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -23,11 +24,12 @@ func TestReadonlyTransactionWithEmptyState(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -47,11 +49,12 @@ func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTimestamp(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -72,11 +75,12 @@ func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTi
 }
 
 func TestReadonlyTransactionWithScan(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -102,11 +106,12 @@ func TestReadonlyTransactionWithScan(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -141,11 +146,12 @@ func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testi
 }
 
 func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -159,11 +165,12 @@ func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
 }
 
 func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -192,11 +199,12 @@ func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
 }
 
 func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -212,11 +220,12 @@ func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
 }
 
 func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -232,11 +241,12 @@ func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
 }
 
 func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -271,11 +281,12 @@ func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testin
 }
 
 func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -306,11 +317,12 @@ func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
 }
 
 func TestTracksReadsInAReadwriteTransactionWithScan(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 

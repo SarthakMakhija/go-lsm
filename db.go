@@ -26,12 +26,15 @@ type KeyValue struct {
 }
 
 // NewDb creates a new instance of key/value Db.
-func NewDb(options state.StorageOptions) *Db {
-	storageState := state.NewStorageStateWithOptions(options)
+func NewDb(options state.StorageOptions) (*Db, error) {
+	storageState, err := state.NewStorageStateWithOptions(options)
+	if err != nil {
+		return nil, err
+	}
 	return &Db{
 		storageState: storageState,
 		oracle:       txn.NewOracle(txn.NewExecutor(storageState)),
-	}
+	}, nil
 }
 
 // Read supports read operation by passing an instance of txn.Transaction (via txn.NewReadonlyTransaction) to the callback.

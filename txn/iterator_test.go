@@ -9,11 +9,12 @@ import (
 )
 
 func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -53,11 +54,12 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing
 }
 
 func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSystem(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -92,11 +94,12 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSys
 }
 
 func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInTheSystem(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -127,11 +130,12 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInT
 }
 
 func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystemWithABoundCheck(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 

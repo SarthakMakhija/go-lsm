@@ -26,8 +26,11 @@ func TestForceFullCompaction(t *testing.T) {
 			level0FilesCompactionTrigger: 2,
 		},
 	}
-	storageState := NewStorageStateWithOptions(storageOptions)
-	defer storageState.Close()
+	storageState, _ := NewStorageStateWithOptions(storageOptions)
+	defer func() {
+		storageState.Close()
+		storageState.DeleteManifest()
+	}()
 
 	buildL0SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)

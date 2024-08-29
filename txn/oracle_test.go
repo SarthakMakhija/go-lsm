@@ -7,11 +7,12 @@ import (
 )
 
 func TestGetsTheBeginTimestamp(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -19,11 +20,12 @@ func TestGetsTheBeginTimestamp(t *testing.T) {
 }
 
 func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -35,11 +37,12 @@ func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
 }
 
 func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -51,11 +54,12 @@ func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked
 }
 
 func TestGetsCommitTimestampForTwoTransactions(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -77,11 +81,12 @@ func TestGetsCommitTimestampForTwoTransactions(t *testing.T) {
 }
 
 func TestGetsCommitTimestampForTwoTransactionsGivenOneTransactionReadsTheKeyAfterTheOtherWrites(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 
@@ -104,11 +109,12 @@ func TestGetsCommitTimestampForTwoTransactionsGivenOneTransactionReadsTheKeyAfte
 }
 
 func TestResultsInConflictErrorForOneTransaction(t *testing.T) {
-	storageState := state.NewStorageState()
+	storageState, _ := state.NewStorageState()
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
 		storageState.Close()
+		storageState.DeleteManifest()
 		oracle.Close()
 	}()
 

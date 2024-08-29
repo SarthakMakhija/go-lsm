@@ -20,7 +20,7 @@ func TestReadInEmptyDb(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.NewDb(storageOptions)
 	defer db.Close()
 
 	err := db.Read(func(transaction *txn.Transaction) {
@@ -39,7 +39,7 @@ func TestReadAnExistingKeyValue(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.NewDb(storageOptions)
 	defer db.Close()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
@@ -70,7 +70,7 @@ func TestScanKeyValues1(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.NewDb(storageOptions)
 	defer db.Close()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
@@ -107,7 +107,7 @@ func TestScanKeyValues2(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.NewDb(storageOptions)
 	defer db.Close()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {

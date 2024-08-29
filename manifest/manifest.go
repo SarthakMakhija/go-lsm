@@ -91,9 +91,7 @@ func (manifest *Manifest) spin() {
 				if _, err = manifest.file.Write(buf); err != nil {
 					slog.Warn("error while writing event: %s", err)
 				}
-				if err = manifest.file.Sync(); err != nil {
-					slog.Warn("error while performing fsync on the manifest file: %s", err)
-				}
+				_ = manifest.file.Sync()
 				eventContext.future.MarkDone()
 			}
 		}
@@ -110,4 +108,9 @@ func (manifest *Manifest) attemptRecovery() ([]Event, error) {
 		return nil, err
 	}
 	return decodeEventsFrom(bytes), nil
+}
+
+func (manifest *Manifest) Delete() {
+	_ = manifest.file.Close()
+	_ = os.Remove(manifest.file.Name())
 }
