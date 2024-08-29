@@ -213,6 +213,11 @@ func (storageState *StorageState) Close() {
 	<-storageState.flushMemtableCompletionChannel
 }
 
+// DeleteManifest deletes Manifest file, only for testing.
+func (storageState *StorageState) DeleteManifest() {
+	storageState.manifest.Delete()
+}
+
 func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
 	if level == 0 {
 		ids := make([]uint64, 0, len(storageState.l0SSTableIds))
@@ -308,8 +313,4 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			}
 		}
 	}()
-}
-
-func (storageState *StorageState) DeleteManifest() {
-	storageState.manifest.Delete()
 }

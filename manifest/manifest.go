@@ -110,6 +110,7 @@ func (manifest *Manifest) attemptRecovery() ([]Event, error) {
 	return decodeEventsFrom(bytes), nil
 }
 
+// Delete deletes Manifest file, only for testing.
 func (manifest *Manifest) Delete() {
 	_ = manifest.file.Close()
 	_ = os.Remove(manifest.file.Name())
