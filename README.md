@@ -7,5 +7,5 @@ Rewrite of the existing [workshop](https://github.com/SarthakMakhija/storage-eng
 
 Inspired by [LSM in a Week](https://skyzh.github.io/mini-lsm/00-preface.html)
 
-![LSM development items](https://github.com/user-attachments/assets/48f63edf-3cbb-4128-bd2f-e29a2f9d9a92)
+![LSM development items](https://github.com/user-attachments/assets/eeb99c77-eef2-48cd-812b-7aeb019d26a7)
 
