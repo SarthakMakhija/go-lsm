@@ -213,11 +213,6 @@ func (storageState *StorageState) Close() {
 	<-storageState.flushMemtableCompletionChannel
 }
 
-// DeleteManifest deletes Manifest file, only for testing.
-func (storageState *StorageState) DeleteManifest() {
-	storageState.manifest.Delete()
-}
-
 func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
 	if level == 0 {
 		ids := make([]uint64, 0, len(storageState.l0SSTableIds))
@@ -264,17 +259,6 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes
 		)
 		storageState.manifest.Submit(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 	}
-}
-
-// forceFreezeCurrentMemtable only for testing.
-func (storageState *StorageState) forceFreezeCurrentMemtable() {
-	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
-	storageState.currentMemtable = memory.NewMemtable(
-		storageState.idGenerator.NextId(),
-		storageState.options.MemTableSizeInBytes,
-		memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
-	)
-	storageState.manifest.Submit(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 }
 
 func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {
