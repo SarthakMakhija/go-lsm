@@ -16,3 +16,20 @@ func TestGenerateNextMemtableId(t *testing.T) {
 	assert.Equal(t, uint64(2), generator.NextId())
 	assert.Equal(t, uint64(3), generator.NextId())
 }
+
+func TestSetIdIfGreaterThanExisting(t *testing.T) {
+	generator := NewSSTableIdGenerator()
+	generator.NextId()
+
+	generator.setIdIfGreaterThanExisting(10)
+	assert.Equal(t, uint64(11), generator.NextId())
+}
+
+func TestDoesNotSetIdGivenItIsNotGreaterThanExisting(t *testing.T) {
+	generator := NewSSTableIdGenerator()
+	generator.NextId()
+	generator.NextId()
+
+	generator.setIdIfGreaterThanExisting(1)
+	assert.Equal(t, uint64(3), generator.NextId())
+}
