@@ -36,8 +36,16 @@ type Oracle struct {
 // As a part creating a new instance of NewOracle, we also mark beginTimestampMark and commitTimestampMark
 // as finished for timestamp 0.
 func NewOracle(executor *Executor) *Oracle {
+	return NewOracleWithLastCommitTimestamp(executor, 0)
+}
+
+// NewOracleWithLastCommitTimestamp creates a new instance of Oracle. It is called once in the entire application.
+// Oracle is initialized with nextTimestamp as the lastCommitTimestamp + 1.
+// As a part creating a new instance of NewOracle, we also mark beginTimestampMark and commitTimestampMark
+// as finished for timestamp lastCommitTimestamp.
+func NewOracleWithLastCommitTimestamp(executor *Executor, lastCommitTimestamp uint64) *Oracle {
 	oracle := &Oracle{
-		nextTimestamp:       1,
+		nextTimestamp:       lastCommitTimestamp + 1,
 		beginTimestampMark:  NewTransactionTimestampWaterMark(),
 		commitTimestampMark: NewTransactionTimestampWaterMark(),
 		executor:            executor,

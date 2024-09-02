@@ -68,20 +68,23 @@ func newMemtableWithWAL(id uint64, memTableSizeInBytes int64, walDirectoryPath s
 }
 
 // recoverFromWAL recovers Memtable from WAL, it skips the check on memTableSizeInBytes.
-func recoverFromWAL(id uint64, memTableSizeInBytes int64, path string) (*Memtable, error) {
+// It returns the Memtable and the max timestamp, if there is no error in recovery.
+func recoverFromWAL(id uint64, memTableSizeInBytes int64, path string) (*Memtable, uint64, error) {
 	memtable := &Memtable{
 		id:                  id,
 		memTableSizeInBytes: memTableSizeInBytes,
 		entries:             external.NewSkipList(memTableSizeInBytes),
 	}
+	var maxTimestamp uint64
 	wal, err := log.Recover(path, func(key kv.Key, value kv.Value) {
 		memtable.entries.Put(key, value)
+		maxTimestamp = max(maxTimestamp, key.Timestamp())
 	})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	memtable.wal = wal
-	return memtable, nil
+	return memtable, maxTimestamp, nil
 }
 
 // Get returns the value for the key if found.
