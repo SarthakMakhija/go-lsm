@@ -47,7 +47,9 @@ func TestReadAnExistingKeyValue(t *testing.T) {
 		assert.NoError(t, transaction.Set([]byte("VSR"), []byte("consensus algorithm")))
 	})
 	assert.NoError(t, err)
+
 	future.Wait()
+	assert.True(t, future.Status().IsOk())
 
 	err = db.Read(func(transaction *txn.Transaction) {
 		value, ok := transaction.Get([]byte("raft"))
@@ -79,7 +81,9 @@ func TestScanKeyValues1(t *testing.T) {
 		assert.NoError(t, transaction.Set([]byte("wisckey"), []byte("modified LSM")))
 	})
 	assert.NoError(t, err)
+
 	future.Wait()
+	assert.True(t, future.Status().IsOk())
 
 	err = db.Read(func(transaction *txn.Transaction) {
 		iterator, _ := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("storage"), kv.RawKey("wisckey")))
@@ -116,7 +120,9 @@ func TestScanKeyValues2(t *testing.T) {
 		assert.NoError(t, transaction.Set([]byte("wisckey"), []byte("modified LSM")))
 	})
 	assert.NoError(t, err)
+
 	future.Wait()
+	assert.True(t, future.Status().IsOk())
 
 	keyValues, err := db.Scan(kv.NewInclusiveKeyRange(kv.RawKey("storage"), kv.RawKey("wisckey")))
 

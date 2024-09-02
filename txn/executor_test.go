@@ -21,7 +21,9 @@ func TestSetsABatchWithOneKeyValueUsingExecutor(t *testing.T) {
 
 	executor := NewExecutor(storageState)
 	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), nothingCallback)
+
 	future.Wait()
+	assert.True(t, future.Status().IsOk())
 
 	value, ok := storageState.Get(kv.NewKey([]byte("kv"), 6))
 	assert.True(t, ok)
@@ -43,7 +45,9 @@ func TestSetsABatchWithOneKeyValueUsingExecutorAndRunsTheCallback(t *testing.T) 
 	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), func() {
 		applied = true
 	})
+
 	future.Wait()
+	assert.True(t, future.Status().IsOk())
 
 	value, ok := storageState.Get(kv.NewKey([]byte("kv"), 6))
 	assert.True(t, applied)
@@ -64,7 +68,9 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor(t *testing.T) {
 
 	executor := NewExecutor(storageState)
 	future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), nothingCallback)
+
 	future.Wait()
+	assert.True(t, future.Status().IsOk())
 
 	value, ok := storageState.Get(kv.NewKey([]byte("raft"), 6))
 	assert.True(t, ok)
@@ -86,14 +92,18 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor1(t *testing.T) {
 		batch := kv.NewBatch()
 		_ = batch.Put([]byte("raft"), []byte("consensus"))
 		future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), nothingCallback)
+
 		future.Wait()
+		assert.True(t, future.Status().IsOk())
 	}
 
 	executeDelete := func(executor *Executor) {
 		batch := kv.NewBatch()
 		batch.Delete([]byte("raft"))
 		future := executor.submit(kv.NewTimestampedBatchFrom(*batch, 5), nothingCallback)
+
 		future.Wait()
+		assert.True(t, future.Status().IsOk())
 	}
 
 	executor := NewExecutor(storageState)

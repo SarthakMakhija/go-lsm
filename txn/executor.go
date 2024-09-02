@@ -41,9 +41,13 @@ func (executor *Executor) start() {
 	for {
 		select {
 		case executionRequest := <-executor.incomingChannel:
-			_ = executor.state.Set(executionRequest.batch)
+			err := executor.state.Set(executionRequest.batch)
 			executionRequest.callback()
-			executionRequest.future.MarkDone()
+			if err != nil {
+				executionRequest.future.MarkDoneAsError(err)
+			} else {
+				executionRequest.future.MarkDoneAsOk()
+			}
 		case <-executor.stopChannel:
 			close(executor.incomingChannel)
 			return
