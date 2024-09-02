@@ -13,12 +13,22 @@ func TestNewMemtableCreatedEventEncodeAndDecode(t *testing.T) {
 	assert.Equal(t, uint64(10), decoded.memtableId)
 }
 
+func TestNewMemtableCreatedEventType(t *testing.T) {
+	memtableCreated := NewMemtableCreated(10)
+	assert.Equal(t, MemtableCreatedEventType, memtableCreated.eventType())
+}
+
 func TestNewSSTableFlushedEventEncodeAndDecode(t *testing.T) {
 	ssTableFlushed := NewSSTableFlushed(20)
 	buffer, _ := ssTableFlushed.encode()
 
 	decoded := decodeSSTableFlushed(buffer[1:])
 	assert.Equal(t, uint64(20), decoded.ssTableId)
+}
+
+func TestNewSSTableFlushedEventType(t *testing.T) {
+	ssTableFlushed := NewSSTableFlushed(10)
+	assert.Equal(t, SSTableFlushedEventType, ssTableFlushed.eventType())
 }
 
 func TestNewDecodeNewMemtableCreatedAndSSTableEventFlushedEvents(t *testing.T) {

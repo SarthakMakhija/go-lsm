@@ -13,12 +13,13 @@ const (
 // Event types.
 const (
 	MemtableCreatedEventType uint8 = iota
-	SSTableFlushedEventType        = 1
+	SSTableFlushedEventType  uint8 = 1
 )
 
 // Event represents a manifest event.
 type Event interface {
 	encode() ([]byte, error)
+	eventType() uint8
 }
 
 // MemtableCreated defines a new memtable event.
@@ -49,6 +50,11 @@ func (memtableCreated *MemtableCreated) encode() ([]byte, error) {
 	return buffer, nil
 }
 
+// eventType returns the event type MemtableCreatedEventType.
+func (memtableCreated *MemtableCreated) eventType() uint8 {
+	return MemtableCreatedEventType
+}
+
 // decodeMemtableCreated decodes the MemtableCreated event from the byte slice.
 // The buffer is a slice containing memtableId.
 func decodeMemtableCreated(buffer []byte) *MemtableCreated {
@@ -71,6 +77,11 @@ func (ssTableFlushed *SSTableFlushed) encode() ([]byte, error) {
 	buffer[0] = SSTableFlushedEventType
 	binary.LittleEndian.PutUint64(buffer[1:], ssTableFlushed.ssTableId)
 	return buffer, nil
+}
+
+// eventType returns the event type SSTableFlushedEventType.
+func (ssTableFlushed *SSTableFlushed) eventType() uint8 {
+	return SSTableFlushedEventType
 }
 
 // decodeSSTableFlushed decodes the SSTableFlushed event from the byte slice.
