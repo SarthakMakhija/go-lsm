@@ -14,13 +14,11 @@ func TestCreateANewManifestWithNewMemtableCreatedEvent(t *testing.T) {
 	manifest, _, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
 
 	defer func() {
-		manifest.Stop()
 		_ = os.RemoveAll(manifestDirectoryPath)
 	}()
 
 	assert.Nil(t, err)
-	future := manifest.Submit(NewMemtableCreated(10))
-	future.Wait()
+	assert.Nil(t, manifest.Add(NewMemtableCreated(10)))
 }
 
 func TestCreateANewManifestWithNewSSTableFlushedEvent(t *testing.T) {
@@ -30,13 +28,11 @@ func TestCreateANewManifestWithNewSSTableFlushedEvent(t *testing.T) {
 	manifest, _, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
 
 	defer func() {
-		manifest.Stop()
 		_ = os.RemoveAll(manifestDirectoryPath)
 	}()
 
 	assert.Nil(t, err)
-	future := manifest.Submit(NewSSTableFlushed(10))
-	future.Wait()
+	assert.Nil(t, manifest.Add(NewSSTableFlushed(10)))
 }
 
 func TestRecoversAnExistingManifest(t *testing.T) {
@@ -50,21 +46,12 @@ func TestRecoversAnExistingManifest(t *testing.T) {
 	}()
 
 	assert.Nil(t, err)
-	future := manifest.Submit(NewMemtableCreated(10))
-	future.Wait()
-
-	future = manifest.Submit(NewMemtableCreated(20))
-	future.Wait()
-
-	future = manifest.Submit(NewSSTableFlushed(10))
-	future.Wait()
-
-	manifest.Stop()
+	assert.Nil(t, manifest.Add(NewMemtableCreated(10)))
+	assert.Nil(t, manifest.Add(NewMemtableCreated(20)))
+	assert.Nil(t, manifest.Add(NewSSTableFlushed(10)))
 
 	manifest, events, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
 	assert.Nil(t, err)
-
-	manifest.Stop()
 
 	assert.Equal(t, 3, len(events))
 	assert.Equal(t, uint64(10), events[0].(*MemtableCreated).memtableId)

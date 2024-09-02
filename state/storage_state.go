@@ -95,7 +95,9 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 		options:                        options,
 		walDirectoryPath:               walDirectoryPath,
 	}
-	storageState.manifest.Submit(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
+	if err := storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id())); err != nil {
+		return nil, err
+	}
 	storageState.spawnMemtableFlush()
 	return storageState, nil
 }
@@ -129,8 +131,10 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 
 // Set
 // TODO: Handle error in Set and Delete
-func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) {
-	storageState.mayBeFreezeCurrentMemtable(int64(timestampedBatch.SizeInBytes()))
+func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) error {
+	if err := storageState.mayBeFreezeCurrentMemtable(int64(timestampedBatch.SizeInBytes())); err != nil {
+		return err
+	}
 	for _, entry := range timestampedBatch.AllEntries() {
 		if entry.IsKindPut() {
 			_ = storageState.currentMemtable.Set(entry.Key, entry.Value)
@@ -141,6 +145,7 @@ func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) {
 		}
 	}
 	storageState.currentMemtable.Sync()
+	return nil
 }
 
 func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Key]) iterator.Iterator {
@@ -198,7 +203,9 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 	storageState.immutableMemtables = storageState.immutableMemtables[1:]
 	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or levels
 	storageState.ssTables[memtableToFlush.Id()] = ssTable
-	storageState.manifest.Submit(manifest.NewSSTableFlushed(ssTable.Id()))
+	if err := storageState.manifest.Add(manifest.NewSSTableFlushed(ssTable.Id())); err != nil {
+		return err
+	}
 	memtableToFlush.DeleteWAL()
 
 	//TODO: concurrency support
@@ -208,7 +215,6 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 // Close TODO: Complete the implementation
 func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
-	storageState.manifest.Stop()
 	//Wait for flush immutable tables goroutine to return
 	<-storageState.flushMemtableCompletionChannel
 }
@@ -249,7 +255,7 @@ func (storageState *StorageState) sortedMemtableIds() []uint64 {
 
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
-func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes int64) {
+func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes int64) error {
 	if !storageState.currentMemtable.CanFit(requiredSizeInBytes) {
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
 		storageState.currentMemtable = memory.NewMemtable(
@@ -257,8 +263,9 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes
 			storageState.options.MemTableSizeInBytes,
 			memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
 		)
-		storageState.manifest.Submit(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
+		return storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 	}
+	return nil
 }
 
 func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {

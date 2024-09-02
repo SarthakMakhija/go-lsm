@@ -13,7 +13,7 @@ const incomingChannelSize = 1 * 1024
 // Executor applies all the commits sequentially.
 //
 // It is a single goroutine that reads kv.TimestampedBatch from the incomingChannel.
-// Anytime a Readwrite Transaction is ready to commit, its kv.TimestampedBatch is sent to the TransactionExecutor via the Submit() method.
+// Anytime a Readwrite Transaction is ready to commit, its kv.TimestampedBatch is sent to the TransactionExecutor via the Add() method.
 // Executor applies the batch to the instance of state.StorageState.
 type Executor struct {
 	state           *state.StorageState
@@ -41,7 +41,7 @@ func (executor *Executor) start() {
 	for {
 		select {
 		case executionRequest := <-executor.incomingChannel:
-			executor.state.Set(executionRequest.batch)
+			_ = executor.state.Set(executionRequest.batch)
 			executionRequest.callback()
 			executionRequest.future.MarkDone()
 		case <-executor.stopChannel:
