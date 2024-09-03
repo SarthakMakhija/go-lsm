@@ -54,7 +54,7 @@ func TestRecoversAnExistingManifest(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, 3, len(events))
-	assert.Equal(t, uint64(10), events[0].(*MemtableCreated).memtableId)
-	assert.Equal(t, uint64(20), events[1].(*MemtableCreated).memtableId)
-	assert.Equal(t, uint64(10), events[2].(*SSTableFlushed).ssTableId)
+	assert.Equal(t, uint64(10), events[0].(*MemtableCreated).MemtableId)
+	assert.Equal(t, uint64(20), events[1].(*MemtableCreated).MemtableId)
+	assert.Equal(t, uint64(10), events[2].(*SSTableFlushed).SsTableId)
 }

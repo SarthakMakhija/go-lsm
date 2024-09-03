@@ -19,73 +19,73 @@ const (
 // Event represents a manifest event.
 type Event interface {
 	encode() ([]byte, error)
-	eventType() uint8
+	EventType() uint8
 }
 
 // MemtableCreated defines a new memtable event.
 type MemtableCreated struct {
-	memtableId uint64
+	MemtableId uint64
 }
 
 // SSTableFlushed defines an SSTable flushed event. (Memtable flushed to SSTable).
 type SSTableFlushed struct {
-	ssTableId uint64
+	SsTableId uint64
 }
 
 // NewMemtableCreated creates a new MemtableCreated event.
 func NewMemtableCreated(memtableId uint64) *MemtableCreated {
-	return &MemtableCreated{memtableId: memtableId}
+	return &MemtableCreated{MemtableId: memtableId}
 }
 
 // encode encodes MemtableCreated to byte slice.
 /*
  -----------------------------------------------
-| 1 byte event type | 8 bytes for the memtableId |
+| 1 byte event type | 8 bytes for the MemtableId |
  -----------------------------------------------
 */
 func (memtableCreated *MemtableCreated) encode() ([]byte, error) {
 	buffer := make([]byte, eventTypeSize+idSize)
 	buffer[0] = MemtableCreatedEventType
-	binary.LittleEndian.PutUint64(buffer[1:], memtableCreated.memtableId)
+	binary.LittleEndian.PutUint64(buffer[1:], memtableCreated.MemtableId)
 	return buffer, nil
 }
 
-// eventType returns the event type MemtableCreatedEventType.
-func (memtableCreated *MemtableCreated) eventType() uint8 {
+// EventType returns the event type MemtableCreatedEventType.
+func (memtableCreated *MemtableCreated) EventType() uint8 {
 	return MemtableCreatedEventType
 }
 
 // decodeMemtableCreated decodes the MemtableCreated event from the byte slice.
-// The buffer is a slice containing memtableId.
+// The buffer is a slice containing MemtableId.
 func decodeMemtableCreated(buffer []byte) *MemtableCreated {
 	return NewMemtableCreated(binary.LittleEndian.Uint64(buffer[:]))
 }
 
 // NewSSTableFlushed creates a new SSTableFlushed event.
 func NewSSTableFlushed(ssTableId uint64) *SSTableFlushed {
-	return &SSTableFlushed{ssTableId: ssTableId}
+	return &SSTableFlushed{SsTableId: ssTableId}
 }
 
 // encode encodes SSTableFlushed to byte slice.
 /*
  -----------------------------------------------
-| 1 byte event type | 8 bytes for the ssTableId |
+| 1 byte event type | 8 bytes for the SsTableId |
  -----------------------------------------------
 */
 func (ssTableFlushed *SSTableFlushed) encode() ([]byte, error) {
 	buffer := make([]byte, eventTypeSize+idSize)
 	buffer[0] = SSTableFlushedEventType
-	binary.LittleEndian.PutUint64(buffer[1:], ssTableFlushed.ssTableId)
+	binary.LittleEndian.PutUint64(buffer[1:], ssTableFlushed.SsTableId)
 	return buffer, nil
 }
 
-// eventType returns the event type SSTableFlushedEventType.
-func (ssTableFlushed *SSTableFlushed) eventType() uint8 {
+// EventType returns the event type SSTableFlushedEventType.
+func (ssTableFlushed *SSTableFlushed) EventType() uint8 {
 	return SSTableFlushedEventType
 }
 
 // decodeSSTableFlushed decodes the SSTableFlushed event from the byte slice.
-// The buffer is a slice containing ssTableId.
+// The buffer is a slice containing SsTableId.
 func decodeSSTableFlushed(buffer []byte) *SSTableFlushed {
 	return NewSSTableFlushed(binary.LittleEndian.Uint64(buffer[:]))
 }
