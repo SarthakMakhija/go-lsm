@@ -5,7 +5,23 @@ package state
 import (
 	"go-lsm/manifest"
 	"go-lsm/memory"
+	"time"
 )
+
+func NewStorageState() (*StorageState, error) {
+	return NewStorageStateWithOptions(StorageOptions{
+		MemTableSizeInBytes:   1 << 20,
+		Path:                  ".",
+		MaximumMemtables:      5,
+		FlushMemtableDuration: 50 * time.Millisecond,
+		EnableWAL:             false,
+		compactionOptions: SimpleLeveledCompactionOptions{
+			level0FilesCompactionTrigger: 6,
+			maxLevels:                    totalLevels,
+			sizeRatioPercentage:          200,
+		},
+	})
+}
 
 // DeleteManifest deletes Manifest file, only for testing.
 func (storageState *StorageState) DeleteManifest() {
@@ -20,5 +36,5 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 		storageState.options.MemTableSizeInBytes,
 		memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
 	)
-	storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
+	_ = storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 }

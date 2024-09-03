@@ -49,21 +49,6 @@ type StorageState struct {
 	walDirectoryPath               string
 }
 
-func NewStorageState() (*StorageState, error) {
-	return NewStorageStateWithOptions(StorageOptions{
-		MemTableSizeInBytes:   1 << 20,
-		Path:                  ".",
-		MaximumMemtables:      5,
-		FlushMemtableDuration: 50 * time.Millisecond,
-		EnableWAL:             false,
-		compactionOptions: SimpleLeveledCompactionOptions{
-			level0FilesCompactionTrigger: 6,
-			maxLevels:                    totalLevels,
-			sizeRatioPercentage:          200,
-		},
-	})
-}
-
 // NewStorageStateWithOptions TODO: Recover from WAL
 func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
