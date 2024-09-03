@@ -59,7 +59,7 @@ func TestMemtableRecoveryFromWAL(t *testing.T) {
 
 	memTable.wal.Close()
 
-	recoveredMemTable, maxTimestamp, err := recoverFromWAL(3, testMemtableSize, filepath.Join(walDirectoryPath, "3.wal"))
+	recoveredMemTable, maxTimestamp, err := RecoverFromWAL(3, testMemtableSize, walDirectoryPath)
 	assert.Nil(t, err)
 
 	value, ok := recoveredMemTable.Get(kv.NewStringKeyWithTimestamp("consensus", 5))

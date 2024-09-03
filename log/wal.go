@@ -22,7 +22,7 @@ type WAL struct {
 // This implementation writes every key/value pair from the batch to WAL individually.
 // An alternate would be to serialize the entire kv.TimestampedBatch and write to WAL.
 func NewWALForId(id uint64, walDirectoryPath string) (*WAL, error) {
-	return newWAL(filepath.Join(walDirectoryPath, fmt.Sprintf("%v.wal", id)))
+	return newWAL(CreateWalPathFor(id, walDirectoryPath))
 }
 
 // Recover recovers from WAL.
@@ -108,6 +108,11 @@ func (wal *WAL) Close() {
 // Path returns the WAL path.
 func (wal *WAL) Path() (string, error) {
 	return filepath.Abs(wal.file.Name())
+}
+
+// CreateWalPathFor creates a WAL path for the memtable with id.
+func CreateWalPathFor(id uint64, walDirectoryPath string) string {
+	return filepath.Join(walDirectoryPath, fmt.Sprintf("%v.wal", id))
 }
 
 // newWAL creates a new instance of WAL.
