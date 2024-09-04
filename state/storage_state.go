@@ -31,7 +31,6 @@ type StorageOptions struct {
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration
-	EnableWAL             bool
 	compactionOptions     SimpleLeveledCompactionOptions
 }
 
@@ -51,7 +50,7 @@ type StorageState struct {
 }
 
 // NewStorageStateWithOptions TODO: Recover from WAL
-func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
+func NewStorageStateWithOptions(options StorageOptions, enableWAL bool) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
@@ -64,7 +63,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 		return nil, err
 	}
 
-	walPresence := log.NewWALPresence(options.EnableWAL, options.Path)
+	walPresence := log.NewWALPresence(enableWAL, options.Path)
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
 		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, walPresence),

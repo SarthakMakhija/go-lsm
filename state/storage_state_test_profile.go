@@ -14,13 +14,12 @@ func NewStorageState() (*StorageState, error) {
 		Path:                  ".",
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
-		EnableWAL:             false,
 		compactionOptions: SimpleLeveledCompactionOptions{
 			level0FilesCompactionTrigger: 6,
 			maxLevels:                    totalLevels,
 			sizeRatioPercentage:          200,
 		},
-	})
+	}, false)
 }
 
 // DeleteManifest deletes Manifest file, only for testing.
