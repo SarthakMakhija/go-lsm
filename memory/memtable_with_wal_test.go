@@ -18,7 +18,7 @@ func TestMemtableWithWALWithASingleKey(t *testing.T) {
 		_ = os.RemoveAll(walDirectoryPath)
 	}()
 
-	memTable := NewMemtable(1, testMemtableSize, log.NewWALPresence(true, directoryPath))
+	memTable := NewMemtable(1, testMemtableSize, log.NewWALPath(directoryPath))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
 	value, ok := memTable.Get(kv.NewStringKeyWithTimestamp("consensus", 5))
@@ -35,7 +35,7 @@ func TestMemtableWithWALWithMultipleKeys(t *testing.T) {
 		_ = os.RemoveAll(walDirectoryPath)
 	}()
 
-	memTable := NewMemtable(2, testMemtableSize, log.NewWALPresence(true, directoryPath))
+	memTable := NewMemtable(2, testMemtableSize, log.NewWALPath(directoryPath))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("storage", 6), kv.NewStringValue("NVMe"))
 
@@ -57,7 +57,7 @@ func TestMemtableRecoveryFromWAL(t *testing.T) {
 		_ = os.RemoveAll(walDirectoryPath)
 	}()
 
-	memTable := NewMemtable(3, testMemtableSize, log.NewWALPresence(true, directoryPath))
+	memTable := NewMemtable(3, testMemtableSize, log.NewWALPath(directoryPath))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("storage", 6), kv.NewStringValue("NVMe"))
 

@@ -13,6 +13,7 @@ func TestGetsTheBeginTimestamp(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -26,6 +27,7 @@ func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -43,6 +45,7 @@ func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -60,6 +63,7 @@ func TestGetsCommitTimestampForTwoTransactions(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -87,6 +91,7 @@ func TestGetsCommitTimestampForTwoTransactionsGivenOneTransactionReadsTheKeyAfte
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -115,6 +120,7 @@ func TestResultsInConflictErrorForOneTransaction(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 

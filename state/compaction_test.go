@@ -26,7 +26,7 @@ func TestForceFullCompaction(t *testing.T) {
 			level0FilesCompactionTrigger: 2,
 		},
 	}
-	storageState, _ := NewStorageStateWithOptions(storageOptions, true)
+	storageState, _ := NewStorageStateWithOptions(storageOptions)
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()

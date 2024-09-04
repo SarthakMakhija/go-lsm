@@ -27,7 +27,7 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 		SSTableSizeInBytes:    4096,
 		compactionOptions:     simpleLeveledCompactionOptions,
 	}
-	storageState, _ := NewStorageStateWithOptions(storageOptions, true)
+	storageState, _ := NewStorageStateWithOptions(storageOptions)
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()

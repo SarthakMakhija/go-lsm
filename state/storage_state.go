@@ -46,11 +46,11 @@ type StorageState struct {
 	closeChannel                   chan struct{}
 	flushMemtableCompletionChannel chan struct{}
 	options                        StorageOptions
-	walPresence                    *log.WalPresence
+	walPath                        log.WALPath
 }
 
 // NewStorageStateWithOptions TODO: Recover from WAL
-func NewStorageStateWithOptions(options StorageOptions, enableWAL bool) (*StorageState, error) {
+func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
@@ -63,10 +63,10 @@ func NewStorageStateWithOptions(options StorageOptions, enableWAL bool) (*Storag
 		return nil, err
 	}
 
-	walPresence := log.NewWALPresence(enableWAL, options.Path)
+	walPath := log.NewWALPath(options.Path)
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
-		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, walPresence),
+		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, walPath),
 		idGenerator:                    idGenerator,
 		manifest:                       manifestRecorder,
 		ssTables:                       make(map[uint64]table.SSTable),
@@ -74,7 +74,7 @@ func NewStorageStateWithOptions(options StorageOptions, enableWAL bool) (*Storag
 		closeChannel:                   make(chan struct{}),
 		flushMemtableCompletionChannel: make(chan struct{}),
 		options:                        options,
-		walPresence:                    walPresence,
+		walPath:                        walPath,
 	}
 	if err := storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id())); err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (storageState *StorageState) Close() {
 }
 
 func (storageState *StorageState) WALDirectoryPath() string {
-	return storageState.walPresence.WALDirectoryPath
+	return storageState.walPath.DirectoryPath
 }
 
 func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
@@ -246,7 +246,7 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes
 		storageState.currentMemtable = memory.NewMemtable(
 			storageState.idGenerator.NextId(),
 			storageState.options.MemTableSizeInBytes,
-			storageState.walPresence,
+			storageState.walPath,
 		)
 		return storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 	}

@@ -21,12 +21,9 @@ type Memtable struct {
 	wal                 *log.WAL
 }
 
-// NewMemtable creates a new instance of Memtable with or without WAL.
-func NewMemtable(id uint64, memTableSizeInBytes int64, walPresence *log.WalPresence) *Memtable {
-	if walPresence.EnableWAL {
-		return newMemtableWithWAL(id, memTableSizeInBytes, walPresence.WALDirectoryPath)
-	}
-	return NewMemtableWithoutWAL(id, memTableSizeInBytes)
+// NewMemtable creates a new instance of Memtable with WAL.
+func NewMemtable(id uint64, memTableSizeInBytes int64, walPath log.WALPath) *Memtable {
+	return newMemtableWithWAL(id, memTableSizeInBytes, walPath.DirectoryPath)
 }
 
 // NewMemtableWithoutWAL creates a new instance of Memtable without WAL.

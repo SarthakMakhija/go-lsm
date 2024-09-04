@@ -27,7 +27,7 @@ type KeyValue struct {
 
 // NewDb creates a new instance of key/value Db.
 func NewDb(options state.StorageOptions) (*Db, error) {
-	storageState, err := state.NewStorageStateWithOptions(options, true)
+	storageState, err := state.NewStorageStateWithOptions(options)
 	if err != nil {
 		return nil, err
 	}

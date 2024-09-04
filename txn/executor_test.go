@@ -14,6 +14,7 @@ func TestSetsABatchWithOneKeyValueUsingExecutor(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 	}()
 
 	batch := kv.NewBatch()
@@ -35,6 +36,7 @@ func TestSetsABatchWithOneKeyValueUsingExecutorAndRunsTheCallback(t *testing.T) 
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 	}()
 
 	batch := kv.NewBatch()
@@ -60,6 +62,7 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 	}()
 
 	batch := kv.NewBatch()
@@ -86,6 +89,7 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor1(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 	}()
 
 	executeSet := func(executor *Executor) {

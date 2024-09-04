@@ -14,6 +14,7 @@ func TestReadonlyTransactionWithEmptyState(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -30,6 +31,7 @@ func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -55,6 +57,7 @@ func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTi
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -81,6 +84,7 @@ func TestReadonlyTransactionWithScan(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -112,6 +116,7 @@ func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testi
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -152,6 +157,7 @@ func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -171,6 +177,7 @@ func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -205,6 +212,7 @@ func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -226,6 +234,7 @@ func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -247,6 +256,7 @@ func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testin
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -287,6 +297,7 @@ func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -323,6 +334,7 @@ func TestTracksReadsInAReadwriteTransactionWithScan(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 

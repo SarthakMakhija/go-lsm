@@ -15,6 +15,7 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -60,6 +61,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSys
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -100,6 +102,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInT
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -136,6 +139,7 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystemWithABoundC
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
