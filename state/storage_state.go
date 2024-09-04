@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-lsm/iterator"
 	"go-lsm/kv"
+	"go-lsm/log"
 	"go-lsm/manifest"
 	"go-lsm/memory"
 	"go-lsm/table"
@@ -46,7 +47,7 @@ type StorageState struct {
 	closeChannel                   chan struct{}
 	flushMemtableCompletionChannel chan struct{}
 	options                        StorageOptions
-	walPresence                    *memory.WalPresence
+	walPresence                    *log.WalPresence
 }
 
 // NewStorageStateWithOptions TODO: Recover from WAL
@@ -63,7 +64,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 		return nil, err
 	}
 
-	walPresence := memory.NewWALPresence(options.EnableWAL, options.Path)
+	walPresence := log.NewWALPresence(options.EnableWAL, options.Path)
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
 		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, walPresence),
