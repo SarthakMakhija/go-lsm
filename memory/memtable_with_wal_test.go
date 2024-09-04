@@ -9,14 +9,15 @@ import (
 )
 
 func TestMemtableWithWALWithASingleKey(t *testing.T) {
-	walDirectoryPath := filepath.Join(".", "wal")
+	directoryPath := "."
+	walDirectoryPath := filepath.Join(directoryPath, "wal")
 	assert.Nil(t, os.MkdirAll(walDirectoryPath, os.ModePerm))
 
 	defer func() {
 		_ = os.RemoveAll(walDirectoryPath)
 	}()
 
-	memTable := NewMemtable(1, testMemtableSize, NewWALPresence(true, walDirectoryPath))
+	memTable := NewMemtable(1, testMemtableSize, NewWALPresence(true, directoryPath))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
 	value, ok := memTable.Get(kv.NewStringKeyWithTimestamp("consensus", 5))
@@ -25,14 +26,15 @@ func TestMemtableWithWALWithASingleKey(t *testing.T) {
 }
 
 func TestMemtableWithWALWithMultipleKeys(t *testing.T) {
-	walDirectoryPath := filepath.Join(".", "wal")
+	directoryPath := "."
+	walDirectoryPath := filepath.Join(directoryPath, "wal")
 	assert.Nil(t, os.MkdirAll(walDirectoryPath, os.ModePerm))
 
 	defer func() {
 		_ = os.RemoveAll(walDirectoryPath)
 	}()
 
-	memTable := NewMemtable(2, testMemtableSize, NewWALPresence(true, walDirectoryPath))
+	memTable := NewMemtable(2, testMemtableSize, NewWALPresence(true, directoryPath))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("storage", 6), kv.NewStringValue("NVMe"))
 
@@ -46,14 +48,15 @@ func TestMemtableWithWALWithMultipleKeys(t *testing.T) {
 }
 
 func TestMemtableRecoveryFromWAL(t *testing.T) {
-	walDirectoryPath := filepath.Join(".", "wal")
+	directoryPath := "."
+	walDirectoryPath := filepath.Join(directoryPath, "wal")
 	assert.Nil(t, os.MkdirAll(walDirectoryPath, os.ModePerm))
 
 	defer func() {
 		_ = os.RemoveAll(walDirectoryPath)
 	}()
 
-	memTable := NewMemtable(3, testMemtableSize, NewWALPresence(true, walDirectoryPath))
+	memTable := NewMemtable(3, testMemtableSize, NewWALPresence(true, directoryPath))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("storage", 6), kv.NewStringValue("NVMe"))
 

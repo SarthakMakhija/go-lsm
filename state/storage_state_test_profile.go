@@ -34,7 +34,7 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.currentMemtable = memory.NewMemtable(
 		storageState.idGenerator.NextId(),
 		storageState.options.MemTableSizeInBytes,
-		memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
+		storageState.walPresence,
 	)
 	_ = storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 }

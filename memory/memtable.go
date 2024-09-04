@@ -5,6 +5,8 @@ import (
 	"go-lsm/kv"
 	"go-lsm/log"
 	"go-lsm/memory/external"
+	"os"
+	"path/filepath"
 )
 
 // WalPresence indicates the presence of WAL.
@@ -14,8 +16,15 @@ type WalPresence struct {
 }
 
 // NewWALPresence creates a new instance of WalPresence.
-func NewWALPresence(enableWAL bool, walDirectoryPath string) WalPresence {
-	return WalPresence{
+func NewWALPresence(enableWAL bool, directoryPath string) *WalPresence {
+	var walDirectoryPath = ""
+	if enableWAL {
+		walDirectoryPath = filepath.Join(directoryPath, "wal")
+		if _, err := os.Stat(walDirectoryPath); os.IsNotExist(err) {
+			_ = os.MkdirAll(walDirectoryPath, os.ModePerm)
+		}
+	}
+	return &WalPresence{
 		EnableWAL:        enableWAL,
 		WALDirectoryPath: walDirectoryPath,
 	}
@@ -36,7 +45,7 @@ type Memtable struct {
 }
 
 // NewMemtable creates a new instance of Memtable with or without WAL.
-func NewMemtable(id uint64, memTableSizeInBytes int64, walPresence WalPresence) *Memtable {
+func NewMemtable(id uint64, memTableSizeInBytes int64, walPresence *WalPresence) *Memtable {
 	if walPresence.EnableWAL {
 		return newMemtableWithWAL(id, memTableSizeInBytes, walPresence.WALDirectoryPath)
 	}

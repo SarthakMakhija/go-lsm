@@ -46,7 +46,7 @@ type StorageState struct {
 	closeChannel                   chan struct{}
 	flushMemtableCompletionChannel chan struct{}
 	options                        StorageOptions
-	walDirectoryPath               string
+	walPresence                    *memory.WalPresence
 }
 
 // NewStorageStateWithOptions TODO: Recover from WAL
@@ -54,23 +54,19 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
-	//TODO: What if options.EnableWAL is false
-	walDirectoryPath := filepath.Join(options.Path, "wal")
-	if _, err := os.Stat(walDirectoryPath); os.IsNotExist(err) {
-		_ = os.MkdirAll(walDirectoryPath, os.ModePerm)
-	}
 	levels := make([]*Level, options.compactionOptions.maxLevels)
 	for level := 1; level <= int(options.compactionOptions.maxLevels); level++ {
 		levels[level-1] = &Level{levelNumber: level}
 	}
-
 	manifestRecorder, _, err := manifest.CreateNewOrRecoverFrom(options.Path)
 	if err != nil {
 		return nil, err
 	}
+
+	walPresence := memory.NewWALPresence(options.EnableWAL, options.Path)
 	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
-		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, memory.NewWALPresence(options.EnableWAL, walDirectoryPath)),
+		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, walPresence),
 		idGenerator:                    idGenerator,
 		manifest:                       manifestRecorder,
 		ssTables:                       make(map[uint64]table.SSTable),
@@ -78,7 +74,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 		closeChannel:                   make(chan struct{}),
 		flushMemtableCompletionChannel: make(chan struct{}),
 		options:                        options,
-		walDirectoryPath:               walDirectoryPath,
+		walPresence:                    walPresence,
 	}
 	if err := storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id())); err != nil {
 		return nil, err
@@ -204,6 +200,10 @@ func (storageState *StorageState) Close() {
 	<-storageState.flushMemtableCompletionChannel
 }
 
+func (storageState *StorageState) WALDirectoryPath() string {
+	return storageState.walPresence.WALDirectoryPath
+}
+
 func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
 	if level == 0 {
 		ids := make([]uint64, 0, len(storageState.l0SSTableIds))
@@ -246,7 +246,7 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes
 		storageState.currentMemtable = memory.NewMemtable(
 			storageState.idGenerator.NextId(),
 			storageState.options.MemTableSizeInBytes,
-			memory.NewWALPresence(storageState.options.EnableWAL, storageState.walDirectoryPath),
+			storageState.walPresence,
 		)
 		return storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 	}
