@@ -46,3 +46,8 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	)
 	_ = storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 }
+
+// hasImmutableMemtables returns true if there are immutable tables, it is only for testing.
+func (storageState *StorageState) hasImmutableMemtables() bool {
+	return len(storageState.immutableMemtables) > 0
+}

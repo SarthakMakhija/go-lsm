@@ -228,10 +228,6 @@ func (storageState *StorageState) ssTableFilePath(id uint64) string {
 	return filepath.Join(storageState.options.Path, fmt.Sprintf("%v.sst", id))
 }
 
-func (storageState *StorageState) hasImmutableMemtables() bool {
-	return len(storageState.immutableMemtables) > 0
-}
-
 func (storageState *StorageState) sortedMemtableIds() []uint64 {
 	ids := make([]uint64, 0, 1+len(storageState.immutableMemtables))
 	ids = append(ids, storageState.currentMemtable.Id())
