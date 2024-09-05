@@ -12,7 +12,7 @@ import (
 )
 
 func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
-	tempDirectory := os.TempDir()
+	directory := filepath.Join(".", "TestGenerateCompactionTaskForSimpleLayeredCompaction")
 
 	simpleLeveledCompactionOptions := SimpleLeveledCompactionOptions{
 		sizeRatioPercentage:          200,
@@ -21,7 +21,7 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 	}
 	storageOptions := StorageOptions{
 		MemTableSizeInBytes:   250,
-		Path:                  tempDirectory,
+		Path:                  directory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
@@ -31,13 +31,14 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		_ = os.RemoveAll(directory)
 	}()
 
 	buildL0SSTable := func(id uint64) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("paxos"))
 
-		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
+		filePath := filepath.Join(directory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
 
 		ssTable, err := ssTableBuilder.Build(id, filePath)
 		assert.Nil(t, err)
@@ -49,7 +50,7 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("unique", 30), kv.NewStringValue("map"))
 
-		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
+		filePath := filepath.Join(directory, fmt.Sprintf("TestGenerateCompactionTaskForSimpleLayeredCompaction%v.log", id))
 
 		ssTable, err := ssTableBuilder.Build(id, filePath)
 		assert.Nil(t, err)

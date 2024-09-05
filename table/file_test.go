@@ -8,8 +8,11 @@ import (
 )
 
 func TestReadFixedChunkFromFile(t *testing.T) {
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestReadFixedChunkFromFile.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestReadFixedChunkFromFile.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	value := []byte("LSM Tree: Log storage merge tree")
 	file, err := Create(filePath, value)
@@ -24,8 +27,11 @@ func TestReadFixedChunkFromFile(t *testing.T) {
 }
 
 func TestReadMoreChunkThanAvailableFromFile(t *testing.T) {
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestReadMoreChunkThanAvailableFromFile.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestReadMoreChunkThanAvailableFromFile.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	value := []byte("LSM Tree: Log storage merge tree")
 	file, err := Create(filePath, value)

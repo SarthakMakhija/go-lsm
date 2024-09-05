@@ -7,21 +7,25 @@ import (
 	"go-lsm/state"
 	"go-lsm/txn"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestReadInEmptyDb(t *testing.T) {
-	tempDirectory := os.TempDir()
+	directory := filepath.Join(".", "TestReadInEmptyDb")
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
-		Path:                  tempDirectory,
+		Path:                  directory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
 	db, _ := go_lsm.NewDb(storageOptions)
-	defer db.Close()
+	defer func() {
+		db.Close()
+		_ = os.RemoveAll(directory)
+	}()
 
 	err := db.Read(func(transaction *txn.Transaction) {
 		_, ok := transaction.Get([]byte("consensus"))
@@ -31,16 +35,19 @@ func TestReadInEmptyDb(t *testing.T) {
 }
 
 func TestReadAnExistingKeyValue(t *testing.T) {
-	tempDirectory := os.TempDir()
+	directory := filepath.Join(".", "TestReadAnExistingKeyValue")
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
-		Path:                  tempDirectory,
+		Path:                  directory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
 	db, _ := go_lsm.NewDb(storageOptions)
-	defer db.Close()
+	defer func() {
+		db.Close()
+		_ = os.RemoveAll(directory)
+	}()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
 		assert.NoError(t, transaction.Set([]byte("raft"), []byte("consensus algorithm")))
@@ -64,16 +71,19 @@ func TestReadAnExistingKeyValue(t *testing.T) {
 }
 
 func TestScanKeyValues1(t *testing.T) {
-	tempDirectory := os.TempDir()
+	directory := filepath.Join(".", "TestScanKeyValues1")
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
-		Path:                  tempDirectory,
+		Path:                  directory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
 	db, _ := go_lsm.NewDb(storageOptions)
-	defer db.Close()
+	defer func() {
+		db.Close()
+		_ = os.RemoveAll(directory)
+	}()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
 		assert.NoError(t, transaction.Set([]byte("raft"), []byte("consensus algorithm")))
@@ -103,16 +113,19 @@ func TestScanKeyValues1(t *testing.T) {
 }
 
 func TestScanKeyValues2(t *testing.T) {
-	tempDirectory := os.TempDir()
+	directory := filepath.Join(".", "TestScanKeyValues2")
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
-		Path:                  tempDirectory,
+		Path:                  directory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
 	db, _ := go_lsm.NewDb(storageOptions)
-	defer db.Close()
+	defer func() {
+		db.Close()
+		_ = os.RemoveAll(directory)
+	}()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
 		assert.NoError(t, transaction.Set([]byte("raft"), []byte("consensus algorithm")))

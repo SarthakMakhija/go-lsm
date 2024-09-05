@@ -14,8 +14,11 @@ func TestLoadSSTableWithSingleBlockAndCheckKeysForExistenceUsingBloom(t *testing
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestLoadSSTableWithSingleBlockAndCheckKeysForExistenceUsingBloom.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestLoadSSTableWithSingleBlockAndCheckKeysForExistenceUsingBloom.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	_, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -34,8 +37,11 @@ func TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom(t *test
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 6), kv.NewStringValue("bbolt"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	_, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -52,8 +58,11 @@ func TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom(t *testing
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	_, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)

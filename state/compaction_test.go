@@ -12,11 +12,10 @@ import (
 )
 
 func TestForceFullCompaction(t *testing.T) {
-	tempDirectory := os.TempDir()
-
+	directory := filepath.Join(".", "TestForceFullCompaction")
 	storageOptions := StorageOptions{
 		MemTableSizeInBytes:   250,
-		Path:                  tempDirectory,
+		Path:                  directory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
@@ -26,10 +25,12 @@ func TestForceFullCompaction(t *testing.T) {
 			level0FilesCompactionTrigger: 2,
 		},
 	}
+
 	storageState, _ := NewStorageStateWithOptions(storageOptions)
 	defer func() {
 		storageState.Close()
 		storageState.DeleteManifest()
+		_ = os.RemoveAll(directory)
 	}()
 
 	buildL0SSTable := func(id uint64) {
@@ -38,7 +39,7 @@ func TestForceFullCompaction(t *testing.T) {
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
 
-		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
+		filePath := filepath.Join(directory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
 
 		ssTable, err := ssTableBuilder.Build(id, filePath)
 		assert.Nil(t, err)
@@ -52,7 +53,7 @@ func TestForceFullCompaction(t *testing.T) {
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("quorum", 10), kv.NewStringValue("n/2+1"))
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("unique", 11), kv.NewStringValue("map"))
 
-		filePath := filepath.Join(tempDirectory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
+		filePath := filepath.Join(directory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
 
 		ssTable, err := ssTableBuilder.Build(id, filePath)
 		assert.Nil(t, err)

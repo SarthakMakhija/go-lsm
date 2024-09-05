@@ -29,7 +29,7 @@ func TestAppendToWALForId(t *testing.T) {
 }
 
 func TestAppendToWAL(t *testing.T) {
-	walPath := filepath.Join(os.TempDir(), "TestAppendToWAL.log")
+	walPath := filepath.Join(".", "TestAppendToWAL.log")
 	wal, err := newWAL(walPath)
 
 	assert.Nil(t, err)
@@ -43,7 +43,7 @@ func TestAppendToWAL(t *testing.T) {
 }
 
 func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
-	walPath := filepath.Join(os.TempDir(), "TestAppendToWALAndRecoverFromWALPath.log")
+	walPath := filepath.Join(".", "TestAppendToWALAndRecoverFromWALPath.log")
 	wal, err := newWAL(walPath)
 
 	assert.Nil(t, err)
@@ -77,7 +77,7 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 }
 
 func TestDeleteWALFile(t *testing.T) {
-	walPath := filepath.Join(os.TempDir(), "TestDeleteWALFile.log")
+	walPath := filepath.Join(".", "TestDeleteWALFile.log")
 	wal, err := newWAL(walPath)
 
 	assert.Nil(t, err)
@@ -92,11 +92,18 @@ func TestDeleteWALFile(t *testing.T) {
 }
 
 func TestWALPath(t *testing.T) {
-	walPath := filepath.Join(os.TempDir(), "TestWALPath.log")
+	walPath := filepath.Join(".", "TestWALPath.log")
 	wal, err := newWAL(walPath)
+	defer func() {
+		_ = os.Remove(walPath)
+	}()
+
+	assert.Nil(t, err)
+
+	absolute, err := filepath.Abs(walPath)
 	assert.Nil(t, err)
 
 	path, err := wal.Path()
 	assert.Nil(t, err)
-	assert.Equal(t, walPath, path)
+	assert.Equal(t, absolute, path)
 }

@@ -12,8 +12,11 @@ func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -35,8 +38,11 @@ func TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestBuildAnSSTableWithASingleBlockWithStartingAndEndingKey.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -50,8 +56,11 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues(t *testing.T)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValues.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -85,8 +94,11 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAn
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAndEndingKey.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)
@@ -100,8 +112,11 @@ func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 10), kv.NewStringValue("TiKV"))
 
-	tempDirectory := os.TempDir()
-	filePath := filepath.Join(tempDirectory, "TestBuildAnSSTableWithTwoBlocks.log")
+	directory := "."
+	filePath := filepath.Join(directory, "TestBuildAnSSTableWithTwoBlocks.log")
+	defer func() {
+		_ = os.Remove(filePath)
+	}()
 
 	ssTable, err := ssTableBuilder.Build(1, filePath)
 	assert.Nil(t, err)

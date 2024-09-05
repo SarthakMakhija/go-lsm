@@ -8,11 +8,10 @@ import (
 )
 
 func TestCreateANewManifestWithNewMemtableCreatedEvent(t *testing.T) {
-	manifestDirectoryPath := filepath.Join(os.TempDir(), "TestCreateANewManifestWithNewMemtableCreatedEvent")
+	manifestDirectoryPath := filepath.Join(".", "TestCreateANewManifestWithNewMemtableCreatedEvent")
 	assert.Nil(t, os.MkdirAll(manifestDirectoryPath, os.ModePerm))
 
 	manifest, _, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
-
 	defer func() {
 		_ = os.RemoveAll(manifestDirectoryPath)
 	}()
@@ -22,11 +21,10 @@ func TestCreateANewManifestWithNewMemtableCreatedEvent(t *testing.T) {
 }
 
 func TestCreateANewManifestWithNewSSTableFlushedEvent(t *testing.T) {
-	manifestDirectoryPath := filepath.Join(os.TempDir(), "TestCreateANewManifestWithNewSSTableFlushedEvent")
+	manifestDirectoryPath := filepath.Join(".", "TestCreateANewManifestWithNewSSTableFlushedEvent")
 	assert.Nil(t, os.MkdirAll(manifestDirectoryPath, os.ModePerm))
 
 	manifest, _, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
-
 	defer func() {
 		_ = os.RemoveAll(manifestDirectoryPath)
 	}()
@@ -36,11 +34,10 @@ func TestCreateANewManifestWithNewSSTableFlushedEvent(t *testing.T) {
 }
 
 func TestRecoversAnExistingManifest(t *testing.T) {
-	manifestDirectoryPath := filepath.Join(os.TempDir(), "TestRecoversAnExistingManifest")
+	manifestDirectoryPath := filepath.Join(".", "TestRecoversAnExistingManifest")
 	assert.Nil(t, os.MkdirAll(manifestDirectoryPath, os.ModePerm))
 
 	manifest, _, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
-
 	defer func() {
 		_ = os.RemoveAll(manifestDirectoryPath)
 	}()
