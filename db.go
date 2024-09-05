@@ -33,7 +33,7 @@ func NewDb(options state.StorageOptions) (*Db, error) {
 	}
 	return &Db{
 		storageState: storageState,
-		oracle:       txn.NewOracle(txn.NewExecutor(storageState)),
+		oracle:       txn.NewOracleWithLastCommitTimestamp(txn.NewExecutor(storageState), storageState.LastCommitTimestamp()),
 	}, nil
 }
 

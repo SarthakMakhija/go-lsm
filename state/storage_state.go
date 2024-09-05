@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"time"
 )
 
@@ -47,6 +48,7 @@ type StorageState struct {
 	flushMemtableCompletionChannel chan struct{}
 	options                        StorageOptions
 	walPath                        log.WALPath
+	lastCommitTimestamp            uint64
 }
 
 // NewStorageStateWithOptions TODO: Recover from WAL
@@ -58,25 +60,23 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	for level := 1; level <= int(options.compactionOptions.maxLevels); level++ {
 		levels[level-1] = &Level{levelNumber: level}
 	}
-	manifestRecorder, _, err := manifest.CreateNewOrRecoverFrom(options.Path)
+	manifestRecorder, events, err := manifest.CreateNewOrRecoverFrom(options.Path)
 	if err != nil {
 		return nil, err
 	}
 
-	walPath := log.NewWALPath(options.Path)
-	idGenerator := NewSSTableIdGenerator()
 	storageState := &StorageState{
-		currentMemtable:                memory.NewMemtable(idGenerator.NextId(), options.MemTableSizeInBytes, walPath),
-		idGenerator:                    idGenerator,
+		idGenerator:                    NewSSTableIdGenerator(),
 		manifest:                       manifestRecorder,
 		ssTables:                       make(map[uint64]table.SSTable),
 		levels:                         levels,
 		closeChannel:                   make(chan struct{}),
 		flushMemtableCompletionChannel: make(chan struct{}),
 		options:                        options,
-		walPath:                        walPath,
+		walPath:                        log.NewWALPath(options.Path),
+		lastCommitTimestamp:            0,
 	}
-	if err := storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id())); err != nil {
+	if err := storageState.mayBeLoadExisting(events); err != nil {
 		return nil, err
 	}
 	storageState.spawnMemtableFlush()
@@ -204,6 +204,10 @@ func (storageState *StorageState) WALDirectoryPath() string {
 	return storageState.walPath.DirectoryPath
 }
 
+func (storageState *StorageState) LastCommitTimestamp() uint64 {
+	return storageState.lastCommitTimestamp
+}
+
 func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
 	if level == 0 {
 		ids := make([]uint64, 0, len(storageState.l0SSTableIds))
@@ -289,4 +293,48 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			}
 		}
 	}()
+}
+
+func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) error {
+	if len(events) > 0 {
+		memtableIds := make(map[uint64]struct{})
+		for _, event := range events {
+			switch event.EventType() {
+			case manifest.MemtableCreatedEventType:
+				memtableCreated := event.(*manifest.MemtableCreated)
+				memtableIds[memtableCreated.MemtableId] = struct{}{}
+				storageState.idGenerator.setIdIfGreaterThanExisting(memtableCreated.MemtableId)
+			default:
+				panic("unhandled default case")
+			}
+		}
+		var immutableMemtables []*memory.Memtable
+		var maxTimestamp uint64
+		for memtableId := range memtableIds {
+			memtable, timestamp, err := memory.RecoverFromWAL(
+				memtableId,
+				storageState.options.MemTableSizeInBytes,
+				storageState.WALDirectoryPath(),
+			)
+			if err != nil {
+				return err
+			}
+			immutableMemtables = append(immutableMemtables, memtable)
+			maxTimestamp = max(maxTimestamp, timestamp)
+		}
+		sort.Slice(immutableMemtables, func(i, j int) bool {
+			return immutableMemtables[i].Id() < immutableMemtables[j].Id()
+		})
+		storageState.lastCommitTimestamp = maxTimestamp
+		storageState.immutableMemtables = immutableMemtables
+	}
+	storageState.currentMemtable = memory.NewMemtable(
+		storageState.idGenerator.NextId(),
+		storageState.options.MemTableSizeInBytes,
+		storageState.walPath,
+	)
+	if err := storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id())); err != nil {
+		return err
+	}
+	return nil
 }
