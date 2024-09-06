@@ -20,10 +20,10 @@ type SSTable struct {
 	endingKey             kv.Key
 }
 
-// Load loads the entire SSTable from the given filePath.
+// Load loads the entire SSTable from the given rootPath.
 // Please take a look at table.SSTableBuilder to understand the encoding of SSTable.
-func Load(id uint64, filePath string, blockSize uint) (SSTable, error) {
-	file, err := Open(filePath)
+func Load(id uint64, rootPath string, blockSize uint) (SSTable, error) {
+	file, err := Open(SSTableFilePath(id, rootPath))
 	if err != nil {
 		return SSTable{}, err
 	}

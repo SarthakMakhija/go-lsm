@@ -15,7 +15,7 @@ func TestReadFixedChunkFromFile(t *testing.T) {
 	}()
 
 	value := []byte("LSM Tree: Log storage merge tree")
-	file, err := Create(filePath, value)
+	file, err := CreateAndWrite(filePath, value)
 
 	assert.Nil(t, err)
 
@@ -34,7 +34,7 @@ func TestReadMoreChunkThanAvailableFromFile(t *testing.T) {
 	}()
 
 	value := []byte("LSM Tree: Log storage merge tree")
-	file, err := Create(filePath, value)
+	file, err := CreateAndWrite(filePath, value)
 
 	assert.Nil(t, err)
 

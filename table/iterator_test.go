@@ -3,8 +3,7 @@ package table
 import (
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
-	"os"
-	"path/filepath"
+	"go-lsm/test_utility"
 	"testing"
 )
 
@@ -12,13 +11,12 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing
 	ssTableBuilder := NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringValue("raft"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValue.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
@@ -39,13 +37,12 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValues(t *test
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 5), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 5), kv.NewStringValue("bbolt"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValues.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
@@ -75,13 +72,12 @@ func TestIterateOverAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 9), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithTwoBlocks.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
@@ -105,13 +101,12 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValueUsingSeekTo
 	ssTableBuilder := NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValueUsingSeekToKey.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 6))
@@ -132,13 +127,12 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSeekToKey.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("contribute", 9))
@@ -164,13 +158,12 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSeekToKeyContainingTheKey.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 6))
@@ -200,13 +193,12 @@ func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKey(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("cart", 5), kv.NewStringValue("draft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKey.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 10))
@@ -226,13 +218,12 @@ func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKeyWithTheKeyLessThanTheFir
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("cart", 9), kv.NewStringValue("draft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 10), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKeyWithTheKeyLessThanTheFirstKeyOfTheFirstBlock.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("bolt", 11))

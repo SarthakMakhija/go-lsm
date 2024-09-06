@@ -3,17 +3,18 @@ package txn
 import (
 	"github.com/stretchr/testify/assert"
 	"go-lsm/state"
+	"go-lsm/test_utility"
 	"testing"
 )
 
 func TestGetsTheBeginTimestamp(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -21,13 +22,13 @@ func TestGetsTheBeginTimestamp(t *testing.T) {
 }
 
 func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -39,13 +40,13 @@ func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
 }
 
 func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -57,13 +58,13 @@ func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked
 }
 
 func TestGetsCommitTimestampForTwoTransactions(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -85,13 +86,13 @@ func TestGetsCommitTimestampForTwoTransactions(t *testing.T) {
 }
 
 func TestGetsCommitTimestampForTwoTransactionsGivenOneTransactionReadsTheKeyAfterTheOtherWrites(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -114,13 +115,13 @@ func TestGetsCommitTimestampForTwoTransactionsGivenOneTransactionReadsTheKeyAfte
 }
 
 func TestResultsInConflictErrorForOneTransaction(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 

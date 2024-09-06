@@ -1,21 +1,20 @@
 package state
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/table"
-	"os"
-	"path/filepath"
+	"go-lsm/test_utility"
 	"testing"
 	"time"
 )
 
 func TestForceFullCompaction(t *testing.T) {
-	directory := filepath.Join(".", "TestForceFullCompaction")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+
 	storageOptions := StorageOptions{
 		MemTableSizeInBytes:   250,
-		Path:                  directory,
+		Path:                  rootPath,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
@@ -28,9 +27,8 @@ func TestForceFullCompaction(t *testing.T) {
 
 	storageState, _ := NewStorageStateWithOptions(storageOptions)
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		_ = os.RemoveAll(directory)
 	}()
 
 	buildL0SSTable := func(id uint64) {
@@ -39,9 +37,7 @@ func TestForceFullCompaction(t *testing.T) {
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
 
-		filePath := filepath.Join(directory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
-
-		ssTable, err := ssTableBuilder.Build(id, filePath)
+		ssTable, err := ssTableBuilder.Build(id, rootPath)
 		assert.Nil(t, err)
 
 		storageState.l0SSTableIds = append(storageState.l0SSTableIds, id)
@@ -53,9 +49,7 @@ func TestForceFullCompaction(t *testing.T) {
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("quorum", 10), kv.NewStringValue("n/2+1"))
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("unique", 11), kv.NewStringValue("map"))
 
-		filePath := filepath.Join(directory, fmt.Sprintf("TestForceFullCompaction%v.log", id))
-
-		ssTable, err := ssTableBuilder.Build(id, filePath)
+		ssTable, err := ssTableBuilder.Build(id, rootPath)
 		assert.Nil(t, err)
 
 		level := storageState.levels[level1-1]

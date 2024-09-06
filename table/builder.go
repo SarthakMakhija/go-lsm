@@ -3,9 +3,11 @@ package table
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"go-lsm/kv"
 	"go-lsm/table/block"
 	"go-lsm/table/bloom"
+	"path/filepath"
 )
 
 // SSTableBuilder allows building SSTable in a step-by-step manner.
@@ -55,7 +57,7 @@ func (builder *SSTableBuilder) Add(key kv.Key, value kv.Value) {
 	builder.blockBuilder.Add(key, value)
 }
 
-// Build builds the SSTable using the given id and file path.
+// Build builds the SSTable using the given id and rootPath.
 // It involves encoding the SSTable, writing the entire table to persistent storage and creating an in-memory representation
 // in the form of SSTable with a reference to its File.
 // The encoding looks like:
@@ -65,7 +67,7 @@ func (builder *SSTableBuilder) Add(key kv.Key, value kv.Value) {
 |										   |				  |									 |		                |                                   |			                                        |
  ----------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error) {
+func (builder *SSTableBuilder) Build(id uint64, rootPath string) (SSTable, error) {
 	blockMetaBeginOffset := func() []byte {
 		blockMetaBeginOffset := make([]byte, block.Uint32Size)
 		binary.LittleEndian.PutUint32(blockMetaBeginOffset, uint32(len(builder.allBlocksData)))
@@ -92,7 +94,7 @@ func (builder *SSTableBuilder) Build(id uint64, filePath string) (SSTable, error
 	buffer.Write(encodedFilter)     //bloom filter section bloom.Filter.Encode()
 	buffer.Write(bloomFilterOffset) //4 bytes to indicate where the bloom filter section starts from
 
-	file, err := Create(filePath, buffer.Bytes())
+	file, err := CreateAndWrite(SSTableFilePath(id, rootPath), buffer.Bytes())
 	if err != nil {
 		return SSTable{}, err
 	}
@@ -135,4 +137,9 @@ func (builder *SSTableBuilder) startNewBlockBuilder(key kv.Key) {
 	builder.blockBuilder = block.NewBlockBuilder(builder.blockSize)
 	builder.startingKey = key
 	builder.endingKey = key
+}
+
+// SSTableFilePath returns the SSTable filepath which consists of rootPath/id.sst.
+func SSTableFilePath(id uint64, rootPath string) string {
+	return filepath.Join(rootPath, fmt.Sprintf("%v.sst", id))
 }

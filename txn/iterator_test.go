@@ -5,17 +5,18 @@ import (
 	"go-lsm/iterator"
 	"go-lsm/kv"
 	"go-lsm/state"
+	"go-lsm/test_utility"
 	"testing"
 )
 
 func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -55,13 +56,13 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing
 }
 
 func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSystem(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -96,13 +97,13 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSys
 }
 
 func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInTheSystem(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -133,13 +134,13 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInT
 }
 
 func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystemWithABoundCheck(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 

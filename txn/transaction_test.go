@@ -4,17 +4,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/state"
+	"go-lsm/test_utility"
 	"testing"
 )
 
 func TestReadonlyTransactionWithEmptyState(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -25,13 +26,13 @@ func TestReadonlyTransactionWithEmptyState(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -51,13 +52,13 @@ func TestReadonlyTransactionWithAnExistingKey(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTimestamp(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -78,13 +79,13 @@ func TestReadonlyTransactionWithAnExistingKeyButWithATimestampHigherThanCommitTi
 }
 
 func TestReadonlyTransactionWithScan(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -110,13 +111,13 @@ func TestReadonlyTransactionWithScan(t *testing.T) {
 }
 
 func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -151,13 +152,13 @@ func TestReadonlyTransactionWithScanHavingSameKeyWithMultipleTimestamps(t *testi
 }
 
 func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -171,13 +172,13 @@ func TestAttemptsToCommitAnEmptyReadwriteTransaction(t *testing.T) {
 }
 
 func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -206,13 +207,13 @@ func TestGetsAnExistingKeyInAReadwriteTransaction(t *testing.T) {
 }
 
 func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -228,13 +229,13 @@ func TestGetsTheValueFromAKeyInAReadwriteTransactionFromBatch(t *testing.T) {
 }
 
 func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -250,13 +251,13 @@ func TestTracksReadsInAReadwriteTransactionWithGet(t *testing.T) {
 }
 
 func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -291,13 +292,13 @@ func TestReadwriteTransactionWithScanHavingMultipleTimestampsOfSameKey(t *testin
 }
 
 func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 
@@ -328,13 +329,13 @@ func TestReadwriteTransactionWithScanHavingDeletedKey(t *testing.T) {
 }
 
 func TestTracksReadsInAReadwriteTransactionWithScan(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
 	oracle := NewOracle(NewExecutor(storageState))
 
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 		oracle.Close()
 	}()
 

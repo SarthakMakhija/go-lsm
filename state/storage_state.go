@@ -1,15 +1,14 @@
 package state
 
 import (
-	"fmt"
 	"go-lsm/iterator"
 	"go-lsm/kv"
 	"go-lsm/log"
 	"go-lsm/manifest"
 	"go-lsm/memory"
 	"go-lsm/table"
+	"log/slog"
 	"os"
-	"path/filepath"
 	"slices"
 	"sort"
 	"time"
@@ -168,7 +167,7 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 		})
 		ssTable, err := ssTableBuilder.Build(
 			memtableToFlush.Id(),
-			storageState.ssTableFilePath(memtableToFlush.Id()),
+			storageState.options.Path,
 		)
 		if err != nil {
 			return table.SSTable{}, err
@@ -224,10 +223,6 @@ func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
 	return ids
 }
 
-func (storageState *StorageState) ssTableFilePath(id uint64) string {
-	return filepath.Join(storageState.options.Path, fmt.Sprintf("%v.sst", id))
-}
-
 func (storageState *StorageState) sortedMemtableIds() []uint64 {
 	ids := make([]uint64, 0, 1+len(storageState.immutableMemtables))
 	ids = append(ids, storageState.currentMemtable.Id())
@@ -279,7 +274,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			case <-timer.C:
 				if uint(len(storageState.immutableMemtables)) >= storageState.options.MaximumMemtables {
 					if err := storageState.ForceFlushNextImmutableMemtable(); err != nil {
-						panic(fmt.Errorf("could not flush memtable %v", err))
+						slog.Error("could not flush memtable, error: %v", err)
 					}
 				}
 				timer.Reset(storageState.options.FlushMemtableDuration)

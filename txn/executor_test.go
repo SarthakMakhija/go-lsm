@@ -4,17 +4,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/state"
+	"go-lsm/test_utility"
 	"testing"
 )
 
 var nothingCallback = func() {}
 
 func TestSetsABatchWithOneKeyValueUsingExecutor(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
+
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 	}()
 
 	batch := kv.NewBatch()
@@ -32,11 +34,12 @@ func TestSetsABatchWithOneKeyValueUsingExecutor(t *testing.T) {
 }
 
 func TestSetsABatchWithOneKeyValueUsingExecutorAndRunsTheCallback(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
+
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 	}()
 
 	batch := kv.NewBatch()
@@ -58,11 +61,12 @@ func TestSetsABatchWithOneKeyValueUsingExecutorAndRunsTheCallback(t *testing.T) 
 }
 
 func TestSetsABatchWithMultipleKeyValuesUsingExecutor(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
+
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 	}()
 
 	batch := kv.NewBatch()
@@ -85,11 +89,12 @@ func TestSetsABatchWithMultipleKeyValuesUsingExecutor(t *testing.T) {
 }
 
 func TestSetsABatchWithMultipleKeyValuesUsingExecutor1(t *testing.T) {
-	storageState, _ := state.NewStorageState()
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
+
 	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
 		storageState.Close()
-		storageState.DeleteManifest()
-		storageState.DeleteWALDirectory()
 	}()
 
 	executeSet := func(executor *Executor) {

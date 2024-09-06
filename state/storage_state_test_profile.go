@@ -10,10 +10,10 @@ import (
 )
 
 // NewStorageState creates new instance of StorageState for testing.
-func NewStorageState() (*StorageState, error) {
+func NewStorageState(rootPath string) (*StorageState, error) {
 	return NewStorageStateWithOptions(StorageOptions{
 		MemTableSizeInBytes:   1 << 20,
-		Path:                  ".",
+		Path:                  rootPath,
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
 		compactionOptions: SimpleLeveledCompactionOptions{

@@ -50,7 +50,7 @@ func (storageState *StorageState) ForceFullCompaction() error {
 	}
 	removeSSTableFiles := func() {
 		for _, ssTableId := range combinedSSTableIds {
-			_ = os.Remove(storageState.ssTableFilePath(ssTableId))
+			_ = os.Remove(table.SSTableFilePath(ssTableId, storageState.options.Path))
 		}
 	}
 
@@ -114,7 +114,7 @@ func (storageState *StorageState) ssTablesFromIterator(iterator iterator.Iterato
 
 func (storageState *StorageState) buildNewSStable(ssTableBuilder *table.SSTableBuilder) (table.SSTable, error) {
 	ssTableId := storageState.idGenerator.NextId()
-	ssTable, err := ssTableBuilder.Build(ssTableId, storageState.ssTableFilePath(ssTableId))
+	ssTable, err := ssTableBuilder.Build(ssTableId, storageState.options.Path)
 	if err != nil {
 		return table.SSTable{}, err
 	}

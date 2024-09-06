@@ -11,9 +11,9 @@ type File struct {
 	size int64
 }
 
-// Create creates a new SSTable file with encoded SSTable data.
+// CreateAndWrite creates a new SSTable file and writes the given data.
 // It opens the file in readonly mode and returns the file handle.
-func Create(path string, data []byte) (*File, error) {
+func CreateAndWrite(path string, data []byte) (*File, error) {
 	err := syncWrite(path, data)
 	if err != nil {
 		return nil, err

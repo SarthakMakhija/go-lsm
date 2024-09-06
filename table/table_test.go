@@ -3,8 +3,7 @@ package table
 import (
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
-	"os"
-	"path/filepath"
+	"go-lsm/test_utility"
 	"testing"
 )
 
@@ -12,13 +11,12 @@ func TestSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringValue("raft"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestSSTableWithASingleBlockContainingSingleKeyValue.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	block, err := ssTable.readBlock(0)
@@ -38,13 +36,12 @@ func TestSSTableWithATwoBlocks(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 20), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestSSTableWithATwoBlocks.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	assert.Equal(t, 2, ssTable.noOfBlocks())
@@ -56,16 +53,15 @@ func TestLoadSSTableWithSingleBlockContainingMultipleKeyValuePairs(t *testing.T)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 4), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 4), kv.NewStringValue("bbolt"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestLoadSSTableWithSingleBlockContainingMultipleKeyValuePairs.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	_, err := ssTableBuilder.Build(1, filePath)
+	_, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
-	ssTable, err := Load(1, filePath, 4096)
+	ssTable, err := Load(1, rootPath, 4096)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
@@ -94,16 +90,15 @@ func TestLoadSSTableWithSingleBlockContainingMultipleKeyValuePairsWithStartingAn
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 20), kv.NewStringValue("TiKV"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 30), kv.NewStringValue("bbolt"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestLoadSSTableWithSingleBlockContainingMultipleKeyValuePairsWithStartingAndEndingKey.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	_, err := ssTableBuilder.Build(1, filePath)
+	_, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
-	ssTable, err := Load(1, filePath, 4096)
+	ssTable, err := Load(1, rootPath, 4096)
 	assert.Nil(t, err)
 	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 10), ssTable.startingKey)
 	assert.Equal(t, kv.NewStringKeyWithTimestamp("etcd", 30), ssTable.endingKey)
@@ -114,16 +109,15 @@ func TestLoadAnSSTableWithTwoBlocks(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 30), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 40), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestLoadAnSSTableWithTwoBlocks.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	_, err := ssTableBuilder.Build(1, filePath)
+	_, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
-	ssTable, err := Load(1, filePath, 30)
+	ssTable, err := Load(1, rootPath, 30)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
@@ -146,16 +140,15 @@ func TestLoadAnSSTableWithTwoBlocksWithStartingAndEndingKey(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 30), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestLoadAnSSTableWithTwoBlocksWithStartingAndEndingKey.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	_, err := ssTableBuilder.Build(1, filePath)
+	_, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
-	ssTable, err := Load(1, filePath, 30)
+	ssTable, err := Load(1, rootPath, 30)
 	assert.Nil(t, err)
 	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 20), ssTable.startingKey)
 	assert.Equal(t, kv.NewStringKeyWithTimestamp("distributed", 30), ssTable.endingKey)
@@ -166,13 +159,12 @@ func TestSSTableContainsAGiveInclusiveKeyRange1(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestSSTableContainsAGiveInclusiveKeyRange1.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	assert.True(t, ssTable.ContainsInclusive(
@@ -186,13 +178,12 @@ func TestSSTableContainsAGiveInclusiveKeyRange2(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 9), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 10), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestSSTableContainsAGiveInclusiveKeyRange2.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	assert.True(t, ssTable.ContainsInclusive(
@@ -206,13 +197,12 @@ func TestSSTableDoesNotContainAGiveInclusiveKeyRange1(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 4), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 5), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestSSTableDoesNotContainAGiveInclusiveKeyRange1.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	assert.False(t, ssTable.ContainsInclusive(
@@ -226,13 +216,12 @@ func TestSSTableDoesNotContainAGiveInclusiveKeyRange2(t *testing.T) {
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 
-	directory := "."
-	filePath := filepath.Join(directory, "TestSSTableDoesNotContainAGiveInclusiveKeyRange2.log")
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	defer func() {
-		_ = os.Remove(filePath)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
-	ssTable, err := ssTableBuilder.Build(1, filePath)
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
 	assert.Nil(t, err)
 
 	assert.False(t, ssTable.ContainsInclusive(
