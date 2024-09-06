@@ -27,7 +27,7 @@ type MemtableCreated struct {
 	MemtableId uint64
 }
 
-// SSTableFlushed defines an SSTable flushed event. (Memtable flushed to SSTable).
+// SSTableFlushed defines an SSTable flushed (to L0) event. (Memtable flushed to SSTable).
 type SSTableFlushed struct {
 	SsTableId uint64
 }
