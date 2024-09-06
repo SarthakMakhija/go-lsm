@@ -299,25 +299,9 @@ func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) err
 				panic("unhandled default case")
 			}
 		}
-		var immutableMemtables []*memory.Memtable
-		var maxTimestamp uint64
-		for memtableId := range memtableIds {
-			memtable, timestamp, err := memory.RecoverFromWAL(
-				memtableId,
-				storageState.options.MemTableSizeInBytes,
-				storageState.WALDirectoryPath(),
-			)
-			if err != nil {
-				return err
-			}
-			immutableMemtables = append(immutableMemtables, memtable)
-			maxTimestamp = max(maxTimestamp, timestamp)
+		if err := storageState.recoverMemtables(memtableIds); err != nil {
+			return err
 		}
-		sort.Slice(immutableMemtables, func(i, j int) bool {
-			return immutableMemtables[i].Id() < immutableMemtables[j].Id()
-		})
-		storageState.lastCommitTimestamp = maxTimestamp
-		storageState.immutableMemtables = immutableMemtables
 	}
 	storageState.currentMemtable = memory.NewMemtable(
 		storageState.idGenerator.NextId(),
@@ -327,5 +311,29 @@ func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) err
 	if err := storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id())); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (storageState *StorageState) recoverMemtables(memtableIds map[uint64]struct{}) error {
+	var immutableMemtables []*memory.Memtable
+	var maxTimestamp uint64
+
+	for memtableId := range memtableIds {
+		memtable, timestamp, err := memory.RecoverFromWAL(
+			memtableId,
+			storageState.options.MemTableSizeInBytes,
+			storageState.WALDirectoryPath(),
+		)
+		if err != nil {
+			return err
+		}
+		immutableMemtables = append(immutableMemtables, memtable)
+		maxTimestamp = max(maxTimestamp, timestamp)
+	}
+	sort.Slice(immutableMemtables, func(i, j int) bool {
+		return immutableMemtables[i].Id() < immutableMemtables[j].Id()
+	})
+	storageState.lastCommitTimestamp = maxTimestamp
+	storageState.immutableMemtables = immutableMemtables
 	return nil
 }
