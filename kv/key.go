@@ -87,9 +87,19 @@ func CompareKeys(userKey, systemKey Key) int {
 	return userKey.CompareKeysWithDescendingTimestamp(systemKey)
 }
 
-// IsRawKeyEqualTo returns true of the raw key two keys is the same.
+// IsRawKeyEqualTo returns true if the raw key two keys is the same.
 func (key Key) IsRawKeyEqualTo(other Key) bool {
 	return bytes.Compare(key.key, other.key) == 0
+}
+
+// IsRawKeyGreaterThan returns true if the raw key of key is greater than the raw key of the other.
+func (key Key) IsRawKeyGreaterThan(other Key) bool {
+	return bytes.Compare(key.key, other.key) > 0
+}
+
+// IsRawKeyLesserThan returns true if the raw key of key is lesser than the raw key of the other.
+func (key Key) IsRawKeyLesserThan(other Key) bool {
+	return bytes.Compare(key.key, other.key) < 0
 }
 
 // IsRawKeyEmpty returns true if the raw key is empty.

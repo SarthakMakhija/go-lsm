@@ -150,14 +150,14 @@ func (table SSTable) SeekToKey(key kv.Key) (*Iterator, error) {
 
 // ContainsInclusive returns true if the SSTable contains the inclusiveKeyRange.
 // It returns false:
-// If the starting key of the inclusiveKeyRange is greater than the ending key of the SSTable, Or
-// If the ending key of the inclusiveKeyRange is less than the starting key of the SSTable.
+// If the starting (raw) key of the inclusiveKeyRange is greater than the ending key of the SSTable, Or
+// If the ending (raw) key of the inclusiveKeyRange is less than the starting key of the SSTable.
 // Returns true otherwise.
 func (table SSTable) ContainsInclusive(inclusiveKeyRange kv.InclusiveKeyRange[kv.Key]) bool {
-	if inclusiveKeyRange.Start().CompareKeysWithDescendingTimestamp(table.endingKey) > 0 {
+	if inclusiveKeyRange.Start().IsRawKeyGreaterThan(table.endingKey) {
 		return false
 	}
-	if inclusiveKeyRange.End().CompareKeysWithDescendingTimestamp(table.startingKey) < 0 {
+	if inclusiveKeyRange.End().IsRawKeyLesserThan(table.startingKey) {
 		return false
 	}
 	return true

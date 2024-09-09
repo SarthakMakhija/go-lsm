@@ -7,6 +7,7 @@ import (
 	"go-lsm/manifest"
 	"go-lsm/memory"
 	"go-lsm/table"
+	"go-lsm/table/block"
 	"log/slog"
 	"os"
 	"slices"
@@ -152,7 +153,7 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
-func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
+func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	var memtableToFlush *memory.Memtable
 	if len(storageState.immutableMemtables) > 0 {
 		memtableToFlush = storageState.immutableMemtables[0]
@@ -273,7 +274,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			select {
 			case <-timer.C:
 				if uint(len(storageState.immutableMemtables)) >= storageState.options.MaximumMemtables {
-					if err := storageState.ForceFlushNextImmutableMemtable(); err != nil {
+					if err := storageState.forceFlushNextImmutableMemtable(); err != nil {
 						slog.Error("could not flush memtable, error: %v", err)
 					}
 				}
@@ -295,9 +296,17 @@ func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) err
 				memtableCreated := event.(*manifest.MemtableCreated)
 				memtableIds[memtableCreated.MemtableId] = struct{}{}
 				storageState.idGenerator.setIdIfGreaterThanExisting(memtableCreated.MemtableId)
+			case manifest.SSTableFlushedEventType:
+				ssTableFlushed := event.(*manifest.SSTableFlushed)
+				delete(memtableIds, ssTableFlushed.SsTableId)
+				storageState.l0SSTableIds = append(storageState.l0SSTableIds, ssTableFlushed.SsTableId)
+				storageState.idGenerator.setIdIfGreaterThanExisting(ssTableFlushed.SsTableId)
 			default:
 				panic("unhandled default case")
 			}
+		}
+		if err := storageState.recoverSSTables(); err != nil {
+			return err
 		}
 		if err := storageState.recoverMemtables(memtableIds); err != nil {
 			return err
@@ -335,5 +344,17 @@ func (storageState *StorageState) recoverMemtables(memtableIds map[uint64]struct
 	})
 	storageState.lastCommitTimestamp = maxTimestamp
 	storageState.immutableMemtables = immutableMemtables
+	return nil
+}
+
+// TODO: populate levels field
+func (storageState *StorageState) recoverSSTables() error {
+	for _, ssTableId := range storageState.l0SSTableIds {
+		ssTable, err := table.Load(ssTableId, storageState.options.Path, block.DefaultBlockSize)
+		if err != nil {
+			return err
+		}
+		storageState.ssTables[ssTable.Id()] = ssTable
+	}
 	return nil
 }

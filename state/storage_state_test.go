@@ -12,15 +12,6 @@ import (
 	"time"
 )
 
-func testStorageStateOptions(memtableSizeInBytes int64) StorageOptions {
-	return StorageOptions{
-		MemTableSizeInBytes:   memtableSizeInBytes,
-		Path:                  ".",
-		MaximumMemtables:      10,
-		FlushMemtableDuration: 1 * time.Minute,
-	}
-}
-
 func testStorageStateOptionsWithMemTableSizeAndDirectory(memtableSizeInBytes int64, directory string) StorageOptions {
 	return StorageOptions{
 		MemTableSizeInBytes:   memtableSizeInBytes,
@@ -97,6 +88,39 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("data-structure", 9))
 	assert.True(t, ok)
 	assert.Equal(t, kv.NewStringValue("LSM"), value)
+}
+
+func TestStorageStateWithSSTablesOnly(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := NewStorageState(rootPath)
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
+
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, 1)
+	storageState.ssTables[1] = ssTable
+
+	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("etcd", 10))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("bbolt"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("consensus", 11))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("paxos"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("distributed", 12))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("TiKV"), value)
 }
 
 func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables1(t *testing.T) {
@@ -634,7 +658,7 @@ func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtabl
 
 	assert.False(t, storageState.hasImmutableMemtables())
 	assert.Panics(t, func() {
-		_ = storageState.ForceFlushNextImmutableMemtable()
+		_ = storageState.forceFlushNextImmutableMemtable()
 	})
 }
 
@@ -670,7 +694,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	walPathOfSecondImmutableMemtable, _ := storageState.immutableMemtables[1].WalPath()
 	assert.Equal(t, expected, walPathOfSecondImmutableMemtable)
 
-	err := storageState.ForceFlushNextImmutableMemtable()
+	err := storageState.forceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
 
 	_, err = os.Stat(walPathOfFirstImmutableMemtable)
@@ -699,7 +723,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *te
 	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
 	assert.Nil(t, storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10)))
 
-	err := storageState.ForceFlushNextImmutableMemtable()
+	err := storageState.forceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
 
 	ssTable, err := table.Load(1, rootPath, 4096)
@@ -744,7 +768,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
 	assert.Nil(t, storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10)))
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(30 * time.Millisecond)
 
 	ssTable, err := table.Load(1, rootPath, 4096)
 	assert.Nil(t, err)
