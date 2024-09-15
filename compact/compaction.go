@@ -1,4 +1,4 @@
-package compaction
+package compact
 
 import (
 	"go-lsm/iterator"

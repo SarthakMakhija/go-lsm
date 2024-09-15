@@ -18,9 +18,9 @@ func NewStorageState(rootPath string) (*StorageState, error) {
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
 		compactionOptions: SimpleLeveledCompactionOptions{
-			level0FilesCompactionTrigger: 6,
-			maxLevels:                    totalLevels,
-			sizeRatioPercentage:          200,
+			Level0FilesCompactionTrigger: 6,
+			MaxLevels:                    totalLevels,
+			SizeRatioPercentage:          200,
 		},
 	})
 }

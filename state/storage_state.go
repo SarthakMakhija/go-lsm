@@ -15,6 +15,12 @@ import (
 	"time"
 )
 
+type SimpleLeveledCompactionOptions struct {
+	SizeRatioPercentage          uint
+	MaxLevels                    uint
+	Level0FilesCompactionTrigger uint
+}
+
 type StorageOptions struct {
 	MemTableSizeInBytes   int64
 	SSTableSizeInBytes    int64
@@ -45,8 +51,8 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
-	levels := make([]*Level, options.compactionOptions.maxLevels)
-	for level := 1; level <= int(options.compactionOptions.maxLevels); level++ {
+	levels := make([]*Level, options.compactionOptions.MaxLevels)
+	for level := 1; level <= int(options.compactionOptions.MaxLevels); level++ {
 		levels[level-1] = &Level{LevelNumber: level}
 	}
 	manifestRecorder, events, err := manifest.CreateNewOrRecoverFrom(options.Path)

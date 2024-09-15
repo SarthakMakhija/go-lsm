@@ -1,12 +1,6 @@
-package compaction
+package compact
 
 import "go-lsm/state"
-
-type SimpleLeveledCompactionOptions struct {
-	sizeRatioPercentage          uint
-	maxLevels                    uint
-	level0FilesCompactionTrigger uint
-}
 
 type SimpleLeveledCompactionDescription struct {
 	upperLevel           int
@@ -16,10 +10,10 @@ type SimpleLeveledCompactionDescription struct {
 }
 
 type SimpleLeveledCompaction struct {
-	options SimpleLeveledCompactionOptions
+	options state.SimpleLeveledCompactionOptions
 }
 
-func NewSimpleLeveledCompaction(options SimpleLeveledCompactionOptions) SimpleLeveledCompaction {
+func NewSimpleLeveledCompaction(options state.SimpleLeveledCompactionOptions) SimpleLeveledCompaction {
 	return SimpleLeveledCompaction{
 		options: options,
 	}
@@ -32,15 +26,15 @@ func (compaction SimpleLeveledCompaction) CompactionDescription(stateSnapshot st
 	for _, level := range stateSnapshot.Levels {
 		ssTableCountByLevel = append(ssTableCountByLevel, len(level.SSTableIds))
 	}
-	for level := 0; level < int(compaction.options.maxLevels); level++ {
+	for level := 0; level < int(compaction.options.MaxLevels); level++ {
 		if level == 0 {
-			if ssTableCountByLevel[level] < int(compaction.options.level0FilesCompactionTrigger) {
+			if ssTableCountByLevel[level] < int(compaction.options.Level0FilesCompactionTrigger) {
 				continue
 			}
 		}
 		lowerLevel := level + 1
 		sizeRatioPercentage := (float64(ssTableCountByLevel[lowerLevel]) / float64(ssTableCountByLevel[level])) * 100
-		if sizeRatioPercentage < float64(compaction.options.sizeRatioPercentage) {
+		if sizeRatioPercentage < float64(compaction.options.SizeRatioPercentage) {
 			println("Triggering simple leveled compaction between levels ", level, lowerLevel)
 			var upperLevel int
 			if level == 0 {
