@@ -1,6 +1,7 @@
 package txn
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"go-lsm/state"
 	"go-lsm/test_utility"
@@ -37,6 +38,22 @@ func TestGetsTheBeginTimestampAfterAPseudoCommit(t *testing.T) {
 
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 	assert.Equal(t, uint64(5), oracle.beginTimestamp())
+}
+
+func TestGetsTheMaxBeginTimestamp(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	oracle.beginTimestampMark.Finish(5)
+	assert.Nil(t, oracle.beginTimestampMark.WaitForMark(context.Background(), 5))
+	assert.Equal(t, uint64(5), oracle.MaxBeginTimestamp())
 }
 
 func TestGetsCommitTimestampForTransactionGivenNoTransactionsAreCurrentlyTracked(t *testing.T) {

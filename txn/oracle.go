@@ -63,6 +63,19 @@ func (oracle *Oracle) Close() {
 	oracle.executor.stop()
 }
 
+// FinishBeginTimestamp indicates that the beginTimestamp of the transaction is finished.
+// This is an indication to the TransactionTimestampWaterMark that all the transactions upto a given `beginTimestamp`
+// are done. This information will be used in cleaning up the committed transactions.
+func (oracle *Oracle) FinishBeginTimestamp(transaction *Transaction) {
+	oracle.beginTimestampMark.Finish(transaction.beginTimestamp)
+}
+
+// MaxBeginTimestamp returns the maximum begin timestamp.
+// It is mainly used in compaction to disregard any keys with commit-timestamp < MaxBeginTimestamp().
+func (oracle *Oracle) MaxBeginTimestamp() uint64 {
+	return oracle.beginTimestampMark.DoneTill()
+}
+
 // beginTimestamp returns the begin-timestamp of a transaction.
 // beginTimestamp = nextTimestamp - 1
 // Before returning the begin-timestamp, the system performs a wait on the commitTimestampMark.
@@ -123,13 +136,6 @@ func (oracle *Oracle) hasConflictFor(transaction *Transaction) bool {
 		}
 	}
 	return false
-}
-
-// FinishBeginTimestamp indicates that the beginTimestamp of the transaction is finished.
-// This is an indication to the TransactionTimestampWaterMark that all the transactions upto a given `beginTimestamp`
-// are done. This information will be used in cleaning up the committed transactions.
-func (oracle *Oracle) FinishBeginTimestamp(transaction *Transaction) {
-	oracle.beginTimestampMark.Finish(transaction.beginTimestamp)
 }
 
 // cleanupReadyToCommitTransactions cleans up the readyToCommitTransactions.
