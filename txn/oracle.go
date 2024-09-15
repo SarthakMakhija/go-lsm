@@ -71,7 +71,7 @@ func (oracle *Oracle) FinishBeginTimestamp(transaction *Transaction) {
 }
 
 // MaxBeginTimestamp returns the maximum begin timestamp.
-// It is mainly used in compaction to disregard any keys with commit-timestamp < MaxBeginTimestamp().
+// It is mainly used in compaction to disregard any keys with commit-timestamp <= MaxBeginTimestamp().
 func (oracle *Oracle) MaxBeginTimestamp() uint64 {
 	return oracle.beginTimestampMark.DoneTill()
 }

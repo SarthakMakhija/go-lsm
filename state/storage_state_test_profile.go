@@ -13,6 +13,7 @@ import (
 func NewStorageState(rootPath string) (*StorageState, error) {
 	return NewStorageStateWithOptions(StorageOptions{
 		MemTableSizeInBytes:   1 << 20,
+		SSTableSizeInBytes:    1 << 20,
 		Path:                  rootPath,
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
@@ -34,6 +35,16 @@ func (storageState *StorageState) DeleteWALDirectory() {
 	if len(storageState.WALDirectoryPath()) > 0 {
 		_ = os.RemoveAll(storageState.WALDirectoryPath())
 	}
+}
+
+// Options returns the StorageOptions, only for testing.
+func (storageState *StorageState) Options() StorageOptions {
+	return storageState.options
+}
+
+// SSTableIdGenerator returns the SSTableIdGenerator, only for testing.
+func (storageState *StorageState) SSTableIdGenerator() *SSTableIdGenerator {
+	return storageState.idGenerator
 }
 
 // forceFreezeCurrentMemtable freezes the current memtable, it is only for testing.
