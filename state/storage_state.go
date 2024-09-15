@@ -15,27 +15,16 @@ import (
 	"time"
 )
 
-const (
-	level0 = iota
-	level1 = 1
-)
-const totalLevels = 6
-
-type Level struct {
-	levelNumber int
-	ssTableIds  []uint64
-}
-
 type StorageOptions struct {
 	MemTableSizeInBytes   int64
-	SSTableSizeInBytes    int64 //TODO: Do we need it?
+	SSTableSizeInBytes    int64
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration
 	compactionOptions     SimpleLeveledCompactionOptions
 }
 
-// StorageState TODO: Support concurrency and Close method
+// StorageState TODO: Support concurrency and Close method, populate levels fields also (refer simple_leveled in compact)
 type StorageState struct {
 	currentMemtable                *memory.Memtable
 	immutableMemtables             []*memory.Memtable
@@ -58,7 +47,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	}
 	levels := make([]*Level, options.compactionOptions.maxLevels)
 	for level := 1; level <= int(options.compactionOptions.maxLevels); level++ {
-		levels[level-1] = &Level{levelNumber: level}
+		levels[level-1] = &Level{LevelNumber: level}
 	}
 	manifestRecorder, events, err := manifest.CreateNewOrRecoverFrom(options.Path)
 	if err != nil {
@@ -153,6 +142,30 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
+// Close TODO: Complete the implementation
+func (storageState *StorageState) Close() {
+	close(storageState.closeChannel)
+	//Wait for flush immutable tables goroutine to return
+	<-storageState.flushMemtableCompletionChannel
+}
+
+func (storageState *StorageState) WALDirectoryPath() string {
+	return storageState.walPath.DirectoryPath
+}
+
+func (storageState *StorageState) LastCommitTimestamp() uint64 {
+	return storageState.lastCommitTimestamp
+}
+
+// Snapshot TODO: acquire lock
+func (storageState StorageState) Snapshot() StorageStateSnapshot {
+	return StorageStateSnapshot{
+		L0SSTableIds: storageState.l0SSTableIds,
+		Levels:       storageState.levels,
+		SSTables:     storageState.ssTables,
+	}
+}
+
 func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	var memtableToFlush *memory.Memtable
 	if len(storageState.immutableMemtables) > 0 {
@@ -182,7 +195,7 @@ func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	}
 
 	storageState.immutableMemtables = storageState.immutableMemtables[1:]
-	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or levels
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or Levels
 	storageState.ssTables[memtableToFlush.Id()] = ssTable
 	if err := storageState.manifest.Add(manifest.NewSSTableFlushed(ssTable.Id())); err != nil {
 		return err
@@ -193,21 +206,6 @@ func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	return nil
 }
 
-// Close TODO: Complete the implementation
-func (storageState *StorageState) Close() {
-	close(storageState.closeChannel)
-	//Wait for flush immutable tables goroutine to return
-	<-storageState.flushMemtableCompletionChannel
-}
-
-func (storageState *StorageState) WALDirectoryPath() string {
-	return storageState.walPath.DirectoryPath
-}
-
-func (storageState *StorageState) LastCommitTimestamp() uint64 {
-	return storageState.lastCommitTimestamp
-}
-
 func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
 	if level == 0 {
 		ids := make([]uint64, 0, len(storageState.l0SSTableIds))
@@ -216,7 +214,7 @@ func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
 		}
 		return ids
 	}
-	ssTableIds := storageState.levels[level-1].ssTableIds
+	ssTableIds := storageState.levels[level-1].SSTableIds
 	ids := make([]uint64, 0, len(ssTableIds))
 	for ssTableIndex := len(ssTableIds) - 1; ssTableIndex >= 0; ssTableIndex-- {
 		ids = append(ids, ssTableIds[ssTableIndex])

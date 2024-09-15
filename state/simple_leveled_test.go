@@ -49,9 +49,9 @@ func TestGenerateCompactionTaskForSimpleLayeredCompaction(t *testing.T) {
 
 		level := storageState.levels[level1-1]
 		if level == nil {
-			level = &Level{levelNumber: 1}
+			level = &Level{LevelNumber: 1}
 		}
-		level.ssTableIds = append(level.ssTableIds, id)
+		level.SSTableIds = append(level.SSTableIds, id)
 		storageState.levels[level1-1] = level
 		storageState.ssTables[id] = ssTable
 	}

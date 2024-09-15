@@ -29,7 +29,7 @@ func (controller SimpleLeveledCompactionController) GenerateCompactionTask(state
 	levelSizes = append(levelSizes, len(state.l0SSTableIds))
 
 	for _, level := range state.levels {
-		levelSizes = append(levelSizes, len(level.ssTableIds))
+		levelSizes = append(levelSizes, len(level.SSTableIds))
 	}
 	for level := 0; level < int(controller.options.maxLevels); level++ {
 		if level == 0 {
@@ -40,7 +40,7 @@ func (controller SimpleLeveledCompactionController) GenerateCompactionTask(state
 		lowerLevel := level + 1
 		sizeRatioPercentage := (float64(levelSizes[lowerLevel]) / float64(levelSizes[level])) * 100
 		if sizeRatioPercentage < float64(controller.options.sizeRatioPercentage) {
-			println("Triggering compaction between levels ", level, lowerLevel)
+			println("Triggering compaction between Levels ", level, lowerLevel)
 			var upperLevel int
 			if level == 0 {
 				upperLevel = -1
