@@ -5,6 +5,7 @@ package state
 import (
 	"go-lsm/manifest"
 	"go-lsm/memory"
+	"go-lsm/table"
 	"os"
 	"time"
 )
@@ -17,7 +18,7 @@ func NewStorageState(rootPath string) (*StorageState, error) {
 		Path:                  rootPath,
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
-		compactionOptions: SimpleLeveledCompactionOptions{
+		CompactionOptions: SimpleLeveledCompactionOptions{
 			Level0FilesCompactionTrigger: 6,
 			MaxLevels:                    totalLevels,
 			SizeRatioPercentage:          200,
@@ -45,6 +46,21 @@ func (storageState *StorageState) Options() StorageOptions {
 // SSTableIdGenerator returns the SSTableIdGenerator, only for testing.
 func (storageState *StorageState) SSTableIdGenerator() *SSTableIdGenerator {
 	return storageState.idGenerator
+}
+
+// SetSSTableAtLevel sets SSTable at the given level, only for testing.
+func (storageState *StorageState) SetSSTableAtLevel(ssTable table.SSTable, level int) {
+	if level == 0 {
+		storageState.l0SSTableIds = append(storageState.l0SSTableIds, ssTable.Id())
+	} else {
+		existingLevel := storageState.levels[level-1]
+		if existingLevel == nil {
+			existingLevel = &Level{LevelNumber: level}
+		}
+		existingLevel.SSTableIds = append(existingLevel.SSTableIds, ssTable.Id())
+		storageState.levels[level-1] = existingLevel
+	}
+	storageState.ssTables[ssTable.Id()] = ssTable
 }
 
 // forceFreezeCurrentMemtable freezes the current memtable, it is only for testing.

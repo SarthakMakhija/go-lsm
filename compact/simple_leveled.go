@@ -2,6 +2,8 @@ package compact
 
 import "go-lsm/state"
 
+var NothingToCompactDescription = SimpleLeveledCompactionDescription{}
+
 type SimpleLeveledCompactionDescription struct {
 	upperLevel           int
 	lowerLevel           int
@@ -50,5 +52,5 @@ func (compaction SimpleLeveledCompaction) CompactionDescription(stateSnapshot st
 			}, true
 		}
 	}
-	return SimpleLeveledCompactionDescription{}, false
+	return NothingToCompactDescription, false
 }

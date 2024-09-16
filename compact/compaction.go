@@ -22,6 +22,43 @@ func NewCompaction(oracle *txn.Oracle, idGenerator *state.SSTableIdGenerator, op
 	}
 }
 
+func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (SimpleLeveledCompactionDescription, []table.SSTable, error) {
+	simpleLeveledCompaction := NewSimpleLeveledCompaction(compaction.options.CompactionOptions)
+	description, ok := simpleLeveledCompaction.CompactionDescription(snapshot)
+	if !ok {
+		return NothingToCompactDescription, nil, nil
+	}
+	ssTables, err := compaction.compact(description, snapshot)
+	if err != nil {
+		return NothingToCompactDescription, nil, nil
+	}
+	return description, ssTables, nil
+}
+
+func (compaction *Compaction) compact(description SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]table.SSTable, error) {
+	upperLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.upperLevelSSTableIds))
+	for _, ssTableId := range description.upperLevelSSTableIds {
+		ssTable := snapshot.SSTables[ssTableId]
+		ssTableIterator, err := ssTable.SeekToFirst()
+		if err != nil {
+			return nil, nil
+		}
+		upperLevelSSTableIterator = append(upperLevelSSTableIterator, ssTableIterator)
+	}
+	lowerLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.lowerLevelSSTableIds))
+	for _, ssTableId := range description.lowerLevelSSTableIds {
+		ssTable := snapshot.SSTables[ssTableId]
+		ssTableIterator, err := ssTable.SeekToFirst()
+		if err != nil {
+			return nil, nil
+		}
+		lowerLevelSSTableIterator = append(lowerLevelSSTableIterator, ssTableIterator)
+	}
+	var iterators []iterator.Iterator
+	iterators = append(upperLevelSSTableIterator, lowerLevelSSTableIterator...)
+	return compaction.ssTablesFromIterator(iterator.NewMergeIterator(iterators))
+}
+
 func (compaction *Compaction) ssTablesFromIterator(iterator iterator.Iterator) ([]table.SSTable, error) {
 	var ssTableBuilder *table.SSTableBuilder
 	var newSSTables []table.SSTable

@@ -2,10 +2,6 @@ package state
 
 import "go-lsm/table"
 
-const (
-	level0 = iota
-	level1 = 1
-)
 const totalLevels = 6
 
 type Level struct {
