@@ -57,8 +57,8 @@ func (memtableCreated *MemtableCreated) EventType() uint8 {
 
 // decodeMemtableCreated decodes the MemtableCreated event from the byte slice.
 // The buffer is a slice containing MemtableId.
-func decodeMemtableCreated(buffer []byte) *MemtableCreated {
-	return NewMemtableCreated(binary.LittleEndian.Uint64(buffer[:]))
+func decodeMemtableCreated(buffer []byte) (*MemtableCreated, int) {
+	return NewMemtableCreated(binary.LittleEndian.Uint64(buffer[:])), int(idSize)
 }
 
 // NewSSTableFlushed creates a new SSTableFlushed event.
@@ -86,8 +86,8 @@ func (ssTableFlushed *SSTableFlushed) EventType() uint8 {
 
 // decodeSSTableFlushed decodes the SSTableFlushed event from the byte slice.
 // The buffer is a slice containing SsTableId.
-func decodeSSTableFlushed(buffer []byte) *SSTableFlushed {
-	return NewSSTableFlushed(binary.LittleEndian.Uint64(buffer[:]))
+func decodeSSTableFlushed(buffer []byte) (*SSTableFlushed, int) {
+	return NewSSTableFlushed(binary.LittleEndian.Uint64(buffer[:])), int(idSize)
 }
 
 // decodeEventsFrom decodes all the events from the Manifest file. The passed buffer is the whole file.
@@ -97,13 +97,13 @@ func decodeEventsFrom(buffer []byte) []Event {
 		eventType := buffer[0]
 		switch eventType {
 		case MemtableCreatedEventType:
-			memtableCreated := decodeMemtableCreated(buffer[eventTypeSize:])
+			memtableCreated, n := decodeMemtableCreated(buffer[eventTypeSize:])
 			events = append(events, memtableCreated)
-			buffer = buffer[idSize+eventTypeSize:]
+			buffer = buffer[n+int(eventTypeSize):]
 		case SSTableFlushedEventType:
-			ssTableFlushed := decodeSSTableFlushed(buffer[eventTypeSize:])
+			ssTableFlushed, n := decodeSSTableFlushed(buffer[eventTypeSize:])
 			events = append(events, ssTableFlushed)
-			buffer = buffer[idSize+eventTypeSize:]
+			buffer = buffer[n+int(eventTypeSize):]
 		}
 	}
 	return events
