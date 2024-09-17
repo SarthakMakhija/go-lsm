@@ -19,9 +19,9 @@ func NewStorageState(rootPath string) (*StorageState, error) {
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
 		CompactionOptions: SimpleLeveledCompactionOptions{
-			Level0FilesCompactionTrigger: 6,
-			MaxLevels:                    totalLevels,
-			SizeRatioPercentage:          200,
+			Level0FilesCompactionTrigger:    6,
+			MaxLevels:                       totalLevels,
+			NumberOfSSTablesRatioPercentage: 200,
 		},
 	})
 }
@@ -77,4 +77,10 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 // hasImmutableMemtables returns true if there are immutable tables, it is only for testing.
 func (storageState *StorageState) hasImmutableMemtables() bool {
 	return len(storageState.immutableMemtables) > 0
+}
+
+// hasSSTableWithId returns true if there is an SSTable for the given SSTableId, false otherwise, it is only for testing.
+func (storageState *StorageState) hasSSTableWithId(id uint64) bool {
+	_, ok := storageState.ssTables[id]
+	return ok
 }

@@ -8,9 +8,9 @@ import (
 
 func TestGenerateCompactionTaskForSimpleLayeredCompactionWithNoCompaction(t *testing.T) {
 	compactionOptions := state.SimpleLeveledCompactionOptions{
-		SizeRatioPercentage:          200,
-		MaxLevels:                    2,
-		Level0FilesCompactionTrigger: 2,
+		NumberOfSSTablesRatioPercentage: 200,
+		MaxLevels:                       2,
+		Level0FilesCompactionTrigger:    2,
 	}
 	snapshot := state.StorageStateSnapshot{
 		L0SSTableIds: []uint64{1},
@@ -28,9 +28,9 @@ func TestGenerateCompactionTaskForSimpleLayeredCompactionWithNoCompaction(t *tes
 
 func TestGenerateCompactionTaskForSimpleLayeredCompactionWithCompactionForLevel0And1(t *testing.T) {
 	compactionOptions := state.SimpleLeveledCompactionOptions{
-		SizeRatioPercentage:          200,
-		MaxLevels:                    2,
-		Level0FilesCompactionTrigger: 2,
+		NumberOfSSTablesRatioPercentage: 200,
+		MaxLevels:                       2,
+		Level0FilesCompactionTrigger:    2,
 	}
 	snapshot := state.StorageStateSnapshot{
 		L0SSTableIds: []uint64{1, 2},
@@ -51,9 +51,9 @@ func TestGenerateCompactionTaskForSimpleLayeredCompactionWithCompactionForLevel0
 
 func TestGenerateCompactionTaskForSimpleLayeredCompactionWithCompactionForLevel1And2(t *testing.T) {
 	compactionOptions := state.SimpleLeveledCompactionOptions{
-		SizeRatioPercentage:          200,
-		MaxLevels:                    2,
-		Level0FilesCompactionTrigger: 2,
+		NumberOfSSTablesRatioPercentage: 200,
+		MaxLevels:                       2,
+		Level0FilesCompactionTrigger:    2,
 	}
 	snapshot := state.StorageStateSnapshot{
 		L0SSTableIds: []uint64{1},

@@ -16,9 +16,9 @@ import (
 )
 
 type SimpleLeveledCompactionOptions struct {
-	SizeRatioPercentage          uint
-	MaxLevels                    uint
-	Level0FilesCompactionTrigger uint
+	NumberOfSSTablesRatioPercentage uint
+	MaxLevels                       uint
+	Level0FilesCompactionTrigger    uint
 }
 
 type StorageOptions struct {
@@ -147,6 +147,40 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 		})...,
 	)
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
+}
+
+func (storageState *StorageState) Apply(event StorageStateChangeEvent) []table.SSTable {
+	type SSTablesToRemove = []table.SSTable
+	//TODO: take lock
+	setSSTableMapping := func() {
+		for _, ssTable := range event.newSSTables {
+			storageState.ssTables[ssTable.Id()] = ssTable
+		}
+	}
+	updateLevels := func() []uint64 {
+		var ssTableIdsToRemove []uint64
+		if event.upperLevel == -1 {
+			ssTableIdsToRemove = append(ssTableIdsToRemove, event.upperLevelSSTableIds...)
+			storageState.l0SSTableIds = event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(storageState.l0SSTableIds)
+		} else {
+			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.upperLevel-1].SSTableIds...)
+			storageState.levels[event.upperLevel-1].clearSSTableIds()
+		}
+		ssTableIdsToRemove = append(ssTableIdsToRemove, event.lowerLevelSSTableIds...)
+		storageState.levels[event.lowerLevel-1].appendSSTableIds(event.newSSTableIds)
+
+		return ssTableIdsToRemove
+	}
+	unsetSSTableMapping := func(ssTableIdsToRemove []uint64) SSTablesToRemove {
+		var ssTables = make(SSTablesToRemove, 0, len(ssTableIdsToRemove))
+		for _, ssTableId := range ssTableIdsToRemove {
+			ssTables = append(ssTables, storageState.ssTables[ssTableId])
+			delete(storageState.ssTables, ssTableId)
+		}
+		return ssTables
+	}
+	setSSTableMapping()
+	return unsetSSTableMapping(updateLevels())
 }
 
 // Close TODO: Complete the implementation

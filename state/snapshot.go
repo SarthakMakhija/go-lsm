@@ -2,13 +2,6 @@ package state
 
 import "go-lsm/table"
 
-const totalLevels = 6
-
-type Level struct {
-	LevelNumber int
-	SSTableIds  []uint64
-}
-
 type StorageStateSnapshot struct {
 	L0SSTableIds []uint64
 	Levels       []*Level
