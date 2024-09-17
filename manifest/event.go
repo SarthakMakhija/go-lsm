@@ -6,14 +6,16 @@ import (
 )
 
 const (
-	idSize        = unsafe.Sizeof(uint64(0))
-	eventTypeSize = unsafe.Sizeof(uint8(0))
+	idSize         = unsafe.Sizeof(uint64(0))
+	eventTypeSize  = unsafe.Sizeof(uint8(0))
+	ssTableIdsSize = unsafe.Sizeof(uint8(0))
 )
 
 // Event types.
 const (
 	MemtableCreatedEventType uint8 = iota
 	SSTableFlushedEventType  uint8 = 1
+	CompactionDoneEventType  uint8 = 2
 )
 
 // Event represents a manifest event.
@@ -30,6 +32,11 @@ type MemtableCreated struct {
 // SSTableFlushed defines an SSTable flushed (to L0) event. (Memtable flushed to SSTable).
 type SSTableFlushed struct {
 	SsTableId uint64
+}
+
+// CompactionDone defines a compaction done event.
+type CompactionDone struct {
+	NewSSTableIds []uint64
 }
 
 // NewMemtableCreated creates a new MemtableCreated event.
@@ -90,6 +97,47 @@ func decodeSSTableFlushed(buffer []byte) (*SSTableFlushed, int) {
 	return NewSSTableFlushed(binary.LittleEndian.Uint64(buffer[:])), int(idSize)
 }
 
+// NewCompactionDone creates a new CompactionDone event.
+func NewCompactionDone(newSSTableIds []uint64) *CompactionDone {
+	return &CompactionDone{NewSSTableIds: newSSTableIds}
+}
+
+// encode encodes CompactionDone to byte slice.
+/*
+ -------------------------------------------------------------------------
+| 1 byte event type | 1 byte length of NewSSTableIds | N * SSTableId size |
+ -------------------------------------------------------------------------
+*/
+func (compactionDone *CompactionDone) encode() ([]byte, error) {
+	buffer := make([]byte, int(eventTypeSize)+int(ssTableIdsSize)+int(idSize)*len(compactionDone.NewSSTableIds))
+	buffer[0] = CompactionDoneEventType
+	buffer[1] = byte(len(compactionDone.NewSSTableIds))
+
+	bufferIndex := 2
+	for _, ssTableId := range compactionDone.NewSSTableIds {
+		binary.LittleEndian.PutUint64(buffer[bufferIndex:], ssTableId)
+		bufferIndex += int(idSize)
+	}
+	return buffer, nil
+}
+
+// EventType returns the event type CompactionDoneEventType.
+func (compactionDone *CompactionDone) EventType() uint8 {
+	return CompactionDoneEventType
+}
+
+// decodeCompactionDone decodes the CompactionDone event from the byte slice.
+func decodeCompactionDone(buffer []byte) (*CompactionDone, int) {
+	numberOfSSTableIds := buffer[0] //read one byte
+	bufferIndex := 1
+	ssTableIds := make([]uint64, 0, numberOfSSTableIds)
+	for count := 1; count <= int(numberOfSSTableIds); count++ {
+		ssTableIds = append(ssTableIds, binary.LittleEndian.Uint64(buffer[bufferIndex:]))
+		bufferIndex += int(idSize)
+	}
+	return NewCompactionDone(ssTableIds), 1 + int(idSize)*int(numberOfSSTableIds)
+}
+
 // decodeEventsFrom decodes all the events from the Manifest file. The passed buffer is the whole file.
 func decodeEventsFrom(buffer []byte) []Event {
 	var events []Event
@@ -103,6 +151,10 @@ func decodeEventsFrom(buffer []byte) []Event {
 		case SSTableFlushedEventType:
 			ssTableFlushed, n := decodeSSTableFlushed(buffer[eventTypeSize:])
 			events = append(events, ssTableFlushed)
+			buffer = buffer[n+int(eventTypeSize):]
+		case CompactionDoneEventType:
+			compactionDone, n := decodeCompactionDone(buffer[eventTypeSize:])
+			events = append(events, compactionDone)
 			buffer = buffer[n+int(eventTypeSize):]
 		}
 	}
