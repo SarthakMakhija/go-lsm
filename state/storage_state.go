@@ -10,8 +10,8 @@ import (
 	"go-lsm/table/block"
 	"log/slog"
 	"os"
-	"slices"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -44,6 +44,7 @@ type StorageState struct {
 	options                        StorageOptions
 	walPath                        log.WALPath
 	lastCommitTimestamp            uint64
+	stateLock                      sync.RWMutex
 }
 
 // NewStorageStateWithOptions TODO: Recover from WAL
@@ -80,6 +81,9 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 }
 
 func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
+	storageState.stateLock.RLock()
+	defer storageState.stateLock.RUnlock()
+
 	value, ok := storageState.currentMemtable.Get(key)
 	if ok {
 		return value, ok
@@ -126,6 +130,9 @@ func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) erro
 }
 
 func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Key]) iterator.Iterator {
+	storageState.stateLock.RLock()
+	defer storageState.stateLock.RUnlock()
+
 	memtableIterators := func() []iterator.Iterator {
 		iterators := make([]iterator.Iterator, len(storageState.immutableMemtables)+1)
 
@@ -150,8 +157,10 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 }
 
 func (storageState *StorageState) Apply(event StorageStateChangeEvent) []table.SSTable {
+	storageState.stateLock.Lock()
+	defer storageState.stateLock.Unlock()
+
 	type SSTablesToRemove = []table.SSTable
-	//TODO: take lock
 	setSSTableMapping := func() {
 		for _, ssTable := range event.newSSTables {
 			storageState.ssTables[ssTable.Id()] = ssTable
@@ -198,8 +207,10 @@ func (storageState *StorageState) LastCommitTimestamp() uint64 {
 	return storageState.lastCommitTimestamp
 }
 
-// Snapshot TODO: acquire lock
-func (storageState StorageState) Snapshot() StorageStateSnapshot {
+func (storageState *StorageState) Snapshot() StorageStateSnapshot {
+	storageState.stateLock.RLock()
+	defer storageState.stateLock.RUnlock()
+
 	return StorageStateSnapshot{
 		L0SSTableIds: storageState.l0SSTableIds,
 		Levels:       storageState.levels,
@@ -208,14 +219,19 @@ func (storageState StorageState) Snapshot() StorageStateSnapshot {
 }
 
 func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
-	var memtableToFlush *memory.Memtable
-	if len(storageState.immutableMemtables) > 0 {
-		memtableToFlush = storageState.immutableMemtables[0]
-	} else {
-		panic("no immutable memtables available to flush")
-	}
+	flushEligibleMemtable := func() *memory.Memtable {
+		storageState.stateLock.Lock()
+		defer storageState.stateLock.Unlock()
 
-	buildSSTable := func() (table.SSTable, error) {
+		var memtable *memory.Memtable
+		if len(storageState.immutableMemtables) > 0 {
+			memtable = storageState.immutableMemtables[0]
+		} else {
+			panic("no immutable memtables available to flush")
+		}
+		return memtable
+	}
+	buildSSTable := func(memtableToFlush *memory.Memtable) (table.SSTable, error) {
 		ssTableBuilder := table.NewSSTableBuilderWithDefaultBlockSize()
 		memtableToFlush.AllEntries(func(key kv.Key, value kv.Value) {
 			ssTableBuilder.Add(key, value)
@@ -230,59 +246,38 @@ func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 		return ssTable, nil
 	}
 
-	ssTable, err := buildSSTable()
+	memtableToFlush := flushEligibleMemtable()
+	ssTable, err := buildSSTable(memtableToFlush)
 	if err != nil {
 		return err
 	}
 
+	storageState.stateLock.Lock()
 	storageState.immutableMemtables = storageState.immutableMemtables[1:]
 	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or Levels
 	storageState.ssTables[memtableToFlush.Id()] = ssTable
+	storageState.stateLock.Unlock()
+
 	if err := storageState.manifest.Add(manifest.NewSSTableFlushed(ssTable.Id())); err != nil {
 		return err
 	}
 	memtableToFlush.DeleteWAL()
 
-	//TODO: concurrency support
 	return nil
-}
-
-func (storageState *StorageState) orderedSSTableIds(level int) []uint64 {
-	if level == 0 {
-		ids := make([]uint64, 0, len(storageState.l0SSTableIds))
-		for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
-			ids = append(ids, storageState.l0SSTableIds[l0SSTableIndex])
-		}
-		return ids
-	}
-	ssTableIds := storageState.levels[level-1].SSTableIds
-	ids := make([]uint64, 0, len(ssTableIds))
-	for ssTableIndex := len(ssTableIds) - 1; ssTableIndex >= 0; ssTableIndex-- {
-		ids = append(ids, ssTableIds[ssTableIndex])
-	}
-	return ids
-}
-
-func (storageState *StorageState) sortedMemtableIds() []uint64 {
-	ids := make([]uint64, 0, 1+len(storageState.immutableMemtables))
-	ids = append(ids, storageState.currentMemtable.Id())
-	for _, immutableMemtable := range storageState.immutableMemtables {
-		ids = append(ids, immutableMemtable.Id())
-	}
-	slices.Sort(ids)
-	return ids
 }
 
 // TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
 // TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
 func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes int64) error {
 	if !storageState.currentMemtable.CanFit(requiredSizeInBytes) {
+		storageState.stateLock.Lock()
 		storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)
 		storageState.currentMemtable = memory.NewMemtable(
 			storageState.idGenerator.NextId(),
 			storageState.options.MemTableSizeInBytes,
 			storageState.walPath,
 		)
+		storageState.stateLock.Unlock()
 		return storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
 	}
 	return nil
@@ -307,12 +302,19 @@ func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelec
 }
 
 func (storageState *StorageState) spawnMemtableFlush() {
+	hasImmutableMemtablesGoneBeyondMaximumAllowed := func() bool {
+		storageState.stateLock.RLock()
+		defer storageState.stateLock.RUnlock()
+
+		return uint(len(storageState.immutableMemtables)) >= storageState.options.MaximumMemtables
+	}
+	
 	timer := time.NewTimer(storageState.options.FlushMemtableDuration)
 	go func() {
 		for {
 			select {
 			case <-timer.C:
-				if uint(len(storageState.immutableMemtables)) >= storageState.options.MaximumMemtables {
+				if hasImmutableMemtablesGoneBeyondMaximumAllowed() {
 					if err := storageState.forceFlushNextImmutableMemtable(); err != nil {
 						slog.Error("could not flush memtable, error: %v", err)
 					}

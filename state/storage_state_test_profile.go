@@ -7,6 +7,7 @@ import (
 	"go-lsm/memory"
 	"go-lsm/table"
 	"os"
+	"slices"
 	"time"
 )
 
@@ -83,4 +84,15 @@ func (storageState *StorageState) hasImmutableMemtables() bool {
 func (storageState *StorageState) hasSSTableWithId(id uint64) bool {
 	_, ok := storageState.ssTables[id]
 	return ok
+}
+
+// sortedMemtableIds returns the sorted memtableIds,  it is only for testing.
+func (storageState *StorageState) sortedMemtableIds() []uint64 {
+	ids := make([]uint64, 0, 1+len(storageState.immutableMemtables))
+	ids = append(ids, storageState.currentMemtable.Id())
+	for _, immutableMemtable := range storageState.immutableMemtables {
+		ids = append(ids, immutableMemtable.Id())
+	}
+	slices.Sort(ids)
+	return ids
 }
