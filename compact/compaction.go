@@ -22,17 +22,18 @@ func NewCompaction(oracle *txn.Oracle, idGenerator *state.SSTableIdGenerator, op
 	}
 }
 
-func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (SimpleLeveledCompactionDescription, []table.SSTable, error) {
+func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.StorageStateChangeEvent, error) {
 	simpleLeveledCompaction := NewSimpleLeveledCompaction(compaction.options.CompactionOptions)
 	description, ok := simpleLeveledCompaction.CompactionDescription(snapshot)
 	if !ok {
-		return NothingToCompactDescription, nil, nil
+		return state.StorageStateChangeEvent{}, nil
 	}
 	ssTables, err := compaction.compact(description, snapshot)
 	if err != nil {
-		return NothingToCompactDescription, nil, nil
+		return state.StorageStateChangeEvent{}, nil
 	}
-	return description, ssTables, nil
+	event := state.NewStorageStateChangeEvent(ssTables, description.upperLevel, description.lowerLevel, description.upperLevelSSTableIds, description.lowerLevelSSTableIds)
+	return event, nil
 }
 
 func (compaction *Compaction) compact(description SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]table.SSTable, error) {

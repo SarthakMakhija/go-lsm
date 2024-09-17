@@ -64,13 +64,13 @@ func TestStartSimpleLeveledCompactionWithCompactionDescription(t *testing.T) {
 	assert.Equal(t, []uint64{4}, storageStateSnapshot.OrderedSSTableIds(1))
 
 	compaction := NewCompaction(oracle, storageState.SSTableIdGenerator(), storageOptions)
-	description, _, err := compaction.Start(storageStateSnapshot)
+	storageStateChangeEvent, err := compaction.Start(storageStateSnapshot)
 
 	assert.Nil(t, err)
-	assert.Equal(t, -1, description.upperLevel)
-	assert.Equal(t, 1, description.lowerLevel)
-	assert.Equal(t, []uint64{4}, description.lowerLevelSSTableIds)
-	assert.Equal(t, []uint64{3, 2}, description.upperLevelSSTableIds)
+	assert.Equal(t, -1, storageStateChangeEvent.UpperLevel)
+	assert.Equal(t, 1, storageStateChangeEvent.LowerLevel)
+	assert.Equal(t, []uint64{4}, storageStateChangeEvent.LowerLevelSSTableIds)
+	assert.Equal(t, []uint64{3, 2}, storageStateChangeEvent.UpperLevelSSTableIds)
 }
 
 func TestStartSimpleLeveledCompactionBetweenL0AndL1WithSSTablesPresentOnlyInL0(t *testing.T) {
@@ -116,9 +116,10 @@ func TestStartSimpleLeveledCompactionBetweenL0AndL1WithSSTablesPresentOnlyInL0(t
 	assert.Equal(t, []uint64{}, storageStateSnapshot.OrderedSSTableIds(1))
 
 	compaction := NewCompaction(oracle, storageState.SSTableIdGenerator(), storageOptions)
-	_, newSSTables, err := compaction.Start(storageStateSnapshot)
-
+	storageStateChangeEvent, err := compaction.Start(storageStateSnapshot)
 	assert.Nil(t, err)
+
+	newSSTables := storageStateChangeEvent.NewSSTables
 	assert.Equal(t, 1, len(newSSTables))
 
 	newSSTable := newSSTables[0]
@@ -185,9 +186,10 @@ func TestStartSimpleLeveledCompactionBetweenL0AndL1WithNewSSTables(t *testing.T)
 	assert.Equal(t, []uint64{4}, storageStateSnapshot.OrderedSSTableIds(1))
 
 	compaction := NewCompaction(oracle, storageState.SSTableIdGenerator(), storageOptions)
-	_, newSSTables, err := compaction.Start(storageStateSnapshot)
-
+	storageStateChangeEvent, err := compaction.Start(storageStateSnapshot)
 	assert.Nil(t, err)
+
+	newSSTables := storageStateChangeEvent.NewSSTables
 	assert.Equal(t, 1, len(newSSTables))
 
 	newSSTable := newSSTables[0]

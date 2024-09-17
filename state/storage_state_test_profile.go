@@ -39,16 +39,6 @@ func (storageState *StorageState) DeleteWALDirectory() {
 	}
 }
 
-// Options returns the StorageOptions, only for testing.
-func (storageState *StorageState) Options() StorageOptions {
-	return storageState.options
-}
-
-// SSTableIdGenerator returns the SSTableIdGenerator, only for testing.
-func (storageState *StorageState) SSTableIdGenerator() *SSTableIdGenerator {
-	return storageState.idGenerator
-}
-
 // SetSSTableAtLevel sets SSTable at the given level, only for testing.
 func (storageState *StorageState) SetSSTableAtLevel(ssTable table.SSTable, level int) {
 	if level == 0 {

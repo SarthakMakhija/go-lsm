@@ -7,7 +7,7 @@ import (
 
 func TestAllSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(t *testing.T) {
 	event := StorageStateChangeEvent{
-		upperLevelSSTableIds: []uint64{1, 2, 3, 4},
+		UpperLevelSSTableIds: []uint64{1, 2, 3, 4},
 	}
 	excludedSSTableIds := event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds([]uint64{1, 2, 3, 4, 5, 6})
 

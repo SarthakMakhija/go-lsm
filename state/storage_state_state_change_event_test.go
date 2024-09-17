@@ -44,12 +44,12 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0(t *testin
 	newSSTable := buildNewSSTable(storageState.SSTableIdGenerator().NextId())
 
 	event := StorageStateChangeEvent{
-		upperLevel:           -1,
-		upperLevelSSTableIds: []uint64{ssTable.Id(), anotherSSTable.Id()},
-		lowerLevel:           1,
-		lowerLevelSSTableIds: []uint64{},
-		newSSTables:          []table.SSTable{newSSTable},
-		newSSTableIds:        []uint64{newSSTable.Id()},
+		UpperLevel:           -1,
+		UpperLevelSSTableIds: []uint64{ssTable.Id(), anotherSSTable.Id()},
+		LowerLevel:           1,
+		LowerLevelSSTableIds: []uint64{},
+		NewSSTables:          []table.SSTable{newSSTable},
+		NewSSTableIds:        []uint64{newSSTable.Id()},
 	}
 	ssTablesToRemove := storageState.Apply(event)
 
@@ -97,12 +97,12 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0ButAnother
 	newSSTable := buildNewSSTable(storageState.SSTableIdGenerator().NextId())
 
 	event := StorageStateChangeEvent{
-		upperLevel:           -1,
-		upperLevelSSTableIds: []uint64{ssTable.Id()},
-		lowerLevel:           1,
-		lowerLevelSSTableIds: []uint64{},
-		newSSTables:          []table.SSTable{newSSTable},
-		newSSTableIds:        []uint64{newSSTable.Id()},
+		UpperLevel:           -1,
+		UpperLevelSSTableIds: []uint64{ssTable.Id()},
+		LowerLevel:           1,
+		LowerLevelSSTableIds: []uint64{},
+		NewSSTables:          []table.SSTable{newSSTable},
+		NewSSTableIds:        []uint64{newSSTable.Id()},
 	}
 	ssTablesToRemove := storageState.Apply(event)
 

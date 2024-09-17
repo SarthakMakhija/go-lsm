@@ -162,21 +162,21 @@ func (storageState *StorageState) Apply(event StorageStateChangeEvent) []table.S
 
 	type SSTablesToRemove = []table.SSTable
 	setSSTableMapping := func() {
-		for _, ssTable := range event.newSSTables {
+		for _, ssTable := range event.NewSSTables {
 			storageState.ssTables[ssTable.Id()] = ssTable
 		}
 	}
 	updateLevels := func() []uint64 {
 		var ssTableIdsToRemove []uint64
-		if event.upperLevel == -1 {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, event.upperLevelSSTableIds...)
+		if event.UpperLevel == -1 {
+			ssTableIdsToRemove = append(ssTableIdsToRemove, event.UpperLevelSSTableIds...)
 			storageState.l0SSTableIds = event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(storageState.l0SSTableIds)
 		} else {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.upperLevel-1].SSTableIds...)
-			storageState.levels[event.upperLevel-1].clearSSTableIds()
+			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.UpperLevel-1].SSTableIds...)
+			storageState.levels[event.UpperLevel-1].clearSSTableIds()
 		}
-		ssTableIdsToRemove = append(ssTableIdsToRemove, event.lowerLevelSSTableIds...)
-		storageState.levels[event.lowerLevel-1].appendSSTableIds(event.newSSTableIds)
+		ssTableIdsToRemove = append(ssTableIdsToRemove, event.LowerLevelSSTableIds...)
+		storageState.levels[event.LowerLevel-1].appendSSTableIds(event.NewSSTableIds)
 
 		return ssTableIdsToRemove
 	}
@@ -192,11 +192,12 @@ func (storageState *StorageState) Apply(event StorageStateChangeEvent) []table.S
 	return unsetSSTableMapping(updateLevels())
 }
 
-// Close TODO: Complete the implementation
-func (storageState *StorageState) Close() {
-	close(storageState.closeChannel)
-	//Wait for flush immutable tables goroutine to return
-	<-storageState.flushMemtableCompletionChannel
+func (storageState *StorageState) SSTableIdGenerator() *SSTableIdGenerator {
+	return storageState.idGenerator
+}
+
+func (storageState *StorageState) Options() StorageOptions {
+	return storageState.options
 }
 
 func (storageState *StorageState) WALDirectoryPath() string {
@@ -216,6 +217,13 @@ func (storageState *StorageState) Snapshot() StorageStateSnapshot {
 		Levels:       storageState.levels,
 		SSTables:     storageState.ssTables,
 	}
+}
+
+// Close TODO: Complete the implementation
+func (storageState *StorageState) Close() {
+	close(storageState.closeChannel)
+	//Wait for flush immutable tables goroutine to return
+	<-storageState.flushMemtableCompletionChannel
 }
 
 func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
@@ -308,7 +316,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 
 		return uint(len(storageState.immutableMemtables)) >= storageState.options.MaximumMemtables
 	}
-	
+
 	timer := time.NewTimer(storageState.options.FlushMemtableDuration)
 	go func() {
 		for {
@@ -322,6 +330,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 				timer.Reset(storageState.options.FlushMemtableDuration)
 			case <-storageState.closeChannel:
 				close(storageState.flushMemtableCompletionChannel)
+				timer.Stop()
 				return
 			}
 		}
