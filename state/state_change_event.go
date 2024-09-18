@@ -1,28 +1,25 @@
 package state
 
-import "go-lsm/table"
+import (
+	"go-lsm/compact/meta"
+	"go-lsm/table"
+)
 
 type StorageStateChangeEvent struct {
-	NewSSTables          []table.SSTable
-	NewSSTableIds        []uint64
-	UpperLevel           int
-	LowerLevel           int
-	UpperLevelSSTableIds []uint64
-	LowerLevelSSTableIds []uint64
+	NewSSTables   []table.SSTable
+	NewSSTableIds []uint64
+	Description   meta.SimpleLeveledCompactionDescription
 }
 
-func NewStorageStateChangeEvent(newSSTables []table.SSTable, upperLevel int, lowerLevel int, upperLevelSSTableIds []uint64, lowerLevelSSTableIds []uint64) StorageStateChangeEvent {
+func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.SimpleLeveledCompactionDescription) StorageStateChangeEvent {
 	newSSTableIds := make([]uint64, 0, len(newSSTables))
 	for _, ssTable := range newSSTables {
 		newSSTableIds = append(newSSTableIds, ssTable.Id())
 	}
 	return StorageStateChangeEvent{
-		NewSSTables:          newSSTables,
-		NewSSTableIds:        newSSTableIds,
-		UpperLevel:           upperLevel,
-		LowerLevel:           lowerLevel,
-		UpperLevelSSTableIds: upperLevelSSTableIds,
-		LowerLevelSSTableIds: lowerLevelSSTableIds,
+		NewSSTables:   newSSTables,
+		NewSSTableIds: newSSTableIds,
+		Description:   description,
 	}
 }
 
@@ -39,8 +36,8 @@ func (event StorageStateChangeEvent) allSSTableIdsExcludingTheOnesPresentInUpper
 }
 
 func (event StorageStateChangeEvent) upperLevelSSTableIdsAsMap() map[uint64]struct{} {
-	ssTableIds := make(map[uint64]struct{}, len(event.UpperLevelSSTableIds))
-	for _, ssTableId := range event.UpperLevelSSTableIds {
+	ssTableIds := make(map[uint64]struct{}, len(event.Description.UpperLevelSSTableIds))
+	for _, ssTableId := range event.Description.UpperLevelSSTableIds {
 		ssTableIds[ssTableId] = struct{}{}
 	}
 	return ssTableIds

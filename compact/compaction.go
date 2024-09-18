@@ -1,6 +1,7 @@
 package compact
 
 import (
+	"go-lsm/compact/meta"
 	"go-lsm/iterator"
 	"go-lsm/kv"
 	"go-lsm/state"
@@ -32,13 +33,13 @@ func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.
 	if err != nil {
 		return state.StorageStateChangeEvent{}, nil
 	}
-	event := state.NewStorageStateChangeEvent(ssTables, description.upperLevel, description.lowerLevel, description.upperLevelSSTableIds, description.lowerLevelSSTableIds)
+	event := state.NewStorageStateChangeEvent(ssTables, description)
 	return event, nil
 }
 
-func (compaction *Compaction) compact(description SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]table.SSTable, error) {
-	upperLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.upperLevelSSTableIds))
-	for _, ssTableId := range description.upperLevelSSTableIds {
+func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]table.SSTable, error) {
+	upperLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.UpperLevelSSTableIds))
+	for _, ssTableId := range description.UpperLevelSSTableIds {
 		ssTable := snapshot.SSTables[ssTableId]
 		ssTableIterator, err := ssTable.SeekToFirst()
 		if err != nil {
@@ -46,8 +47,8 @@ func (compaction *Compaction) compact(description SimpleLeveledCompactionDescrip
 		}
 		upperLevelSSTableIterator = append(upperLevelSSTableIterator, ssTableIterator)
 	}
-	lowerLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.lowerLevelSSTableIds))
-	for _, ssTableId := range description.lowerLevelSSTableIds {
+	lowerLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.LowerLevelSSTableIds))
+	for _, ssTableId := range description.LowerLevelSSTableIds {
 		ssTable := snapshot.SSTables[ssTableId]
 		ssTableIterator, err := ssTable.SeekToFirst()
 		if err != nil {

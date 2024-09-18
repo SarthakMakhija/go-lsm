@@ -1,15 +1,9 @@
 package compact
 
-import "go-lsm/state"
-
-var NothingToCompactDescription = SimpleLeveledCompactionDescription{}
-
-type SimpleLeveledCompactionDescription struct {
-	upperLevel           int
-	lowerLevel           int
-	upperLevelSSTableIds []uint64
-	lowerLevelSSTableIds []uint64
-}
+import (
+	"go-lsm/compact/meta"
+	"go-lsm/state"
+)
 
 type SimpleLeveledCompaction struct {
 	options state.SimpleLeveledCompactionOptions
@@ -21,7 +15,7 @@ func NewSimpleLeveledCompaction(options state.SimpleLeveledCompactionOptions) Si
 	}
 }
 
-func (compaction SimpleLeveledCompaction) CompactionDescription(stateSnapshot state.StorageStateSnapshot) (SimpleLeveledCompactionDescription, bool) {
+func (compaction SimpleLeveledCompaction) CompactionDescription(stateSnapshot state.StorageStateSnapshot) (meta.SimpleLeveledCompactionDescription, bool) {
 	var ssTableCountByLevel []int
 	ssTableCountByLevel = append(ssTableCountByLevel, len(stateSnapshot.L0SSTableIds))
 
@@ -44,13 +38,13 @@ func (compaction SimpleLeveledCompaction) CompactionDescription(stateSnapshot st
 			} else {
 				upperLevel = level
 			}
-			return SimpleLeveledCompactionDescription{
-				upperLevel:           upperLevel,
-				lowerLevel:           lowerLevel,
-				upperLevelSSTableIds: stateSnapshot.OrderedSSTableIds(level),
-				lowerLevelSSTableIds: stateSnapshot.OrderedSSTableIds(lowerLevel),
+			return meta.SimpleLeveledCompactionDescription{
+				UpperLevel:           upperLevel,
+				LowerLevel:           lowerLevel,
+				UpperLevelSSTableIds: stateSnapshot.OrderedSSTableIds(level),
+				LowerLevelSSTableIds: stateSnapshot.OrderedSSTableIds(lowerLevel),
 			}, true
 		}
 	}
-	return NothingToCompactDescription, false
+	return meta.NothingToCompactDescription, false
 }

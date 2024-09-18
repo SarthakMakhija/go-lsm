@@ -43,10 +43,10 @@ func TestGenerateCompactionTaskForSimpleLayeredCompactionWithCompactionForLevel0
 	compactionDescription, ok := compaction.CompactionDescription(snapshot)
 
 	assert.True(t, ok)
-	assert.Equal(t, -1, compactionDescription.upperLevel)
-	assert.Equal(t, 1, compactionDescription.lowerLevel)
-	assert.Equal(t, []uint64{2, 1}, compactionDescription.upperLevelSSTableIds)
-	assert.Equal(t, []uint64{}, compactionDescription.lowerLevelSSTableIds)
+	assert.Equal(t, -1, compactionDescription.UpperLevel)
+	assert.Equal(t, 1, compactionDescription.LowerLevel)
+	assert.Equal(t, []uint64{2, 1}, compactionDescription.UpperLevelSSTableIds)
+	assert.Equal(t, []uint64{}, compactionDescription.LowerLevelSSTableIds)
 }
 
 func TestGenerateCompactionTaskForSimpleLayeredCompactionWithCompactionForLevel1And2(t *testing.T) {
@@ -67,8 +67,8 @@ func TestGenerateCompactionTaskForSimpleLayeredCompactionWithCompactionForLevel1
 	compactionDescription, ok := compaction.CompactionDescription(snapshot)
 
 	assert.True(t, ok)
-	assert.Equal(t, 1, compactionDescription.upperLevel)
-	assert.Equal(t, 2, compactionDescription.lowerLevel)
-	assert.Equal(t, []uint64{3, 2}, compactionDescription.upperLevelSSTableIds)
-	assert.Equal(t, []uint64{4}, compactionDescription.lowerLevelSSTableIds)
+	assert.Equal(t, 1, compactionDescription.UpperLevel)
+	assert.Equal(t, 2, compactionDescription.LowerLevel)
+	assert.Equal(t, []uint64{3, 2}, compactionDescription.UpperLevelSSTableIds)
+	assert.Equal(t, []uint64{4}, compactionDescription.LowerLevelSSTableIds)
 }

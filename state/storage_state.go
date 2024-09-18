@@ -160,10 +160,10 @@ func (storageState *StorageState) Apply(event StorageStateChangeEvent) ([]table.
 	ssTablesToRemove := storageState.updateState(event)
 	if err := storageState.manifest.Add(manifest.NewCompactionDone(
 		event.NewSSTableIds,
-		event.UpperLevel,
-		event.LowerLevel,
-		event.UpperLevelSSTableIds,
-		event.LowerLevelSSTableIds,
+		event.Description.UpperLevel,
+		event.Description.LowerLevel,
+		event.Description.UpperLevelSSTableIds,
+		event.Description.LowerLevelSSTableIds,
 	)); err != nil {
 		return nil, err
 	}
@@ -399,15 +399,15 @@ func (storageState *StorageState) updateState(event StorageStateChangeEvent) []t
 	}
 	updateLevels := func() []uint64 {
 		var ssTableIdsToRemove []uint64
-		if event.UpperLevel == -1 {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, event.UpperLevelSSTableIds...)
+		if event.Description.UpperLevel == -1 {
+			ssTableIdsToRemove = append(ssTableIdsToRemove, event.Description.UpperLevelSSTableIds...)
 			storageState.l0SSTableIds = event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(storageState.l0SSTableIds)
 		} else {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.UpperLevel-1].SSTableIds...)
-			storageState.levels[event.UpperLevel-1].clearSSTableIds()
+			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.Description.UpperLevel-1].SSTableIds...)
+			storageState.levels[event.Description.UpperLevel-1].clearSSTableIds()
 		}
-		ssTableIdsToRemove = append(ssTableIdsToRemove, event.LowerLevelSSTableIds...)
-		storageState.levels[event.LowerLevel-1].appendSSTableIds(event.NewSSTableIds)
+		ssTableIdsToRemove = append(ssTableIdsToRemove, event.Description.LowerLevelSSTableIds...)
+		storageState.levels[event.Description.LowerLevel-1].appendSSTableIds(event.NewSSTableIds)
 
 		return ssTableIdsToRemove
 	}
