@@ -186,6 +186,7 @@ func (table SSTable) Remove() error {
 	return nil
 }
 
+// readBlock reads the block at the given blockIndex.
 func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
 	startingOffset, endOffset := table.offsetRangeOfBlockAt(blockIndex)
 	buffer := make([]byte, endOffset-startingOffset)
