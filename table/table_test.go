@@ -229,3 +229,17 @@ func TestSSTableDoesNotContainAGiveInclusiveKeyRange2(t *testing.T) {
 			kv.NewStringKeyWithTimestamp("etcd", 6), kv.NewStringKeyWithTimestamp("traffik", 6))),
 	)
 }
+
+func TestRemoveSSTable(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringValue("raft"))
+
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+	}()
+
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+	assert.Nil(t, ssTable.Remove())
+}

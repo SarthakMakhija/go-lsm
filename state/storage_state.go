@@ -186,7 +186,7 @@ func (storageState *StorageState) Snapshot() StorageStateSnapshot {
 	defer storageState.stateLock.RUnlock()
 
 	return StorageStateSnapshot{
-		L0SSTableIds: storageState.l0SSTableIds,
+		L0SSTableIds: storageState.l0SSTableIds, //TODO: order it?
 		Levels:       storageState.levels,
 		SSTables:     storageState.ssTables,
 	}

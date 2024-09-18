@@ -6,6 +6,7 @@ import (
 	"go-lsm/kv"
 	"go-lsm/table/block"
 	"go-lsm/table/bloom"
+	"os"
 )
 
 // SSTable represents SSTable on disk.
@@ -172,6 +173,17 @@ func (table SSTable) MayContain(key kv.Key) bool {
 // Id returns the id of SSTable.
 func (table SSTable) Id() uint64 {
 	return table.id
+}
+
+// Remove removes the SSTable.
+func (table SSTable) Remove() error {
+	if err := table.file.file.Close(); err != nil {
+		return err
+	}
+	if err := os.Remove(table.file.file.Name()); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
