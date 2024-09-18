@@ -21,7 +21,7 @@ func TestReadInEmptyDb(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db, _ := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
 		_ = os.RemoveAll(directory)
@@ -43,7 +43,7 @@ func TestReadAnExistingKeyValue(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db, _ := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
 		_ = os.RemoveAll(directory)
@@ -79,7 +79,7 @@ func TestScanKeyValues1(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db, _ := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
 		_ = os.RemoveAll(directory)
@@ -121,7 +121,7 @@ func TestScanKeyValues2(t *testing.T) {
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    4096,
 	}
-	db, _ := go_lsm.NewDb(storageOptions)
+	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
 		_ = os.RemoveAll(directory)

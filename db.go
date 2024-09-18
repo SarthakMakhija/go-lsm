@@ -25,8 +25,8 @@ type KeyValue struct {
 	Value []byte
 }
 
-// NewDb creates a new instance of key/value Db.
-func NewDb(options state.StorageOptions) (*Db, error) {
+// Open opens the database (either new or existing) and creates a new instance of key/value Db.
+func Open(options state.StorageOptions) (*Db, error) {
 	storageState, err := state.NewStorageStateWithOptions(options)
 	if err != nil {
 		return nil, err
