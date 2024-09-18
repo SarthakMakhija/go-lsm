@@ -10,9 +10,8 @@ import (
 )
 
 const (
-	idSize         = unsafe.Sizeof(uint64(0))
-	eventTypeSize  = unsafe.Sizeof(uint8(0))
-	ssTableIdsSize = unsafe.Sizeof(uint8(0))
+	idSize        = unsafe.Sizeof(uint64(0))
+	eventTypeSize = unsafe.Sizeof(uint8(0))
 )
 
 // Event types.

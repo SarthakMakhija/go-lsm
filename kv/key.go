@@ -154,7 +154,7 @@ func (key Key) Timestamp() uint64 {
 // RawKey represents the raw key (provided by the user).
 type RawKey []byte
 
-// IsLessThanOrEqualTo returns true if RawKey is less than or equal to other.
+// IsLessThanOrEqualTo returns true if RawKey is less than or equal to other key.
 func (key RawKey) IsLessThanOrEqualTo(other LessOrEqual) bool {
 	otherKey := other.(RawKey)
 	return bytes.Compare(key, otherKey) <= 0

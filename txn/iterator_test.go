@@ -25,7 +25,7 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing
 
 	existingBatch := kv.NewBatch()
 	_ = existingBatch.Put([]byte("consensus"), []byte("raft"))
-	storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
+	_ = storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadwriteTransaction(oracle, storageState)
@@ -71,7 +71,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSys
 
 	existingBatch := kv.NewBatch()
 	_ = existingBatch.Put([]byte("consensus"), []byte("raft"))
-	storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
+	_ = storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadwriteTransaction(oracle, storageState)
@@ -112,7 +112,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInT
 
 	existingBatch := kv.NewBatch()
 	existingBatch.Delete([]byte("consensus"))
-	storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
+	_ = storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadwriteTransaction(oracle, storageState)
@@ -149,7 +149,7 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystemWithABoundC
 
 	existingBatch := kv.NewBatch()
 	_ = existingBatch.Put([]byte("consensus"), []byte("raft"))
-	storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
+	_ = storageState.Set(kv.NewTimestampedBatchFrom(*existingBatch, commitTimestamp))
 	oracle.commitTimestampMark.Finish(commitTimestamp)
 
 	transaction := NewReadwriteTransaction(oracle, storageState)

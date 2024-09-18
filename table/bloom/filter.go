@@ -13,7 +13,7 @@ const uin8Size = int(unsafe.Sizeof(uint8(0)))
 const FalsePositiveRate = 0.01
 
 // Filter represents Bloom filter.
-// Bloom filter is a probabilistic data structure used to test whether an element is a add member.
+// Bloom filter is a probabilistic data structure used to test whether an element maybe present in the dataset.
 // A bloom filter can query against large amounts of data and return either “possibly in the add” or “definitely not in the add”.
 // It depends on M-sized bit vector and K-hash functions.
 type Filter struct {

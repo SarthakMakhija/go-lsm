@@ -36,7 +36,7 @@ func NewIndexedIterator(index int, iterator Iterator) IndexedIterator {
 	}
 }
 
-// IsPrioritizedOver returns true if the key referred by the indexedIterator is smaller than the key referred by other.
+// IsPrioritizedOver returns true if the key referred by the indexedIterator is smaller than the key referred by the other.
 // If the keys are the same, IndexedIterator with smaller index is prioritized.
 func (indexedIterator IndexedIterator) IsPrioritizedOver(other IndexedIterator) bool {
 	comparisonResult := indexedIterator.Key().CompareKeysWithDescendingTimestamp(other.Key())

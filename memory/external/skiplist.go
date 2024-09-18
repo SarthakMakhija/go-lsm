@@ -60,7 +60,7 @@ func NewSkipList(arenaSize int64) *SkipList {
 // Put inserts the key-value pair.
 func (skipList *SkipList) Put(key kv.Key, value kv.Value) {
 	// Since we allow over-write, we may not need to create a new node. We might not even need to
-	// increase the height. Let'skipList defer these actions.
+	// increase the height. Let skipList defer these actions.
 	listHeight := skipList.getHeight()
 
 	var prev [maxHeight + 1]*node
@@ -116,7 +116,6 @@ func (skipList *SkipList) Put(key kv.Key, value kv.Value) {
 			// because it is unlikely that lots of nodes are inserted between prev[i] and next[i].
 			prev[i], next[i] = skipList.findSpliceForLevel(key, prev[i], i)
 			if prev[i] == next[i] {
-				//y.AssertTruef(i == 0, "Equality can happen only on base level: %d", i)
 				prev[i].setValue(skipList.arena, value)
 				return
 			}
@@ -173,7 +172,7 @@ func (skipList *SkipList) decrRef() {
 	// Indicate we are closed. Good for testing.  Also, lets GC reclaim memory. Race condition
 	// here would suggest we are accessing skipList when we are supposed to have no reference!
 	skipList.arena = nil
-	// Since the head references the arena'skipList buf, as long as the head is kept around
+	// Since the head references the arena's skipList buf, as long as the head is kept around
 	// GC can't release the buf.
 	skipList.head = nil
 }
@@ -243,7 +242,7 @@ func (skipList *SkipList) findNear(key kv.Key, less bool, allowEqual bool) (*nod
 				level--
 				continue
 			}
-			// Level=0. Cannot descend further. Let'skipList return something that makes sense.
+			// Level=0. Cannot descend further. Let skipList return something that makes sense.
 			if !less {
 				return nil, false
 			}
