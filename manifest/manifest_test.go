@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"github.com/stretchr/testify/assert"
+	"go-lsm/compact/meta"
 	"os"
 	"path/filepath"
 	"testing"
@@ -52,7 +53,12 @@ func TestRecoversAnExistingManifest(t *testing.T) {
 	upperLevelSSTableIds := []uint64{20, 30}
 	lowerLevelSSTableIds := []uint64{50, 60}
 
-	compactionDone := NewCompactionDone([]uint64{10, 11}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
+	compactionDone := NewCompactionDone([]uint64{10, 11}, meta.SimpleLeveledCompactionDescription{
+		UpperLevel:           upperLevel,
+		LowerLevel:           lowerLevel,
+		UpperLevelSSTableIds: upperLevelSSTableIds,
+		LowerLevelSSTableIds: lowerLevelSSTableIds,
+	})
 	assert.Nil(t, manifest.Add(compactionDone))
 
 	manifest, events, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
@@ -64,8 +70,8 @@ func TestRecoversAnExistingManifest(t *testing.T) {
 	assert.Equal(t, uint64(10), events[2].(*SSTableFlushed).SsTableId)
 
 	assert.Equal(t, []uint64{10, 11}, events[3].(*CompactionDone).NewSSTableIds)
-	assert.Equal(t, -1, events[3].(*CompactionDone).UpperLevel)
-	assert.Equal(t, 1, events[3].(*CompactionDone).LowerLevel)
-	assert.Equal(t, []uint64{20, 30}, events[3].(*CompactionDone).UpperLevelSSTableIds)
-	assert.Equal(t, []uint64{50, 60}, events[3].(*CompactionDone).LowerLevelSSTableIds)
+	assert.Equal(t, -1, events[3].(*CompactionDone).Description.UpperLevel)
+	assert.Equal(t, 1, events[3].(*CompactionDone).Description.LowerLevel)
+	assert.Equal(t, []uint64{20, 30}, events[3].(*CompactionDone).Description.UpperLevelSSTableIds)
+	assert.Equal(t, []uint64{50, 60}, events[3].(*CompactionDone).Description.LowerLevelSSTableIds)
 }

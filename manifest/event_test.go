@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"github.com/stretchr/testify/assert"
+	"go-lsm/compact/meta"
 	"testing"
 )
 
@@ -36,15 +37,20 @@ func TestNewCompactionDoneEventEncodeAndDecode(t *testing.T) {
 	lowerLevel := 1
 	upperLevelSSTableIds := []uint64{20, 30}
 	lowerLevelSSTableIds := []uint64{50, 60}
-	compactionDone := NewCompactionDone([]uint64{10, 14}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
+	compactionDone := NewCompactionDone([]uint64{10, 14}, meta.SimpleLeveledCompactionDescription{
+		UpperLevel:           upperLevel,
+		LowerLevel:           lowerLevel,
+		UpperLevelSSTableIds: upperLevelSSTableIds,
+		LowerLevelSSTableIds: lowerLevelSSTableIds,
+	})
 	buffer, _ := compactionDone.encode()
 
 	decoded, _ := decodeCompactionDone(buffer[1:])
 	assert.Equal(t, []uint64{10, 14}, decoded.NewSSTableIds)
-	assert.Equal(t, -1, decoded.UpperLevel)
-	assert.Equal(t, 1, decoded.LowerLevel)
-	assert.Equal(t, []uint64{20, 30}, decoded.UpperLevelSSTableIds)
-	assert.Equal(t, []uint64{50, 60}, decoded.LowerLevelSSTableIds)
+	assert.Equal(t, -1, decoded.Description.UpperLevel)
+	assert.Equal(t, 1, decoded.Description.LowerLevel)
+	assert.Equal(t, []uint64{20, 30}, decoded.Description.UpperLevelSSTableIds)
+	assert.Equal(t, []uint64{50, 60}, decoded.Description.LowerLevelSSTableIds)
 }
 
 func TestNewCompactionDoneEventType(t *testing.T) {
@@ -53,7 +59,12 @@ func TestNewCompactionDoneEventType(t *testing.T) {
 	upperLevelSSTableIds := []uint64{20, 30}
 	lowerLevelSSTableIds := []uint64{50, 60}
 
-	compactionDone := NewCompactionDone([]uint64{10, 14}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
+	compactionDone := NewCompactionDone([]uint64{10, 14}, meta.SimpleLeveledCompactionDescription{
+		UpperLevel:           upperLevel,
+		LowerLevel:           lowerLevel,
+		UpperLevelSSTableIds: upperLevelSSTableIds,
+		LowerLevelSSTableIds: lowerLevelSSTableIds,
+	})
 	assert.Equal(t, CompactionDoneEventType, compactionDone.EventType())
 }
 
@@ -80,7 +91,12 @@ func TestDecodeNewMemtableCreatedAndCompactionDoneEvents(t *testing.T) {
 	lowerLevel := 1
 	upperLevelSSTableIds := []uint64{20, 30}
 	lowerLevelSSTableIds := []uint64{50, 60}
-	compactionDone := NewCompactionDone([]uint64{10, 11}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
+	compactionDone := NewCompactionDone([]uint64{10, 11}, meta.SimpleLeveledCompactionDescription{
+		UpperLevel:           upperLevel,
+		LowerLevel:           lowerLevel,
+		UpperLevelSSTableIds: upperLevelSSTableIds,
+		LowerLevelSSTableIds: lowerLevelSSTableIds,
+	})
 
 	memtableCreatedBuffer, _ := memtableCreated.encode()
 	compactionDoneBuffer, _ := compactionDone.encode()

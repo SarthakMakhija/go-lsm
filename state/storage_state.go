@@ -158,13 +158,7 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 
 func (storageState *StorageState) Apply(event StorageStateChangeEvent) ([]table.SSTable, error) {
 	ssTablesToRemove := storageState.updateState(event)
-	if err := storageState.manifest.Add(manifest.NewCompactionDone(
-		event.NewSSTableIds,
-		event.Description.UpperLevel,
-		event.Description.LowerLevel,
-		event.Description.UpperLevelSSTableIds,
-		event.Description.LowerLevelSSTableIds,
-	)); err != nil {
+	if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds, event.Description)); err != nil {
 		return nil, err
 	}
 	return ssTablesToRemove, nil

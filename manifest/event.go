@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"go-lsm/compact/meta"
 	"io"
 	"unsafe"
 )
@@ -39,11 +40,8 @@ type SSTableFlushed struct {
 
 // CompactionDone defines a compaction done event.
 type CompactionDone struct {
-	NewSSTableIds        []uint64
-	UpperLevel           int
-	LowerLevel           int
-	UpperLevelSSTableIds []uint64
-	LowerLevelSSTableIds []uint64
+	NewSSTableIds []uint64
+	Description   meta.SimpleLeveledCompactionDescription
 }
 
 // NewMemtableCreated creates a new MemtableCreated event.
@@ -105,19 +103,10 @@ func decodeSSTableFlushed(buffer []byte) (*SSTableFlushed, int) {
 }
 
 // NewCompactionDone creates a new CompactionDone event.
-func NewCompactionDone(
-	newSSTableIds []uint64,
-	upperLevel int,
-	lowerLevel int,
-	upperLevelSSTableIds []uint64,
-	lowerLevelSSTableIds []uint64,
-) *CompactionDone {
+func NewCompactionDone(newSSTableIds []uint64, description meta.SimpleLeveledCompactionDescription) *CompactionDone {
 	return &CompactionDone{
-		NewSSTableIds:        newSSTableIds,
-		UpperLevel:           upperLevel,
-		LowerLevel:           lowerLevel,
-		UpperLevelSSTableIds: upperLevelSSTableIds,
-		LowerLevelSSTableIds: lowerLevelSSTableIds,
+		NewSSTableIds: newSSTableIds,
+		Description:   description,
 	}
 }
 
