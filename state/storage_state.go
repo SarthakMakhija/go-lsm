@@ -52,7 +52,6 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
-	//TODO: populate information inside levels
 	levels := make([]*Level, options.CompactionOptions.MaxLevels)
 	for level := 1; level <= int(options.CompactionOptions.MaxLevels); level++ {
 		levels[level-1] = &Level{LevelNumber: level}
@@ -156,10 +155,12 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
-func (storageState *StorageState) Apply(event StorageStateChangeEvent) ([]table.SSTable, error) {
-	ssTablesToRemove := storageState.updateState(event)
-	if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds, event.CompactionDescription())); err != nil {
-		return nil, err
+func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) ([]table.SSTable, error) {
+	ssTablesToRemove := storageState.apply(event)
+	if !recovery {
+		if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds, event.CompactionDescription())); err != nil {
+			return nil, err
+		}
 	}
 	return ssTablesToRemove, nil
 }
@@ -198,7 +199,7 @@ func (storageState *StorageState) Close() {
 	<-storageState.flushMemtableCompletionChannel
 }
 
-func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
+func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 	flushEligibleMemtable := func() *memory.Memtable {
 		storageState.stateLock.Lock()
 		defer storageState.stateLock.Unlock()
@@ -295,7 +296,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			select {
 			case <-timer.C:
 				if hasImmutableMemtablesGoneBeyondMaximumAllowed() {
-					if err := storageState.forceFlushNextImmutableMemtable(); err != nil {
+					if err := storageState.ForceFlushNextImmutableMemtable(); err != nil {
 						slog.Error("could not flush memtable, error: %v", err)
 					}
 				}
@@ -323,11 +324,23 @@ func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) err
 				delete(memtableIds, ssTableFlushed.SsTableId)
 				storageState.l0SSTableIds = append(storageState.l0SSTableIds, ssTableFlushed.SsTableId)
 				storageState.idGenerator.setIdIfGreaterThanExisting(ssTableFlushed.SsTableId)
-			default:
-				panic("unhandled default case")
+			case manifest.CompactionDoneEventType:
+				compactionDone := event.(*manifest.CompactionDone)
+				storageChangeEvent, err := NewStorageStateChangeEventByOpeningSSTables(
+					compactionDone.NewSSTableIds,
+					compactionDone.Description,
+					storageState.options.Path,
+				)
+				if err != nil {
+					return err
+				}
+				if _, err := storageState.Apply(storageChangeEvent, true); err != nil {
+					return err
+				}
+				storageState.idGenerator.setIdIfGreaterThanExisting(storageChangeEvent.MaxSSTableId())
 			}
 		}
-		if err := storageState.recoverSSTables(); err != nil {
+		if err := storageState.recoverL0SSTables(); err != nil {
 			return err
 		}
 		if err := storageState.recoverMemtables(memtableIds); err != nil {
@@ -358,7 +371,9 @@ func (storageState *StorageState) recoverMemtables(memtableIds map[uint64]struct
 		if err != nil {
 			return err
 		}
-		immutableMemtables = append(immutableMemtables, memtable)
+		if !memtable.IsEmpty() {
+			immutableMemtables = append(immutableMemtables, memtable)
+		}
 		maxTimestamp = max(maxTimestamp, timestamp)
 	}
 	sort.Slice(immutableMemtables, func(i, j int) bool {
@@ -369,8 +384,7 @@ func (storageState *StorageState) recoverMemtables(memtableIds map[uint64]struct
 	return nil
 }
 
-// TODO: populate levels field
-func (storageState *StorageState) recoverSSTables() error {
+func (storageState *StorageState) recoverL0SSTables() error {
 	for _, ssTableId := range storageState.l0SSTableIds {
 		ssTable, err := table.Load(ssTableId, storageState.options.Path, block.DefaultBlockSize)
 		if err != nil {
@@ -381,7 +395,7 @@ func (storageState *StorageState) recoverSSTables() error {
 	return nil
 }
 
-func (storageState *StorageState) updateState(event StorageStateChangeEvent) []table.SSTable {
+func (storageState *StorageState) apply(event StorageStateChangeEvent) []table.SSTable {
 	storageState.stateLock.Lock()
 	defer storageState.stateLock.Unlock()
 

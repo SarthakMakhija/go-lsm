@@ -1,7 +1,8 @@
-1) Recover SSTables + CompactionDone
+1) Recover SSTables + CompactionDone -> done
 2) Delete SSTable file
 3) Integrate compaction in Db
 4) Integrate the iterators from different levels in Get
 5) Integrate the iterators from different levels in Scan
 6) Finish TODOs
 7) Finish the documentation of state and compact package
+8) Improve the test: TestStorageStateLoadExistingStateAfterCompaction after point 4 and 5

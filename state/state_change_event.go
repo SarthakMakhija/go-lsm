@@ -4,6 +4,7 @@ import (
 	"go-lsm/compact/meta"
 	"go-lsm/table"
 	"go-lsm/table/block"
+	"slices"
 )
 
 type StorageStateChangeEvent struct {
@@ -24,9 +25,9 @@ func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.Si
 	}
 }
 
-func NewStorageStateChangeEventByOpeningSSTables(ssTableIds []uint64, description meta.SimpleLeveledCompactionDescription, rootPath string) (StorageStateChangeEvent, error) {
-	newSSTables := make([]table.SSTable, 0, len(ssTableIds))
-	for _, ssTableId := range ssTableIds {
+func NewStorageStateChangeEventByOpeningSSTables(newSSTableIds []uint64, description meta.SimpleLeveledCompactionDescription, rootPath string) (StorageStateChangeEvent, error) {
+	newSSTables := make([]table.SSTable, 0, len(newSSTableIds))
+	for _, ssTableId := range newSSTableIds {
 		ssTable, err := table.Load(ssTableId, rootPath, block.DefaultBlockSize)
 		if err != nil {
 			return StorageStateChangeEvent{}, err
@@ -35,7 +36,7 @@ func NewStorageStateChangeEventByOpeningSSTables(ssTableIds []uint64, descriptio
 	}
 	return StorageStateChangeEvent{
 		NewSSTables:   newSSTables,
-		NewSSTableIds: ssTableIds,
+		NewSSTableIds: newSSTableIds,
 		description:   description,
 	}, nil
 }
@@ -58,6 +59,10 @@ func (event StorageStateChangeEvent) CompactionLowerLevelSSTableIds() []uint64 {
 
 func (event StorageStateChangeEvent) CompactionDescription() meta.SimpleLeveledCompactionDescription {
 	return event.description
+}
+
+func (event StorageStateChangeEvent) MaxSSTableId() uint64 {
+	return slices.Max(event.NewSSTableIds)
 }
 
 func (event StorageStateChangeEvent) allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(ssTableIds []uint64) []uint64 {

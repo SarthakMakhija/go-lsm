@@ -54,7 +54,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0(t *testin
 		NewSSTables:   []table.SSTable{newSSTable},
 		NewSSTableIds: []uint64{newSSTable.Id()},
 	}
-	ssTablesToRemove, err := storageState.Apply(event)
+	ssTablesToRemove, err := storageState.Apply(event, false)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(ssTablesToRemove))
@@ -110,7 +110,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0ButAnother
 		NewSSTables:   []table.SSTable{newSSTable},
 		NewSSTableIds: []uint64{newSSTable.Id()},
 	}
-	ssTablesToRemove, err := storageState.Apply(event)
+	ssTablesToRemove, err := storageState.Apply(event, false)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(ssTablesToRemove))

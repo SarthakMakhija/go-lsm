@@ -39,6 +39,16 @@ func (storageState *StorageState) DeleteWALDirectory() {
 	}
 }
 
+// HasImmutableMemtables returns true if there are immutable tables, it is only for testing.
+func (storageState *StorageState) HasImmutableMemtables() bool {
+	return len(storageState.immutableMemtables) > 0
+}
+
+// TotalImmutableMemtables returns the total number of immutable memtables, it is only for testing.
+func (storageState *StorageState) TotalImmutableMemtables() int {
+	return len(storageState.immutableMemtables)
+}
+
 // SetSSTableAtLevel sets SSTable at the given level, only for testing.
 func (storageState *StorageState) SetSSTableAtLevel(ssTable table.SSTable, level int) {
 	if level == 0 {
@@ -63,11 +73,6 @@ func (storageState *StorageState) forceFreezeCurrentMemtable() {
 		storageState.walPath,
 	)
 	_ = storageState.manifest.Add(manifest.NewMemtableCreated(storageState.currentMemtable.Id()))
-}
-
-// hasImmutableMemtables returns true if there are immutable tables, it is only for testing.
-func (storageState *StorageState) hasImmutableMemtables() bool {
-	return len(storageState.immutableMemtables) > 0
 }
 
 // hasSSTableWithId returns true if there is an SSTable for the given SSTableId, false otherwise, it is only for testing.
