@@ -67,10 +67,10 @@ func TestStartSimpleLeveledCompactionWithCompactionDescription(t *testing.T) {
 	storageStateChangeEvent, err := compaction.Start(storageStateSnapshot)
 
 	assert.Nil(t, err)
-	assert.Equal(t, -1, storageStateChangeEvent.Description.UpperLevel)
-	assert.Equal(t, 1, storageStateChangeEvent.Description.LowerLevel)
-	assert.Equal(t, []uint64{4}, storageStateChangeEvent.Description.LowerLevelSSTableIds)
-	assert.Equal(t, []uint64{3, 2}, storageStateChangeEvent.Description.UpperLevelSSTableIds)
+	assert.Equal(t, -1, storageStateChangeEvent.CompactionUpperLevel())
+	assert.Equal(t, 1, storageStateChangeEvent.CompactionLowerLevel())
+	assert.Equal(t, []uint64{3, 2}, storageStateChangeEvent.CompactionUpperLevelSSTableIds())
+	assert.Equal(t, []uint64{4}, storageStateChangeEvent.CompactionLowerLevelSSTableIds())
 }
 
 func TestStartSimpleLeveledCompactionBetweenL0AndL1WithSSTablesPresentOnlyInL0(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 
 func TestAllSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(t *testing.T) {
 	event := StorageStateChangeEvent{
-		Description: meta.SimpleLeveledCompactionDescription{
+		description: meta.SimpleLeveledCompactionDescription{
 			UpperLevelSSTableIds: []uint64{1, 2, 3, 4},
 		},
 	}

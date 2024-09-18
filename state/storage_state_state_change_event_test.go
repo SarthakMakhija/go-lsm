@@ -45,7 +45,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0(t *testin
 	newSSTable := buildNewSSTable(storageState.SSTableIdGenerator().NextId())
 
 	event := StorageStateChangeEvent{
-		Description: meta.SimpleLeveledCompactionDescription{
+		description: meta.SimpleLeveledCompactionDescription{
 			UpperLevel:           -1,
 			UpperLevelSSTableIds: []uint64{ssTable.Id(), anotherSSTable.Id()},
 			LowerLevel:           1,
@@ -101,7 +101,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0ButAnother
 	newSSTable := buildNewSSTable(storageState.SSTableIdGenerator().NextId())
 
 	event := StorageStateChangeEvent{
-		Description: meta.SimpleLeveledCompactionDescription{
+		description: meta.SimpleLeveledCompactionDescription{
 			UpperLevel:           -1,
 			UpperLevelSSTableIds: []uint64{ssTable.Id()},
 			LowerLevel:           1,

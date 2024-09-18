@@ -158,7 +158,7 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 
 func (storageState *StorageState) Apply(event StorageStateChangeEvent) ([]table.SSTable, error) {
 	ssTablesToRemove := storageState.updateState(event)
-	if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds, event.Description)); err != nil {
+	if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds, event.CompactionDescription())); err != nil {
 		return nil, err
 	}
 	return ssTablesToRemove, nil
@@ -393,15 +393,15 @@ func (storageState *StorageState) updateState(event StorageStateChangeEvent) []t
 	}
 	updateLevels := func() []uint64 {
 		var ssTableIdsToRemove []uint64
-		if event.Description.UpperLevel == -1 {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, event.Description.UpperLevelSSTableIds...)
+		if event.CompactionUpperLevel() == -1 {
+			ssTableIdsToRemove = append(ssTableIdsToRemove, event.CompactionUpperLevelSSTableIds()...)
 			storageState.l0SSTableIds = event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(storageState.l0SSTableIds)
 		} else {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.Description.UpperLevel-1].SSTableIds...)
-			storageState.levels[event.Description.UpperLevel-1].clearSSTableIds()
+			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.CompactionUpperLevel()-1].SSTableIds...)
+			storageState.levels[event.CompactionLowerLevel()-1].clearSSTableIds()
 		}
-		ssTableIdsToRemove = append(ssTableIdsToRemove, event.Description.LowerLevelSSTableIds...)
-		storageState.levels[event.Description.LowerLevel-1].appendSSTableIds(event.NewSSTableIds)
+		ssTableIdsToRemove = append(ssTableIdsToRemove, event.CompactionLowerLevelSSTableIds()...)
+		storageState.levels[event.CompactionLowerLevel()-1].appendSSTableIds(event.NewSSTableIds)
 
 		return ssTableIdsToRemove
 	}

@@ -8,7 +8,7 @@ import (
 type StorageStateChangeEvent struct {
 	NewSSTables   []table.SSTable
 	NewSSTableIds []uint64
-	Description   meta.SimpleLeveledCompactionDescription
+	description   meta.SimpleLeveledCompactionDescription
 }
 
 func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.SimpleLeveledCompactionDescription) StorageStateChangeEvent {
@@ -19,8 +19,28 @@ func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.Si
 	return StorageStateChangeEvent{
 		NewSSTables:   newSSTables,
 		NewSSTableIds: newSSTableIds,
-		Description:   description,
+		description:   description,
 	}
+}
+
+func (event StorageStateChangeEvent) CompactionUpperLevel() int {
+	return event.description.UpperLevel
+}
+
+func (event StorageStateChangeEvent) CompactionLowerLevel() int {
+	return event.description.LowerLevel
+}
+
+func (event StorageStateChangeEvent) CompactionUpperLevelSSTableIds() []uint64 {
+	return event.description.UpperLevelSSTableIds
+}
+
+func (event StorageStateChangeEvent) CompactionLowerLevelSSTableIds() []uint64 {
+	return event.description.LowerLevelSSTableIds
+}
+
+func (event StorageStateChangeEvent) CompactionDescription() meta.SimpleLeveledCompactionDescription {
+	return event.description
 }
 
 func (event StorageStateChangeEvent) allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(ssTableIds []uint64) []uint64 {
@@ -36,8 +56,8 @@ func (event StorageStateChangeEvent) allSSTableIdsExcludingTheOnesPresentInUpper
 }
 
 func (event StorageStateChangeEvent) upperLevelSSTableIdsAsMap() map[uint64]struct{} {
-	ssTableIds := make(map[uint64]struct{}, len(event.Description.UpperLevelSSTableIds))
-	for _, ssTableId := range event.Description.UpperLevelSSTableIds {
+	ssTableIds := make(map[uint64]struct{}, len(event.CompactionUpperLevelSSTableIds()))
+	for _, ssTableId := range event.CompactionUpperLevelSSTableIds() {
 		ssTableIds[ssTableId] = struct{}{}
 	}
 	return ssTableIds
