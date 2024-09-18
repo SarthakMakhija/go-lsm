@@ -156,40 +156,12 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
-func (storageState *StorageState) Apply(event StorageStateChangeEvent) []table.SSTable {
-	storageState.stateLock.Lock()
-	defer storageState.stateLock.Unlock()
-
-	type SSTablesToRemove = []table.SSTable
-	setSSTableMapping := func() {
-		for _, ssTable := range event.NewSSTables {
-			storageState.ssTables[ssTable.Id()] = ssTable
-		}
+func (storageState *StorageState) Apply(event StorageStateChangeEvent) ([]table.SSTable, error) {
+	ssTablesToRemove := storageState.updateState(event)
+	if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds)); err != nil {
+		return nil, err
 	}
-	updateLevels := func() []uint64 {
-		var ssTableIdsToRemove []uint64
-		if event.UpperLevel == -1 {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, event.UpperLevelSSTableIds...)
-			storageState.l0SSTableIds = event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(storageState.l0SSTableIds)
-		} else {
-			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.UpperLevel-1].SSTableIds...)
-			storageState.levels[event.UpperLevel-1].clearSSTableIds()
-		}
-		ssTableIdsToRemove = append(ssTableIdsToRemove, event.LowerLevelSSTableIds...)
-		storageState.levels[event.LowerLevel-1].appendSSTableIds(event.NewSSTableIds)
-
-		return ssTableIdsToRemove
-	}
-	unsetSSTableMapping := func(ssTableIdsToRemove []uint64) SSTablesToRemove {
-		var ssTables = make(SSTablesToRemove, 0, len(ssTableIdsToRemove))
-		for _, ssTableId := range ssTableIdsToRemove {
-			ssTables = append(ssTables, storageState.ssTables[ssTableId])
-			delete(storageState.ssTables, ssTableId)
-		}
-		return ssTables
-	}
-	setSSTableMapping()
-	return unsetSSTableMapping(updateLevels())
+	return ssTablesToRemove, nil
 }
 
 func (storageState *StorageState) SSTableIdGenerator() *SSTableIdGenerator {
@@ -407,4 +379,40 @@ func (storageState *StorageState) recoverSSTables() error {
 		storageState.ssTables[ssTable.Id()] = ssTable
 	}
 	return nil
+}
+
+func (storageState *StorageState) updateState(event StorageStateChangeEvent) []table.SSTable {
+	storageState.stateLock.Lock()
+	defer storageState.stateLock.Unlock()
+
+	type SSTablesToRemove = []table.SSTable
+	setSSTableMapping := func() {
+		for _, ssTable := range event.NewSSTables {
+			storageState.ssTables[ssTable.Id()] = ssTable
+		}
+	}
+	updateLevels := func() []uint64 {
+		var ssTableIdsToRemove []uint64
+		if event.UpperLevel == -1 {
+			ssTableIdsToRemove = append(ssTableIdsToRemove, event.UpperLevelSSTableIds...)
+			storageState.l0SSTableIds = event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(storageState.l0SSTableIds)
+		} else {
+			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.UpperLevel-1].SSTableIds...)
+			storageState.levels[event.UpperLevel-1].clearSSTableIds()
+		}
+		ssTableIdsToRemove = append(ssTableIdsToRemove, event.LowerLevelSSTableIds...)
+		storageState.levels[event.LowerLevel-1].appendSSTableIds(event.NewSSTableIds)
+
+		return ssTableIdsToRemove
+	}
+	unsetSSTableMapping := func(ssTableIdsToRemove []uint64) SSTablesToRemove {
+		var ssTables = make(SSTablesToRemove, 0, len(ssTableIdsToRemove))
+		for _, ssTableId := range ssTableIdsToRemove {
+			ssTables = append(ssTables, storageState.ssTables[ssTableId])
+			delete(storageState.ssTables, ssTableId)
+		}
+		return ssTables
+	}
+	setSSTableMapping()
+	return unsetSSTableMapping(updateLevels())
 }
