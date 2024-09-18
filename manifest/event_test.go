@@ -32,16 +32,28 @@ func TestNewSSTableFlushedEventType(t *testing.T) {
 }
 
 func TestNewCompactionDoneEventEncodeAndDecode(t *testing.T) {
-	compactionDone := NewCompactionDone([]uint64{10, 14})
+	upperLevel := -1
+	lowerLevel := 1
+	upperLevelSSTableIds := []uint64{20, 30}
+	lowerLevelSSTableIds := []uint64{50, 60}
+	compactionDone := NewCompactionDone([]uint64{10, 14}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
 	buffer, _ := compactionDone.encode()
 
-	decoded, n := decodeCompactionDone(buffer[1:])
+	decoded, _ := decodeCompactionDone(buffer[1:])
 	assert.Equal(t, []uint64{10, 14}, decoded.NewSSTableIds)
-	assert.Equal(t, 17, n)
+	assert.Equal(t, -1, decoded.UpperLevel)
+	assert.Equal(t, 1, decoded.LowerLevel)
+	assert.Equal(t, []uint64{20, 30}, decoded.UpperLevelSSTableIds)
+	assert.Equal(t, []uint64{50, 60}, decoded.LowerLevelSSTableIds)
 }
 
 func TestNewCompactionDoneEventType(t *testing.T) {
-	compactionDone := NewCompactionDone([]uint64{1})
+	upperLevel := -1
+	lowerLevel := 1
+	upperLevelSSTableIds := []uint64{20, 30}
+	lowerLevelSSTableIds := []uint64{50, 60}
+
+	compactionDone := NewCompactionDone([]uint64{10, 14}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
 	assert.Equal(t, CompactionDoneEventType, compactionDone.EventType())
 }
 
@@ -64,7 +76,11 @@ func TestDecodeNewMemtableCreatedAndSSTableEventFlushedEvents(t *testing.T) {
 
 func TestDecodeNewMemtableCreatedAndCompactionDoneEvents(t *testing.T) {
 	memtableCreated := NewMemtableCreated(10)
-	compactionDone := NewCompactionDone([]uint64{20, 21})
+	upperLevel := -1
+	lowerLevel := 1
+	upperLevelSSTableIds := []uint64{20, 30}
+	lowerLevelSSTableIds := []uint64{50, 60}
+	compactionDone := NewCompactionDone([]uint64{10, 11}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
 
 	memtableCreatedBuffer, _ := memtableCreated.encode()
 	compactionDoneBuffer, _ := compactionDone.encode()
@@ -76,5 +92,5 @@ func TestDecodeNewMemtableCreatedAndCompactionDoneEvents(t *testing.T) {
 	events := decodeEventsFrom(buffer)
 	assert.Equal(t, 2, len(events))
 	assert.Equal(t, uint64(10), events[0].(*MemtableCreated).MemtableId)
-	assert.Equal(t, []uint64{20, 21}, events[1].(*CompactionDone).NewSSTableIds)
+	assert.Equal(t, []uint64{10, 11}, events[1].(*CompactionDone).NewSSTableIds)
 }

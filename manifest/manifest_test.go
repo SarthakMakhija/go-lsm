@@ -47,11 +47,25 @@ func TestRecoversAnExistingManifest(t *testing.T) {
 	assert.Nil(t, manifest.Add(NewMemtableCreated(20)))
 	assert.Nil(t, manifest.Add(NewSSTableFlushed(10)))
 
+	upperLevel := -1
+	lowerLevel := 1
+	upperLevelSSTableIds := []uint64{20, 30}
+	lowerLevelSSTableIds := []uint64{50, 60}
+
+	compactionDone := NewCompactionDone([]uint64{10, 11}, upperLevel, lowerLevel, upperLevelSSTableIds, lowerLevelSSTableIds)
+	assert.Nil(t, manifest.Add(compactionDone))
+
 	manifest, events, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 3, len(events))
+	assert.Equal(t, 4, len(events))
 	assert.Equal(t, uint64(10), events[0].(*MemtableCreated).MemtableId)
 	assert.Equal(t, uint64(20), events[1].(*MemtableCreated).MemtableId)
 	assert.Equal(t, uint64(10), events[2].(*SSTableFlushed).SsTableId)
+
+	assert.Equal(t, []uint64{10, 11}, events[3].(*CompactionDone).NewSSTableIds)
+	assert.Equal(t, -1, events[3].(*CompactionDone).UpperLevel)
+	assert.Equal(t, 1, events[3].(*CompactionDone).LowerLevel)
+	assert.Equal(t, []uint64{20, 30}, events[3].(*CompactionDone).UpperLevelSSTableIds)
+	assert.Equal(t, []uint64{50, 60}, events[3].(*CompactionDone).LowerLevelSSTableIds)
 }

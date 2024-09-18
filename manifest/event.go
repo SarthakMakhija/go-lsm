@@ -1,7 +1,10 @@
 package manifest
 
 import (
+	"bytes"
 	"encoding/binary"
+	"encoding/gob"
+	"io"
 	"unsafe"
 )
 
@@ -36,7 +39,11 @@ type SSTableFlushed struct {
 
 // CompactionDone defines a compaction done event.
 type CompactionDone struct {
-	NewSSTableIds []uint64
+	NewSSTableIds        []uint64
+	UpperLevel           int
+	LowerLevel           int
+	UpperLevelSSTableIds []uint64
+	LowerLevelSSTableIds []uint64
 }
 
 // NewMemtableCreated creates a new MemtableCreated event.
@@ -98,27 +105,35 @@ func decodeSSTableFlushed(buffer []byte) (*SSTableFlushed, int) {
 }
 
 // NewCompactionDone creates a new CompactionDone event.
-func NewCompactionDone(newSSTableIds []uint64) *CompactionDone {
-	return &CompactionDone{NewSSTableIds: newSSTableIds}
+func NewCompactionDone(
+	newSSTableIds []uint64,
+	upperLevel int,
+	lowerLevel int,
+	upperLevelSSTableIds []uint64,
+	lowerLevelSSTableIds []uint64,
+) *CompactionDone {
+	return &CompactionDone{
+		NewSSTableIds:        newSSTableIds,
+		UpperLevel:           upperLevel,
+		LowerLevel:           lowerLevel,
+		UpperLevelSSTableIds: upperLevelSSTableIds,
+		LowerLevelSSTableIds: lowerLevelSSTableIds,
+	}
 }
 
 // encode encodes CompactionDone to byte slice.
-/*
- -------------------------------------------------------------------------
-| 1 byte event type | 1 byte length of NewSSTableIds | N * SSTableId size |
- -------------------------------------------------------------------------
-*/
 func (compactionDone *CompactionDone) encode() ([]byte, error) {
-	buffer := make([]byte, int(eventTypeSize)+int(ssTableIdsSize)+int(idSize)*len(compactionDone.NewSSTableIds))
-	buffer[0] = CompactionDoneEventType
-	buffer[1] = byte(len(compactionDone.NewSSTableIds))
-
-	bufferIndex := 2
-	for _, ssTableId := range compactionDone.NewSSTableIds {
-		binary.LittleEndian.PutUint64(buffer[bufferIndex:], ssTableId)
-		bufferIndex += int(idSize)
+	buffer := bytes.Buffer{}
+	err := gob.NewEncoder(&buffer).Encode(compactionDone)
+	if err != nil {
+		return nil, err
 	}
-	return buffer, nil
+	buffered := buffer.Bytes()
+	encoded := make([]byte, int(eventTypeSize)+len(buffered))
+	encoded[0] = CompactionDoneEventType
+	copy(encoded[1:], buffered)
+
+	return encoded, nil
 }
 
 // EventType returns the event type CompactionDoneEventType.
@@ -128,14 +143,13 @@ func (compactionDone *CompactionDone) EventType() uint8 {
 
 // decodeCompactionDone decodes the CompactionDone event from the byte slice.
 func decodeCompactionDone(buffer []byte) (*CompactionDone, int) {
-	numberOfSSTableIds := buffer[0] //read one byte
-	bufferIndex := 1
-	ssTableIds := make([]uint64, 0, numberOfSSTableIds)
-	for count := 1; count <= int(numberOfSSTableIds); count++ {
-		ssTableIds = append(ssTableIds, binary.LittleEndian.Uint64(buffer[bufferIndex:]))
-		bufferIndex += int(idSize)
+	compactionDone := &CompactionDone{}
+	reader := &byteCountingReader{reader: bytes.NewReader(buffer)}
+	err := gob.NewDecoder(reader).Decode(compactionDone)
+	if err != nil {
+		return nil, 0
 	}
-	return NewCompactionDone(ssTableIds), 1 + int(idSize)*int(numberOfSSTableIds)
+	return compactionDone, int(reader.count)
 }
 
 // decodeEventsFrom decodes all the events from the Manifest file. The passed buffer is the whole file.
@@ -159,4 +173,18 @@ func decodeEventsFrom(buffer []byte) []Event {
 		}
 	}
 	return events
+}
+
+// byteCountingReader counts the number of bytes read while encapsulates a reader.
+// It is mainly used in decoding of CompactionDoneEventType.
+type byteCountingReader struct {
+	reader io.Reader
+	count  int64
+}
+
+// Read reads from the given byte slice.
+func (reader *byteCountingReader) Read(p []byte) (n int, err error) {
+	n, err = reader.reader.Read(p)
+	reader.count += int64(n)
+	return
 }
