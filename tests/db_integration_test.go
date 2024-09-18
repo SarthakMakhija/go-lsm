@@ -5,15 +5,14 @@ import (
 	"go-lsm"
 	"go-lsm/kv"
 	"go-lsm/state"
+	"go-lsm/test_utility"
 	"go-lsm/txn"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestReadInEmptyDb(t *testing.T) {
-	directory := filepath.Join(".", "TestReadInEmptyDb")
+	directory := test_utility.SetupADirectoryWithTestName(t)
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
 		Path:                  directory,
@@ -24,7 +23,7 @@ func TestReadInEmptyDb(t *testing.T) {
 	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
-		_ = os.RemoveAll(directory)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
 	err := db.Read(func(transaction *txn.Transaction) {
@@ -35,7 +34,7 @@ func TestReadInEmptyDb(t *testing.T) {
 }
 
 func TestReadAnExistingKeyValue(t *testing.T) {
-	directory := filepath.Join(".", "TestReadAnExistingKeyValue")
+	directory := test_utility.SetupADirectoryWithTestName(t)
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
 		Path:                  directory,
@@ -46,7 +45,7 @@ func TestReadAnExistingKeyValue(t *testing.T) {
 	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
-		_ = os.RemoveAll(directory)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
@@ -71,7 +70,7 @@ func TestReadAnExistingKeyValue(t *testing.T) {
 }
 
 func TestScanKeyValues1(t *testing.T) {
-	directory := filepath.Join(".", "TestScanKeyValues1")
+	directory := test_utility.SetupADirectoryWithTestName(t)
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
 		Path:                  directory,
@@ -82,7 +81,7 @@ func TestScanKeyValues1(t *testing.T) {
 	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
-		_ = os.RemoveAll(directory)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
@@ -113,7 +112,7 @@ func TestScanKeyValues1(t *testing.T) {
 }
 
 func TestScanKeyValues2(t *testing.T) {
-	directory := filepath.Join(".", "TestScanKeyValues2")
+	directory := test_utility.SetupADirectoryWithTestName(t)
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,
 		Path:                  directory,
@@ -124,7 +123,7 @@ func TestScanKeyValues2(t *testing.T) {
 	db, _ := go_lsm.Open(storageOptions)
 	defer func() {
 		db.Close()
-		_ = os.RemoveAll(directory)
+		test_utility.CleanupDirectoryWithTestName(t)
 	}()
 
 	future, err := db.Write(func(transaction *txn.Transaction) {
