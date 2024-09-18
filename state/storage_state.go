@@ -52,7 +52,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
-	//populate information inside levels
+	//TODO: populate information inside levels
 	levels := make([]*Level, options.CompactionOptions.MaxLevels)
 	for level := 1; level <= int(options.CompactionOptions.MaxLevels); level++ {
 		levels[level-1] = &Level{LevelNumber: level}

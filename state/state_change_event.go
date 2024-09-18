@@ -3,6 +3,7 @@ package state
 import (
 	"go-lsm/compact/meta"
 	"go-lsm/table"
+	"go-lsm/table/block"
 )
 
 type StorageStateChangeEvent struct {
@@ -21,6 +22,22 @@ func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.Si
 		NewSSTableIds: newSSTableIds,
 		description:   description,
 	}
+}
+
+func NewStorageStateChangeEventByOpeningSSTables(ssTableIds []uint64, description meta.SimpleLeveledCompactionDescription, rootPath string) (StorageStateChangeEvent, error) {
+	newSSTables := make([]table.SSTable, 0, len(ssTableIds))
+	for _, ssTableId := range ssTableIds {
+		ssTable, err := table.Load(ssTableId, rootPath, block.DefaultBlockSize)
+		if err != nil {
+			return StorageStateChangeEvent{}, err
+		}
+		newSSTables = append(newSSTables, ssTable)
+	}
+	return StorageStateChangeEvent{
+		NewSSTables:   newSSTables,
+		NewSSTableIds: ssTableIds,
+		description:   description,
+	}, nil
 }
 
 func (event StorageStateChangeEvent) CompactionUpperLevel() int {
