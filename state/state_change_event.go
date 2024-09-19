@@ -7,10 +7,13 @@ import (
 	"slices"
 )
 
+var NoStorageStateChanges = StorageStateChangeEvent{anyChanges: false}
+
 type StorageStateChangeEvent struct {
 	NewSSTables   []table.SSTable
 	NewSSTableIds []uint64
 	description   meta.SimpleLeveledCompactionDescription
+	anyChanges    bool
 }
 
 func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.SimpleLeveledCompactionDescription) StorageStateChangeEvent {
@@ -22,6 +25,7 @@ func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.Si
 		NewSSTables:   newSSTables,
 		NewSSTableIds: newSSTableIds,
 		description:   description,
+		anyChanges:    true,
 	}
 }
 
@@ -30,7 +34,7 @@ func NewStorageStateChangeEventByOpeningSSTables(newSSTableIds []uint64, descrip
 	for _, ssTableId := range newSSTableIds {
 		ssTable, err := table.Load(ssTableId, rootPath, block.DefaultBlockSize)
 		if err != nil {
-			return StorageStateChangeEvent{}, err
+			return NoStorageStateChanges, err
 		}
 		newSSTables = append(newSSTables, ssTable)
 	}
@@ -38,6 +42,7 @@ func NewStorageStateChangeEventByOpeningSSTables(newSSTableIds []uint64, descrip
 		NewSSTables:   newSSTables,
 		NewSSTableIds: newSSTableIds,
 		description:   description,
+		anyChanges:    true,
 	}, nil
 }
 
@@ -63,6 +68,10 @@ func (event StorageStateChangeEvent) CompactionDescription() meta.SimpleLeveledC
 
 func (event StorageStateChangeEvent) MaxSSTableId() uint64 {
 	return slices.Max(event.NewSSTableIds)
+}
+
+func (event StorageStateChangeEvent) HasAnyChanges() bool {
+	return event.anyChanges
 }
 
 func (event StorageStateChangeEvent) allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(ssTableIds []uint64) []uint64 {

@@ -27,11 +27,11 @@ func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.
 	simpleLeveledCompaction := NewSimpleLeveledCompaction(compaction.options.CompactionOptions)
 	description, ok := simpleLeveledCompaction.CompactionDescription(snapshot)
 	if !ok {
-		return state.StorageStateChangeEvent{}, nil
+		return state.NoStorageStateChanges, nil
 	}
 	ssTables, err := compaction.compact(description, snapshot)
 	if err != nil {
-		return state.StorageStateChangeEvent{}, nil
+		return state.NoStorageStateChanges, nil
 	}
 	event := state.NewStorageStateChangeEvent(ssTables, description)
 	return event, nil
