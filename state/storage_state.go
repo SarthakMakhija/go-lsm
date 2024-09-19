@@ -412,7 +412,7 @@ func (storageState *StorageState) apply(event StorageStateChangeEvent) []table.S
 			storageState.l0SSTableIds = event.allSSTableIdsExcludingTheOnesPresentInUpperLevelSSTableIds(storageState.l0SSTableIds)
 		} else {
 			ssTableIdsToRemove = append(ssTableIdsToRemove, storageState.levels[event.CompactionUpperLevel()-1].SSTableIds...)
-			storageState.levels[event.CompactionLowerLevel()-1].clearSSTableIds()
+			storageState.levels[event.CompactionUpperLevel()-1].clearSSTableIds()
 		}
 		ssTableIdsToRemove = append(ssTableIdsToRemove, event.CompactionLowerLevelSSTableIds()...)
 		storageState.levels[event.CompactionLowerLevel()-1].appendSSTableIds(event.NewSSTableIds)
