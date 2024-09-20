@@ -1,8 +1,13 @@
-1) Recover SSTables + CompactionDone -> done
-2) Delete SSTable file
+6) Finish TODOs
+7) Finish the documentation of state and compact package + SSTableCleaner
+
 3) Integrate compaction in Db
 4) Integrate the iterators from different levels in Get
 5) Integrate the iterators from different levels in Scan
-6) Finish TODOs
-7) Finish the documentation of state and compact package
 8) Improve the test: TestStorageStateLoadExistingStateAfterCompaction after point 4 and 5
+
+
+1) Recover SSTables + CompactionDone                                    -> done
+4) Correct the bug in applying state                                    -> done
+9) Add support for incrementing/decrementing reference count in SSTable -> done
+2) Delete SSTable file                                                  -> done

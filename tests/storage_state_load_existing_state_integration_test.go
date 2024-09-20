@@ -156,16 +156,16 @@ func TestStorageStateLoadExistingStateAfterCompaction(t *testing.T) {
 	assert.Nil(t, storageState.ForceFlushNextImmutableMemtable())
 	assert.Nil(t, storageState.ForceFlushNextImmutableMemtable())
 
+	assert.True(t, storageState.TotalSSTablesAtLevel(0) > 1)
+
 	stateChangeEvent, err := compaction.Start(storageState.Snapshot())
 	assert.Nil(t, err)
 
 	assert.Equal(t, -1, stateChangeEvent.CompactionUpperLevel())
 	assert.Equal(t, 1, stateChangeEvent.CompactionLowerLevel())
 
-	_, err = storageState.Apply(stateChangeEvent, false)
+	err = storageState.Apply(stateChangeEvent, false)
 	assert.Nil(t, err)
-
-	assert.False(t, storageState.HasImmutableMemtables())
 
 	storageState.Close()
 	loadedStorageState, _ := state.NewStorageStateWithOptions(testStorageStateOptionsWithCompactionOptions(250, rootPath))
@@ -174,4 +174,6 @@ func TestStorageStateLoadExistingStateAfterCompaction(t *testing.T) {
 		test_utility.CleanupDirectoryWithTestName(t)
 		loadedStorageState.Close()
 	}()
+
+	assert.True(t, loadedStorageState.TotalSSTablesAtLevel(1) >= 1)
 }

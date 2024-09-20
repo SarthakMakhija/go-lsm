@@ -36,6 +36,7 @@ type StorageState struct {
 	immutableMemtables             []*memory.Memtable
 	idGenerator                    *SSTableIdGenerator
 	manifest                       *manifest.Manifest
+	ssTableCleaner                 *table.SSTableCleaner
 	l0SSTableIds                   []uint64
 	levels                         []*Level
 	ssTables                       map[uint64]*table.SSTable
@@ -64,6 +65,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	storageState := &StorageState{
 		idGenerator:                    NewSSTableIdGenerator(),
 		manifest:                       manifestRecorder,
+		ssTableCleaner:                 table.NewSSTableCleaner(5 * time.Millisecond),
 		ssTables:                       make(map[uint64]*table.SSTable),
 		levels:                         levels,
 		closeChannel:                   make(chan struct{}),
@@ -76,6 +78,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 		return nil, err
 	}
 	storageState.spawnMemtableFlush()
+	storageState.ssTableCleaner.Start()
 	return storageState, nil
 }
 
@@ -149,14 +152,15 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators, onCloseCallback), inclusiveRange.End())
 }
 
-func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) ([]*table.SSTable, error) {
+func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) error {
 	ssTablesToRemove := storageState.apply(event)
 	if !recovery {
 		if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds, event.CompactionDescription())); err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return ssTablesToRemove, nil
+	storageState.ssTableCleaner.Submit(ssTablesToRemove)
+	return nil
 }
 
 func (storageState *StorageState) SSTableIdGenerator() *SSTableIdGenerator {
@@ -191,6 +195,7 @@ func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
 	//Wait for flush immutable tables goroutine to return
 	<-storageState.flushMemtableCompletionChannel
+	storageState.ssTableCleaner.Stop()
 }
 
 func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
@@ -329,10 +334,19 @@ func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) err
 					compactionDone.Description,
 					storageState.options.Path,
 				)
+				oldSSTableIds := compactionDone.Description.UpperLevelSSTableIds
+				oldSSTableIds = append(oldSSTableIds, compactionDone.Description.LowerLevelSSTableIds...)
+
+				for _, ssTableId := range oldSSTableIds {
+					ssTable, err := table.Load(ssTableId, storageState.options.Path, block.DefaultBlockSize)
+					if err == nil {
+						storageState.ssTables[ssTable.Id()] = ssTable
+					}
+				}
 				if err != nil {
 					return err
 				}
-				if _, err := storageState.Apply(storageChangeEvent, true); err != nil {
+				if err := storageState.Apply(storageChangeEvent, true); err != nil {
 					return err
 				}
 				storageState.idGenerator.setIdIfGreaterThanExisting(storageChangeEvent.MaxSSTableId())
@@ -420,7 +434,10 @@ func (storageState *StorageState) apply(event StorageStateChangeEvent) []*table.
 	unsetSSTableMapping := func(ssTableIdsToRemove []uint64) SSTablesToRemove {
 		var ssTables = make(SSTablesToRemove, 0, len(ssTableIdsToRemove))
 		for _, ssTableId := range ssTableIdsToRemove {
-			ssTables = append(ssTables, storageState.ssTables[ssTableId])
+			ssTable, ok := storageState.ssTables[ssTableId]
+			if ok {
+				ssTables = append(ssTables, ssTable)
+			}
 			delete(storageState.ssTables, ssTableId)
 		}
 		return ssTables
