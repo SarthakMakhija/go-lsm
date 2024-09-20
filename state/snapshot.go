@@ -5,7 +5,7 @@ import "go-lsm/table"
 type StorageStateSnapshot struct {
 	L0SSTableIds []uint64
 	Levels       []*Level
-	SSTables     map[uint64]table.SSTable
+	SSTables     map[uint64]*table.SSTable
 }
 
 func (snapshot StorageStateSnapshot) OrderedSSTableIds(level int) []uint64 {

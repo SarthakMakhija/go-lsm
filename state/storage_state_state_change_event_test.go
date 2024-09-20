@@ -23,7 +23,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0(t *testin
 		storageState.Close()
 	}()
 
-	buildL0SSTable := func(id uint64) table.SSTable {
+	buildL0SSTable := func(id uint64) *table.SSTable {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
 		ssTable, err := ssTableBuilder.Build(id, rootPath)
@@ -34,7 +34,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0(t *testin
 
 		return ssTable
 	}
-	buildNewSSTable := func(id uint64) table.SSTable {
+	buildNewSSTable := func(id uint64) *table.SSTable {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
 		ssTable, err := ssTableBuilder.Build(id, rootPath)
@@ -54,7 +54,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0(t *testin
 			LowerLevel:           1,
 			LowerLevelSSTableIds: []uint64{},
 		},
-		NewSSTables:   []table.SSTable{newSSTable},
+		NewSSTables:   []*table.SSTable{newSSTable},
 		NewSSTableIds: []uint64{newSSTable.Id()},
 	}
 	ssTablesToRemove, err := storageState.Apply(event, false)
@@ -79,7 +79,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0ButAnother
 		storageState.Close()
 	}()
 
-	buildL0SSTable := func(id uint64) table.SSTable {
+	buildL0SSTable := func(id uint64) *table.SSTable {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
 		ssTable, err := ssTableBuilder.Build(id, rootPath)
@@ -90,7 +90,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0ButAnother
 
 		return ssTable
 	}
-	buildNewSSTable := func(id uint64) table.SSTable {
+	buildNewSSTable := func(id uint64) *table.SSTable {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
 		ssTable, err := ssTableBuilder.Build(id, rootPath)
@@ -110,7 +110,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel0ButAnother
 			LowerLevel:           1,
 			LowerLevelSSTableIds: []uint64{},
 		},
-		NewSSTables:   []table.SSTable{newSSTable},
+		NewSSTables:   []*table.SSTable{newSSTable},
 		NewSSTableIds: []uint64{newSSTable.Id()},
 	}
 	ssTablesToRemove, err := storageState.Apply(event, false)
@@ -136,7 +136,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel1(t *testin
 		storageState.Close()
 	}()
 
-	buildL1SSTable := func(id uint64) table.SSTable {
+	buildL1SSTable := func(id uint64) *table.SSTable {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
 		ssTable, err := ssTableBuilder.Build(id, rootPath)
@@ -147,7 +147,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel1(t *testin
 
 		return ssTable
 	}
-	buildNewSSTable := func(id uint64) table.SSTable {
+	buildNewSSTable := func(id uint64) *table.SSTable {
 		ssTableBuilder := table.NewSSTableBuilder(4096)
 		ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
 		ssTable, err := ssTableBuilder.Build(id, rootPath)
@@ -167,7 +167,7 @@ func TestApplyStorageStateChangeEventWhichCompactsAllTheTablesAtLevel1(t *testin
 			LowerLevel:           2,
 			LowerLevelSSTableIds: []uint64{},
 		},
-		NewSSTables:   []table.SSTable{newSSTable},
+		NewSSTables:   []*table.SSTable{newSSTable},
 		NewSSTableIds: []uint64{newSSTable.Id()},
 	}
 	ssTablesToRemove, err := storageState.Apply(event, false)

@@ -23,10 +23,10 @@ type SSTable struct {
 
 // Load loads the entire SSTable from the given rootPath.
 // Please take a look at table.SSTableBuilder to understand the encoding of SSTable.
-func Load(id uint64, rootPath string, blockSize uint) (SSTable, error) {
+func Load(id uint64, rootPath string, blockSize uint) (*SSTable, error) {
 	file, err := Open(SSTableFilePath(id, rootPath))
 	if err != nil {
-		return SSTable{}, err
+		return nil, err
 	}
 
 	fileSize := file.Size()
@@ -83,15 +83,15 @@ func Load(id uint64, rootPath string, blockSize uint) (SSTable, error) {
 
 	filter, bloomOffset, err := bloomFilter()
 	if err != nil {
-		return SSTable{}, err
+		return nil, err
 	}
 	metaList, metaOffset, err := blockMetaList(bloomOffset)
 	if err != nil {
-		return SSTable{}, err
+		return nil, err
 	}
 	startingKey, _ := metaList.StartingKeyOfFirstBlock()
 	endingKey, _ := metaList.EndingKeyOfLastBlock()
-	return SSTable{
+	return &SSTable{
 		id:                    id,
 		blockMetaList:         metaList,
 		bloomFilter:           filter,
@@ -106,7 +106,8 @@ func Load(id uint64, rootPath string, blockSize uint) (SSTable, error) {
 // SeekToFirst seeks to the first key in the SSTable.
 // First key is a part of the first block, so the block at index 0 is read and a block.Iterator
 // is created over the read block.
-func (table SSTable) SeekToFirst() (*Iterator, error) {
+// It is used in compact.Compaction.
+func (table *SSTable) SeekToFirst() (*Iterator, error) {
 	readBlock, err := table.readBlock(0)
 	if err != nil {
 		return nil, err
@@ -124,7 +125,7 @@ func (table SSTable) SeekToFirst() (*Iterator, error) {
 // 2) Read the block identified by blockIndex.
 // 3) Seek to the key within the read block (seeks to the offset where the key >= the given key)
 // 4) Handle the case where block.Iterator may become invalid.
-func (table SSTable) SeekToKey(key kv.Key) (*Iterator, error) {
+func (table *SSTable) SeekToKey(key kv.Key) (*Iterator, error) {
 	_, blockIndex := table.blockMetaList.MaybeBlockMetaContaining(key)
 	readBlock, err := table.readBlock(blockIndex)
 	if err != nil {
@@ -154,7 +155,7 @@ func (table SSTable) SeekToKey(key kv.Key) (*Iterator, error) {
 // If the starting (raw) key of the inclusiveKeyRange is greater than the ending key of the SSTable, Or
 // If the ending (raw) key of the inclusiveKeyRange is less than the starting key of the SSTable.
 // Returns true otherwise.
-func (table SSTable) ContainsInclusive(inclusiveKeyRange kv.InclusiveKeyRange[kv.Key]) bool {
+func (table *SSTable) ContainsInclusive(inclusiveKeyRange kv.InclusiveKeyRange[kv.Key]) bool {
 	if inclusiveKeyRange.Start().IsRawKeyGreaterThan(table.endingKey) {
 		return false
 	}
@@ -166,17 +167,17 @@ func (table SSTable) ContainsInclusive(inclusiveKeyRange kv.InclusiveKeyRange[kv
 
 // MayContain uses bloom filter to determine if the given key maybe present in the SSTable.
 // Returns true if the key MAYBE present, false otherwise.
-func (table SSTable) MayContain(key kv.Key) bool {
+func (table *SSTable) MayContain(key kv.Key) bool {
 	return table.bloomFilter.MayContain(key)
 }
 
 // Id returns the id of SSTable.
-func (table SSTable) Id() uint64 {
+func (table *SSTable) Id() uint64 {
 	return table.id
 }
 
 // Remove removes the SSTable.
-func (table SSTable) Remove() error {
+func (table *SSTable) Remove() error {
 	if err := table.file.file.Close(); err != nil {
 		return err
 	}
@@ -187,7 +188,7 @@ func (table SSTable) Remove() error {
 }
 
 // readBlock reads the block at the given blockIndex.
-func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
+func (table *SSTable) readBlock(blockIndex int) (block.Block, error) {
 	startingOffset, endOffset := table.offsetRangeOfBlockAt(blockIndex)
 	buffer := make([]byte, endOffset-startingOffset)
 	n, err := table.file.Read(int64(startingOffset), buffer)
@@ -198,7 +199,7 @@ func (table SSTable) readBlock(blockIndex int) (block.Block, error) {
 }
 
 // noOfBlocks returns the number of blocks in SSTable.
-func (table SSTable) noOfBlocks() int {
+func (table *SSTable) noOfBlocks() int {
 	return table.blockMetaList.Length()
 }
 
@@ -209,7 +210,7 @@ func (table SSTable) noOfBlocks() int {
 // If the block.Meta is not available at the next index, it returns the BlockStartingOffset of block.Meta at the given index,
 // and table.blockMetaOffsetMarker, which is essentially the offset of the 4-bytes which denote the meta starting offset.
 // Please take a look at the table.SSTableBuilder for encoding of SSTable.
-func (table SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
+func (table *SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
 	blockMeta, blockPresent := table.blockMetaList.GetAt(blockIndex)
 	if !blockPresent {
 		panic(fmt.Errorf("block meta not found at index %v", blockIndex))

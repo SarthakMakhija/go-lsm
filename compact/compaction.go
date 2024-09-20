@@ -37,7 +37,7 @@ func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.
 	return event, nil
 }
 
-func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]table.SSTable, error) {
+func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]*table.SSTable, error) {
 	upperLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.UpperLevelSSTableIds))
 	for _, ssTableId := range description.UpperLevelSSTableIds {
 		ssTable := snapshot.SSTables[ssTableId]
@@ -61,9 +61,9 @@ func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDe
 	return compaction.ssTablesFromIterator(iterator.NewMergeIterator(iterators))
 }
 
-func (compaction *Compaction) ssTablesFromIterator(iterator iterator.Iterator) ([]table.SSTable, error) {
+func (compaction *Compaction) ssTablesFromIterator(iterator iterator.Iterator) ([]*table.SSTable, error) {
 	var ssTableBuilder *table.SSTableBuilder
-	var newSSTables []table.SSTable
+	var newSSTables []*table.SSTable
 
 	var lastKey = kv.EmptyKey
 	var firstKeyOccurrence = false
@@ -120,11 +120,11 @@ func (compaction *Compaction) ssTablesFromIterator(iterator iterator.Iterator) (
 	return newSSTables, nil
 }
 
-func (compaction *Compaction) buildNewSStable(ssTableBuilder *table.SSTableBuilder) (table.SSTable, error) {
+func (compaction *Compaction) buildNewSStable(ssTableBuilder *table.SSTableBuilder) (*table.SSTable, error) {
 	ssTableId := compaction.idGenerator.NextId()
 	ssTable, err := ssTableBuilder.Build(ssTableId, compaction.options.Path)
 	if err != nil {
-		return table.SSTable{}, err
+		return nil, err
 	}
 	return ssTable, nil
 }

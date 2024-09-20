@@ -67,7 +67,7 @@ func (builder *SSTableBuilder) Add(key kv.Key, value kv.Value) {
 |										   |				  |									 |		                |                                   |			                                        |
  ----------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-func (builder *SSTableBuilder) Build(id uint64, rootPath string) (SSTable, error) {
+func (builder *SSTableBuilder) Build(id uint64, rootPath string) (*SSTable, error) {
 	blockMetaBeginOffset := func() []byte {
 		blockMetaBeginOffset := make([]byte, block.Uint32Size)
 		binary.LittleEndian.PutUint32(blockMetaBeginOffset, uint32(len(builder.allBlocksData)))
@@ -87,7 +87,7 @@ func (builder *SSTableBuilder) Build(id uint64, rootPath string) (SSTable, error
 	filter := builder.bloomFilterBuilder.Build(bloom.FalsePositiveRate)
 	encodedFilter, err := filter.Encode()
 	if err != nil {
-		return SSTable{}, err
+		return nil, err
 	}
 
 	bloomFilterOffset := bloomOffset(buffer)
@@ -96,12 +96,12 @@ func (builder *SSTableBuilder) Build(id uint64, rootPath string) (SSTable, error
 
 	file, err := CreateAndWrite(SSTableFilePath(id, rootPath), buffer.Bytes())
 	if err != nil {
-		return SSTable{}, err
+		return nil, err
 	}
 
 	startingKey, _ := builder.blockMetaList.StartingKeyOfFirstBlock()
 	endingKey, _ := builder.blockMetaList.EndingKeyOfLastBlock()
-	return SSTable{
+	return &SSTable{
 		id:                    id,
 		file:                  file,
 		blockMetaList:         builder.blockMetaList,

@@ -50,7 +50,7 @@ func (storageState *StorageState) TotalImmutableMemtables() int {
 }
 
 // SetSSTableAtLevel sets SSTable at the given level, only for testing.
-func (storageState *StorageState) SetSSTableAtLevel(ssTable table.SSTable, level int) {
+func (storageState *StorageState) SetSSTableAtLevel(ssTable *table.SSTable, level int) {
 	if level == 0 {
 		storageState.l0SSTableIds = append(storageState.l0SSTableIds, ssTable.Id())
 	} else {

@@ -38,7 +38,7 @@ type StorageState struct {
 	manifest                       *manifest.Manifest
 	l0SSTableIds                   []uint64
 	levels                         []*Level
-	ssTables                       map[uint64]table.SSTable
+	ssTables                       map[uint64]*table.SSTable
 	closeChannel                   chan struct{}
 	flushMemtableCompletionChannel chan struct{}
 	options                        StorageOptions
@@ -64,7 +64,7 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	storageState := &StorageState{
 		idGenerator:                    NewSSTableIdGenerator(),
 		manifest:                       manifestRecorder,
-		ssTables:                       make(map[uint64]table.SSTable),
+		ssTables:                       make(map[uint64]*table.SSTable),
 		levels:                         levels,
 		closeChannel:                   make(chan struct{}),
 		flushMemtableCompletionChannel: make(chan struct{}),
@@ -97,7 +97,7 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 	mergeIterator := iterator.NewInclusiveBoundedIterator(
 		iterator.NewMergeIterator(storageState.l0SSTableIterators(
 			key,
-			func(ssTable table.SSTable) bool {
+			func(ssTable *table.SSTable) bool {
 				return ssTable.ContainsInclusive(kv.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
 			},
 		)),
@@ -148,14 +148,14 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 
 	allIterators := append(
 		memtableIterators(),
-		storageState.l0SSTableIterators(inclusiveRange.Start(), func(ssTable table.SSTable) bool {
+		storageState.l0SSTableIterators(inclusiveRange.Start(), func(ssTable *table.SSTable) bool {
 			return ssTable.ContainsInclusive(inclusiveRange)
 		})...,
 	)
 	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
 }
 
-func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) ([]table.SSTable, error) {
+func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) ([]*table.SSTable, error) {
 	ssTablesToRemove := storageState.apply(event)
 	if !recovery {
 		if err := storageState.manifest.Add(manifest.NewCompactionDone(event.NewSSTableIds, event.CompactionDescription())); err != nil {
@@ -212,7 +212,7 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 		}
 		return memtable
 	}
-	buildSSTable := func(memtableToFlush *memory.Memtable) (table.SSTable, error) {
+	buildSSTable := func(memtableToFlush *memory.Memtable) (*table.SSTable, error) {
 		ssTableBuilder := table.NewSSTableBuilderWithDefaultBlockSize()
 		memtableToFlush.AllEntries(func(key kv.Key, value kv.Value) {
 			ssTableBuilder.Add(key, value)
@@ -222,7 +222,7 @@ func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
 			storageState.options.Path,
 		)
 		if err != nil {
-			return table.SSTable{}, err
+			return nil, err
 		}
 		return ssTable, nil
 	}
@@ -264,7 +264,7 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes
 	return nil
 }
 
-func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable table.SSTable) bool) []iterator.Iterator {
+func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable *table.SSTable) bool) []iterator.Iterator {
 	iterators := make([]iterator.Iterator, len(storageState.l0SSTableIds))
 	index := 0
 
@@ -395,11 +395,11 @@ func (storageState *StorageState) recoverL0SSTables() error {
 	return nil
 }
 
-func (storageState *StorageState) apply(event StorageStateChangeEvent) []table.SSTable {
+func (storageState *StorageState) apply(event StorageStateChangeEvent) []*table.SSTable {
 	storageState.stateLock.Lock()
 	defer storageState.stateLock.Unlock()
 
-	type SSTablesToRemove = []table.SSTable
+	type SSTablesToRemove = []*table.SSTable
 	setSSTableMapping := func() {
 		for _, ssTable := range event.NewSSTables {
 			storageState.ssTables[ssTable.Id()] = ssTable

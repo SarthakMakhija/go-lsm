@@ -11,7 +11,7 @@ import (
 // blockIterator is a pointer to the block.Iterator.
 // Effectively, an SSTable Iterator is an iterator which iterates over the blocks of SSTable.
 type Iterator struct {
-	table         SSTable
+	table         *SSTable
 	blockIndex    int
 	blockIterator *block.Iterator
 }

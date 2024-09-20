@@ -10,13 +10,13 @@ import (
 var NoStorageStateChanges = StorageStateChangeEvent{anyChanges: false}
 
 type StorageStateChangeEvent struct {
-	NewSSTables   []table.SSTable
+	NewSSTables   []*table.SSTable
 	NewSSTableIds []uint64
 	description   meta.SimpleLeveledCompactionDescription
 	anyChanges    bool
 }
 
-func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.SimpleLeveledCompactionDescription) StorageStateChangeEvent {
+func NewStorageStateChangeEvent(newSSTables []*table.SSTable, description meta.SimpleLeveledCompactionDescription) StorageStateChangeEvent {
 	newSSTableIds := make([]uint64, 0, len(newSSTables))
 	for _, ssTable := range newSSTables {
 		newSSTableIds = append(newSSTableIds, ssTable.Id())
@@ -30,7 +30,7 @@ func NewStorageStateChangeEvent(newSSTables []table.SSTable, description meta.Si
 }
 
 func NewStorageStateChangeEventByOpeningSSTables(newSSTableIds []uint64, description meta.SimpleLeveledCompactionDescription, rootPath string) (StorageStateChangeEvent, error) {
-	newSSTables := make([]table.SSTable, 0, len(newSSTableIds))
+	newSSTables := make([]*table.SSTable, 0, len(newSSTableIds))
 	for _, ssTableId := range newSSTableIds {
 		ssTable, err := table.Load(ssTableId, rootPath, block.DefaultBlockSize)
 		if err != nil {
