@@ -20,7 +20,7 @@ type SSTable struct {
 	blockSize             uint
 	startingKey           kv.Key
 	endingKey             kv.Key
-	references            atomic.Uint64
+	references            atomic.Int64
 }
 
 // Load loads the entire SSTable from the given rootPath.
@@ -180,7 +180,7 @@ func (table *SSTable) Id() uint64 {
 }
 
 // TotalReferences returns the total references to the SSTable.
-func (table *SSTable) TotalReferences() uint64 {
+func (table *SSTable) TotalReferences() int64 {
 	return table.references.Load()
 }
 
@@ -193,6 +193,13 @@ func (table *SSTable) Remove() error {
 		return err
 	}
 	return nil
+}
+
+// DecrementReferenceFor decrements the references for all the SSTables.
+func DecrementReferenceFor(tables []*SSTable) {
+	for _, table := range tables {
+		table.references.Add(-1)
+	}
 }
 
 // readBlock reads the block at the given blockIndex.
