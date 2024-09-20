@@ -7,6 +7,7 @@ import (
 	"go-lsm/table/block"
 	"go-lsm/table/bloom"
 	"os"
+	"sync/atomic"
 )
 
 // SSTable represents SSTable on disk.
@@ -19,6 +20,7 @@ type SSTable struct {
 	blockSize             uint
 	startingKey           kv.Key
 	endingKey             kv.Key
+	references            atomic.Uint64
 }
 
 // Load loads the entire SSTable from the given rootPath.
@@ -143,6 +145,7 @@ func (table *SSTable) SeekToKey(key kv.Key) (*Iterator, error) {
 			blockIterator = readBlock.SeekToKey(key)
 		}
 	}
+	table.incrementReference()
 	return &Iterator{
 		table:         table,
 		blockIndex:    blockIndex,
@@ -174,6 +177,11 @@ func (table *SSTable) MayContain(key kv.Key) bool {
 // Id returns the id of SSTable.
 func (table *SSTable) Id() uint64 {
 	return table.id
+}
+
+// TotalReferences returns the total references to the SSTable.
+func (table *SSTable) TotalReferences() uint64 {
+	return table.references.Load()
 }
 
 // Remove removes the SSTable.
@@ -224,4 +232,11 @@ func (table *SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
 		endOffset = table.blockMetaOffsetMarker
 	}
 	return blockMeta.BlockStartingOffset, endOffset
+}
+
+// incrementReference increments the references of the SSTable.
+// A reference is typically used when an SSTable is to be removed (usually after compaction).
+// An SSTable with a reference (/usage) > 0 can not be removed unless all the references to the SSTable are dropped.
+func (table *SSTable) incrementReference() {
+	table.references.Add(1)
 }

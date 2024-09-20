@@ -97,6 +97,24 @@ func TestIterateOverAnSSTableWithTwoBlocks(t *testing.T) {
 	assert.False(t, iterator.IsValid())
 }
 
+func TestSeekToAKeyInSSTableAndCheckTheReferences(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
+
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+	}()
+
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 6))
+	defer iterator.Close()
+
+	assert.Equal(t, uint64(1), ssTable.TotalReferences())
+}
+
 func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValueUsingSeekToKeyGreaterOrEqualToTheGivenKey(t *testing.T) {
 	ssTableBuilder := NewSSTableBuilder(4096)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
