@@ -49,6 +49,29 @@ func (storageState *StorageState) TotalImmutableMemtables() int {
 	return len(storageState.immutableMemtables)
 }
 
+// TotalSSTablesAtLevel returns the total number of SSTables at the given level, it is only for testing.
+func (storageState *StorageState) TotalSSTablesAtLevel(level int) int {
+	if level == 0 {
+		return len(storageState.l0SSTableIds)
+	}
+	return len(storageState.levels[level-1].SSTableIds)
+}
+
+// SSTableReferenceCountAtLevel returns a slice of references of table.SSTable at the given level, it is only for testing.
+func (storageState *StorageState) SSTableReferenceCountAtLevel(level int) ([]int64, int) {
+	var totalReferenceCount []int64
+	if level == 0 {
+		for _, ssTableId := range storageState.l0SSTableIds {
+			totalReferenceCount = append(totalReferenceCount, storageState.ssTables[ssTableId].TotalReferences())
+		}
+	} else {
+		for _, ssTableId := range storageState.levels[level-1].SSTableIds {
+			totalReferenceCount = append(totalReferenceCount, storageState.ssTables[ssTableId].TotalReferences())
+		}
+	}
+	return totalReferenceCount, len(totalReferenceCount)
+}
+
 // SetSSTableAtLevel sets SSTable at the given level, only for testing.
 func (storageState *StorageState) SetSSTableAtLevel(ssTable *table.SSTable, level int) {
 	if level == 0 {

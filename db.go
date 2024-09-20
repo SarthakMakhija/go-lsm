@@ -77,6 +77,8 @@ func (db *Db) Scan(keyRange kv.InclusiveKeyRange[kv.RawKey]) ([]KeyValue, error)
 	if err != nil {
 		return nil, err
 	}
+	defer iterator.Close()
+
 	var keyValuePairs []KeyValue
 	for iterator.IsValid() {
 		keyValuePairs = append(keyValuePairs, KeyValue{

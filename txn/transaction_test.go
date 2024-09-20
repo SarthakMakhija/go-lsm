@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/state"
+	"go-lsm/table"
 	"go-lsm/test_utility"
 	"testing"
 )
@@ -383,4 +384,61 @@ func TestTracksReadsInAReadwriteTransactionWithScan(t *testing.T) {
 	assert.Equal(t, "hdd", string(allTrackedReads[1]))
 	assert.Equal(t, "kv", string(allTrackedReads[2]))
 	assert.Equal(t, "storage", string(allTrackedReads[3]))
+}
+
+func TestReferencesToSSTableInTransactionGet(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 0), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 0), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 0), kv.NewStringValue("bbolt"))
+
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, 0)
+
+	readonlyTransaction := NewReadonlyTransaction(oracle, storageState)
+	value, ok := readonlyTransaction.Get([]byte("consensus"))
+
+	assert.True(t, ok)
+	assert.Equal(t, "paxos", value.String())
+	assert.Equal(t, int64(0), ssTable.TotalReferences())
+}
+
+func TestReferencesToSSTableInTransactionScan(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := state.NewStorageState(rootPath)
+	oracle := NewOracle(NewExecutor(storageState))
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+		oracle.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 0), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 0), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 0), kv.NewStringValue("bbolt"))
+
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, 0)
+
+	readonlyTransaction := NewReadonlyTransaction(oracle, storageState)
+	iterator, _ := readonlyTransaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("draft"), kv.RawKey("quadrant")))
+	iterator.Close()
+
+	assert.Equal(t, int64(0), ssTable.TotalReferences())
 }

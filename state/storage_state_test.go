@@ -441,7 +441,7 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	iterator := storageState.Scan(
 		kv.NewInclusiveKeyRange(kv.NewStringKeyWithTimestamp("consensus", 14), kv.NewStringKeyWithTimestamp("distributed", 14)),
 	)
-	defer iterator.Close()
+	iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 9), iterator.Key())
@@ -610,6 +610,34 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 	defer iterator.Close()
 
 	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateScanSSTableAndReferencesToSSTable(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(200, rootPath))
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
+
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, 1)
+	storageState.ssTables[1] = ssTable
+
+	iterator := storageState.Scan(
+		kv.NewInclusiveKeyRange(kv.NewStringKeyWithTimestamp("paxos", 11), kv.NewStringKeyWithTimestamp("quotient", 11)),
+	)
+	iterator.Close()
+
+	assert.Equal(t, int64(0), ssTable.TotalReferences())
 }
 
 func TestStorageStateScanWithMultipleInvalidIterators(t *testing.T) {

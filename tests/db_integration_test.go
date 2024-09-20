@@ -96,6 +96,7 @@ func TestScanKeyValues1(t *testing.T) {
 
 	err = db.Read(func(transaction *txn.Transaction) {
 		iterator, _ := transaction.Scan(kv.NewInclusiveKeyRange(kv.RawKey("storage"), kv.RawKey("wisckey")))
+		defer iterator.Close()
 
 		assert.Equal(t, "vsr", iterator.Key().RawString())
 		assert.Equal(t, "consensus algorithm", iterator.Value().String())
@@ -143,4 +144,52 @@ func TestScanKeyValues2(t *testing.T) {
 		{Key: kv.RawKey("vsr"), Value: []byte("consensus algorithm")},
 		{Key: kv.RawKey("wisckey"), Value: []byte("modified LSM")},
 	}, keyValues)
+}
+
+func TestScanAndValidateReferencesOfSSTables(t *testing.T) {
+	directory := test_utility.SetupADirectoryWithTestName(t)
+	storageOptions := state.StorageOptions{
+		MemTableSizeInBytes:   250,
+		Path:                  directory,
+		MaximumMemtables:      2,
+		FlushMemtableDuration: 1 * time.Millisecond,
+		SSTableSizeInBytes:    4096,
+	}
+	db, _ := go_lsm.Open(storageOptions)
+	defer func() {
+		db.Close()
+		test_utility.CleanupDirectoryWithTestName(t)
+	}()
+
+	executeInTransaction := func(key, value []byte) {
+		resultingFuture, err := db.Write(func(transaction *txn.Transaction) {
+			assert.NoError(t, transaction.Set(key, value))
+		})
+		assert.Nil(t, err)
+		resultingFuture.Wait()
+
+		assert.True(t, resultingFuture.Status().IsOk())
+	}
+
+	executeInTransaction([]byte("raft"), []byte("consensus algorithm"))
+	executeInTransaction([]byte("storage"), []byte("Flash SSD"))
+	executeInTransaction([]byte("data-structure"), []byte("Buffered B+Tree"))
+
+	time.Sleep(2 * time.Second)
+	assert.True(t, db.StorageState().TotalSSTablesAtLevel(0) > 0)
+
+	keyValues, err := db.Scan(kv.NewInclusiveKeyRange(kv.RawKey("raft"), kv.RawKey("wisckey")))
+
+	assert.NoError(t, err)
+	assert.Equal(t, []go_lsm.KeyValue{
+		{Key: kv.RawKey("raft"), Value: []byte("consensus algorithm")},
+		{Key: kv.RawKey("storage"), Value: []byte("Flash SSD")},
+	}, keyValues)
+
+	referenceCounts, n := db.StorageState().SSTableReferenceCountAtLevel(0)
+	expected := make([]int64, n)
+	for index := 0; index < n; index++ {
+		expected[index] = 0
+	}
+	assert.Equal(t, expected, referenceCounts)
 }
