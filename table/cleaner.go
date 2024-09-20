@@ -8,17 +8,19 @@ import (
 const inboundChannelCapacity = 1024
 
 type SSTableCleaner struct {
-	inboundChannel chan []*SSTable
-	stopChannel    chan struct{}
-	pending        []*SSTable
-	cleanDuration  time.Duration
+	inboundChannel                    chan []*SSTable
+	stopChannel                       chan struct{}
+	stopCompletionNotificationChannel chan struct{}
+	pending                           []*SSTable
+	cleanDuration                     time.Duration
 }
 
 func NewSSTableCleaner(cleanDuration time.Duration) *SSTableCleaner {
 	return &SSTableCleaner{
-		inboundChannel: make(chan []*SSTable, inboundChannelCapacity),
-		stopChannel:    make(chan struct{}),
-		cleanDuration:  cleanDuration,
+		inboundChannel:                    make(chan []*SSTable, inboundChannelCapacity),
+		stopChannel:                       make(chan struct{}),
+		stopCompletionNotificationChannel: make(chan struct{}),
+		cleanDuration:                     cleanDuration,
 	}
 }
 
@@ -35,6 +37,7 @@ func (cleaner *SSTableCleaner) Start() {
 				cleaner.mayBeCleanPending()
 				pendingCleanTimer.Reset(cleaner.cleanDuration)
 			case <-cleaner.stopChannel:
+				close(cleaner.stopCompletionNotificationChannel)
 				return
 			}
 		}
@@ -45,8 +48,9 @@ func (cleaner *SSTableCleaner) Submit(ssTables []*SSTable) {
 	cleaner.inboundChannel <- ssTables
 }
 
-func (cleaner *SSTableCleaner) Stop() {
+func (cleaner *SSTableCleaner) Stop() chan struct{} {
 	close(cleaner.stopChannel)
+	return cleaner.stopCompletionNotificationChannel
 }
 
 func (cleaner *SSTableCleaner) mayBeClean(ssTables []*SSTable) {

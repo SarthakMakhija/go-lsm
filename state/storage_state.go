@@ -195,7 +195,8 @@ func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
 	//Wait for flush immutable tables goroutine to return
 	<-storageState.flushMemtableCompletionChannel
-	storageState.ssTableCleaner.Stop()
+	//Wait for ssTableCleaner to return
+	<-storageState.ssTableCleaner.Stop()
 }
 
 func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
