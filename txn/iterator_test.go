@@ -41,7 +41,7 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystem(t *testing
 			kv.RawKey("distributed"),
 		)),
 		storageState.Scan(keyRange),
-	}))
+	}, iterator.NoOperationOnCloseCallback))
 
 	assert.Equal(t, "consensus", transactionIterator.Key().RawString())
 	assert.Equal(t, "raft", transactionIterator.Value().String())
@@ -87,7 +87,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingStateInTheSys
 			kv.RawKey("distributed"),
 		)),
 		storageState.Scan(keyRange),
-	}))
+	}, iterator.NoOperationOnCloseCallback))
 
 	assert.Equal(t, "consensus", transactionIterator.Key().RawString())
 	assert.Equal(t, "raft", transactionIterator.Value().String())
@@ -128,7 +128,7 @@ func TestIterateOverTransactionIteratorWithADeletedKeyAndAnExistingDeletedKeyInT
 			kv.RawKey("distributed"),
 		)),
 		storageState.Scan(keyRange),
-	}))
+	}, iterator.NoOperationOnCloseCallback))
 
 	assert.False(t, transactionIterator.IsValid())
 }
@@ -165,7 +165,7 @@ func TestIterateOverTransactionIteratorWithAnExistingStateInTheSystemWithABoundC
 			kv.RawKey("consensus"),
 		)),
 		storageState.Scan(keyRange),
-	}))
+	}, iterator.NoOperationOnCloseCallback))
 
 	assert.Equal(t, "consensus", transactionIterator.Key().RawString())
 	assert.Equal(t, "raft", transactionIterator.Value().String())

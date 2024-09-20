@@ -106,6 +106,7 @@ func (transaction *Transaction) Scan(keyRange kv.InclusiveKeyRange[kv.RawKey]) (
 			NewPendingWritesIterator(transaction.batch, transaction.beginTimestamp, keyRange),
 			transaction.state.Scan(versionedKeyRange),
 		},
+		iterator.NoOperationOnCloseCallback,
 	)
 	transactionIterator, err := NewTransactionIterator(transaction, pendingWritesIteratorMergedWithStateIterator)
 	if err != nil {

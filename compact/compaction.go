@@ -37,6 +37,7 @@ func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.
 	return event, nil
 }
 
+// TODO: Check the ordering of tables in StorageStateSnapshot
 func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]*table.SSTable, error) {
 	upperLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.UpperLevelSSTableIds))
 	for _, ssTableId := range description.UpperLevelSSTableIds {
@@ -58,7 +59,7 @@ func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDe
 	}
 	var iterators []iterator.Iterator
 	iterators = append(upperLevelSSTableIterator, lowerLevelSSTableIterator...)
-	return compaction.ssTablesFromIterator(iterator.NewMergeIterator(iterators))
+	return compaction.ssTablesFromIterator(iterator.NewMergeIterator(iterators, iterator.NoOperationOnCloseCallback))
 }
 
 func (compaction *Compaction) ssTablesFromIterator(iterator iterator.Iterator) ([]*table.SSTable, error) {

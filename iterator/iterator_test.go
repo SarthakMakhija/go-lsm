@@ -15,7 +15,7 @@ func TestInclusiveBoundedIteratorWithTwoIterators(t *testing.T) {
 		[]kv.Key{kv.NewStringKeyWithTimestamp("diskType", 30), kv.NewStringKeyWithTimestamp("distributed-db", 40)},
 		[]kv.Value{kv.NewStringValue("SSD"), kv.NewStringValue("etcd")},
 	)
-	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo}, NoOperationOnCloseCallback)
 	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, kv.NewStringKeyWithTimestamp("diskType", 40))
 	defer inclusiveBoundedIterator.Close()
 
@@ -42,7 +42,7 @@ func TestInclusiveBoundedIteratorWithTwoIteratorsAndADeletedKeyWithEmptyValue(t 
 		[]kv.Key{kv.NewStringKeyWithTimestamp("diskType", 30), kv.NewStringKeyWithTimestamp("distributed-db", 40)},
 		[]kv.Value{kv.NewStringValue(""), kv.NewStringValue("etcd")},
 	)
-	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo}, NoOperationOnCloseCallback)
 	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, kv.NewStringKeyWithTimestamp("diskType", 30))
 	defer inclusiveBoundedIterator.Close()
 
@@ -63,7 +63,7 @@ func TestInclusiveBoundedIteratorWithTwoIteratorsAndAnInclusiveKeyWithSmallerTim
 		[]kv.Key{kv.NewStringKeyWithTimestamp("diskType", 30), kv.NewStringKeyWithTimestamp("distributed-db", 40)},
 		[]kv.Value{kv.NewStringValue("SSD"), kv.NewStringValue("etcd")},
 	)
-	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo}, NoOperationOnCloseCallback)
 	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, kv.NewStringKeyWithTimestamp("diskType", 20))
 	defer inclusiveBoundedIterator.Close()
 
@@ -84,7 +84,7 @@ func TestInclusiveBoundedIteratorWithTwoIteratorsAndAndAKeyWithMultipleTimestamp
 		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringKeyWithTimestamp("distributed-db", 40)},
 		[]kv.Value{kv.NewStringValue("paxos"), kv.NewStringValue("etcd")},
 	)
-	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo}, NoOperationOnCloseCallback)
 	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, kv.NewStringKeyWithTimestamp("diskType", 20))
 	defer inclusiveBoundedIterator.Close()
 
@@ -105,7 +105,7 @@ func TestInclusiveBoundedIteratorWithTwoIteratorsAndAndAKeyWithMultipleTimestamp
 		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringKeyWithTimestamp("distributed-db", 40)},
 		[]kv.Value{kv.NewStringValue("paxos"), kv.NewStringValue("etcd")},
 	)
-	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo}, NoOperationOnCloseCallback)
 	inclusiveBoundedIterator := NewInclusiveBoundedIterator(mergeIterator, kv.NewStringKeyWithTimestamp("storage", 11))
 	defer inclusiveBoundedIterator.Close()
 

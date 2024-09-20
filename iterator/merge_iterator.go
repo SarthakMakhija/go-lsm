@@ -63,12 +63,19 @@ func (indexedIterator IndexedIterator) IsPrioritizedOver(other IndexedIterator) 
 // It is possible that multiple iterators may have the same key, in such a case, iterator with smaller index has the higher
 // priority.
 type MergeIterator struct {
-	current   IndexedIterator
-	iterators *IndexedIteratorMinHeap
+	current         IndexedIterator
+	iterators       *IndexedIteratorMinHeap
+	onCloseCallback OnCloseCallback
 }
 
+// OnCloseCallback is a function that is called on closing the MergeIterator.
+type OnCloseCallback = func()
+
+// NoOperationOnCloseCallback represents a no-operation OnCloseCallback.
+var NoOperationOnCloseCallback = func() {}
+
 // NewMergeIterator creates a new instance of MergeIterator.
-func NewMergeIterator(iterators []Iterator) *MergeIterator {
+func NewMergeIterator(iterators []Iterator, onCloseCallback OnCloseCallback) *MergeIterator {
 	prioritizedIterators := &IndexedIteratorMinHeap{}
 	heap.Init(prioritizedIterators)
 
@@ -81,12 +88,14 @@ func NewMergeIterator(iterators []Iterator) *MergeIterator {
 	//each element of heap is an instance of IndexedIterator.
 	if prioritizedIterators.Len() > 0 {
 		return &MergeIterator{
-			current:   heap.Pop(prioritizedIterators).(IndexedIterator),
-			iterators: prioritizedIterators,
+			current:         heap.Pop(prioritizedIterators).(IndexedIterator),
+			iterators:       prioritizedIterators,
+			onCloseCallback: onCloseCallback,
 		}
 	}
 	return &MergeIterator{
-		current: NewIndexedIterator(0, nothingIterator),
+		current:         NewIndexedIterator(0, nothingIterator),
+		onCloseCallback: onCloseCallback,
 	}
 }
 
@@ -123,7 +132,7 @@ func (iterator *MergeIterator) Next() error {
 	return iterator.maybeSwapCurrent()
 }
 
-// Close closes all the iterators.
+// Close closes all the iterators and invokes the onCloseCallback.
 func (iterator *MergeIterator) Close() {
 	iterator.current.Close()
 	if iterator.iterators != nil && iterator.iterators.Len() > 0 {
@@ -131,6 +140,7 @@ func (iterator *MergeIterator) Close() {
 			anIterator.Close()
 		}
 	}
+	iterator.onCloseCallback()
 }
 
 // advanceOtherIteratorsOnSameKey advances the other iterators present in the binary-heap if the key is the same as

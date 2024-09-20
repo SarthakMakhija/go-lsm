@@ -40,12 +40,27 @@ func (iterator *testIteratorNoEndKey) IsValid() bool {
 func (iterator *testIteratorNoEndKey) Close() {
 }
 
+func TestMergeIteratorWithAnOnCloseCallback(t *testing.T) {
+	iterator := newTestIteratorNoEndKey(
+		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringKeyWithTimestamp("storage", 14)},
+		[]kv.Value{kv.NewStringValue("raft"), kv.NewStringValue("NVMe")},
+	)
+	nothingCounter := 20
+	counterDecrementingCallback := func() {
+		nothingCounter -= 1
+	}
+	mergeIterator := NewMergeIterator([]Iterator{iterator}, counterDecrementingCallback)
+	mergeIterator.Close()
+
+	assert.Equal(t, 19, nothingCounter)
+}
+
 func TestMergeIteratorWithASingleIterator(t *testing.T) {
 	iterator := newTestIteratorNoEndKey(
 		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringKeyWithTimestamp("storage", 14)},
 		[]kv.Value{kv.NewStringValue("raft"), kv.NewStringValue("NVMe")},
 	)
-	mergeIterator := NewMergeIterator([]Iterator{iterator})
+	mergeIterator := NewMergeIterator([]Iterator{iterator}, NoOperationOnCloseCallback)
 	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
@@ -65,7 +80,7 @@ func TestMergeIteratorWithASingleInvalidIterator(t *testing.T) {
 		[]kv.Value{kv.NewStringValue("raft"), kv.NewStringValue("NVMe")},
 	)
 	iterator.currentIndex = 2
-	mergeIterator := NewMergeIterator([]Iterator{iterator})
+	mergeIterator := NewMergeIterator([]Iterator{iterator}, NoOperationOnCloseCallback)
 	defer mergeIterator.Close()
 
 	assert.False(t, mergeIterator.IsValid())
@@ -80,7 +95,7 @@ func TestMergeIteratorWithATwoIterators(t *testing.T) {
 		[]kv.Key{kv.NewStringKeyWithTimestamp("diskType", 4), kv.NewStringKeyWithTimestamp("distributed-db", 7)},
 		[]kv.Value{kv.NewStringValue("SSD"), kv.NewStringValue("etcd")},
 	)
-	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo}, NoOperationOnCloseCallback)
 	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
@@ -120,7 +135,7 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey1(t *testing.T) {
 		[]kv.Value{kv.NewStringValue("paxos"), kv.NewStringValue("NVMe")},
 	)
 	//iterator with the lower index has higher priority
-	mergeIterator := NewMergeIterator([]Iterator{iteratorTwo, iteratorOne})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorTwo, iteratorOne}, NoOperationOnCloseCallback)
 	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())
@@ -166,7 +181,7 @@ func TestMergeIteratorWithATwoIteratorsHavingSameKey2(t *testing.T) {
 		[]kv.Value{kv.NewStringValue("consistency"), kv.NewStringValue("raft"), kv.NewStringValue("NVMe")},
 	)
 	//iterator with the lower index has higher priority
-	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo})
+	mergeIterator := NewMergeIterator([]Iterator{iteratorOne, iteratorTwo}, NoOperationOnCloseCallback)
 	defer mergeIterator.Close()
 
 	assert.True(t, mergeIterator.IsValid())

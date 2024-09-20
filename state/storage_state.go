@@ -94,17 +94,17 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 		}
 	}
 
-	mergeIterator := iterator.NewInclusiveBoundedIterator(
+	boundedIterator := iterator.NewInclusiveBoundedIterator(
 		iterator.NewMergeIterator(storageState.l0SSTableIterators(
 			key,
 			func(ssTable *table.SSTable) bool {
 				return ssTable.ContainsInclusive(kv.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
 			},
-		)),
+		), iterator.NoOperationOnCloseCallback),
 		key,
 	)
-	if mergeIterator.IsValid() && mergeIterator.Key().IsRawKeyEqualTo(key) {
-		return mergeIterator.Value(), true
+	if boundedIterator.IsValid() && boundedIterator.Key().IsRawKeyEqualTo(key) {
+		return boundedIterator.Value(), true
 	}
 	return kv.EmptyValue, false
 }
@@ -152,7 +152,7 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 			return ssTable.ContainsInclusive(inclusiveRange)
 		})...,
 	)
-	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators), inclusiveRange.End())
+	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(allIterators, iterator.NoOperationOnCloseCallback), inclusiveRange.End())
 }
 
 func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) ([]*table.SSTable, error) {
