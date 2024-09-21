@@ -21,6 +21,16 @@ func testStorageStateOptionsWithMemTableSizeAndDirectory(memtableSizeInBytes int
 	}
 }
 
+func testStorageStateOptionsWithDirectoryAndCompactionOptions(directory string, compactionOptions SimpleLeveledCompactionOptions) StorageOptions {
+	return StorageOptions{
+		MemTableSizeInBytes:   1 << 10,
+		Path:                  directory,
+		MaximumMemtables:      10,
+		FlushMemtableDuration: 1 * time.Minute,
+		CompactionOptions:     compactionOptions,
+	}
+}
+
 func TestStorageStateWithASinglePutAndHasNoImmutableMemtables(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	storageState, _ := NewStorageState(rootPath)
@@ -719,6 +729,135 @@ func TestStorageStateScanWithImmutableMemtablesAndSSTables4(t *testing.T) {
 		kv.NewInclusiveKeyRange(kv.NewStringKeyWithTimestamp("paxos", 11), kv.NewStringKeyWithTimestamp("quotient", 11)),
 	)
 	defer iterator.Close()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateScanWithSSTablesAtLevel1AndLevel2(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectoryAndCompactionOptions(rootPath, SimpleLeveledCompactionOptions{
+		NumberOfSSTablesRatioPercentage: 200,
+		MaxLevels:                       4,
+		Level0FilesCompactionTrigger:    5,
+	}))
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level1)
+
+	ssTableBuilder = table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("JunoDB"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 6), kv.NewStringValue("KV"))
+	ssTable, err = ssTableBuilder.Build(2, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level2)
+
+	iterator := storageState.Scan(
+		kv.NewInclusiveKeyRange(kv.NewStringKeyWithTimestamp("consensus", 11), kv.NewStringKeyWithTimestamp("quotient", 11)),
+	)
+	defer iterator.Close()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 7), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("paxos"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("distributed", 7), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("TiKV"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("etcd", 7), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("bbolt"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageStateScanWithSSTablesAtLevel0AndLevel1(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithDirectoryAndCompactionOptions(rootPath, SimpleLeveledCompactionOptions{
+		NumberOfSSTablesRatioPercentage: 200,
+		MaxLevels:                       4,
+		Level0FilesCompactionTrigger:    5,
+	}))
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 7), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 7), kv.NewStringValue("bbolt"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("graph", 7), kv.NewStringValue("dGraph"))
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level0)
+
+	ssTableBuilder = table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("VSR"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 8), kv.NewStringValue("Foundation"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("KV"))
+	ssTable, err = ssTableBuilder.Build(2, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level0)
+
+	ssTableBuilder = table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("JunoDB"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 6), kv.NewStringValue("B+Tree"))
+	ssTable, err = ssTableBuilder.Build(3, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level1)
+
+	iterator := storageState.Scan(
+		kv.NewInclusiveKeyRange(kv.NewStringKeyWithTimestamp("consensus", 11), kv.NewStringKeyWithTimestamp("quotient", 11)),
+	)
+	defer iterator.Close()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("consensus", 8), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("VSR"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("distributed", 8), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("Foundation"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("etcd", 8), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("KV"), iterator.Value())
+
+	_ = iterator.Next()
+
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, kv.NewStringKeyWithTimestamp("graph", 7), iterator.Key())
+	assert.Equal(t, kv.NewStringValue("dGraph"), iterator.Value())
+
+	_ = iterator.Next()
 
 	assert.False(t, iterator.IsValid())
 }

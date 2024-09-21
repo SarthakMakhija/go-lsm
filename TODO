@@ -4,7 +4,6 @@
 10) A storage state test with more than one SSTable at level 1 and more than one SSTable at level 2. Level 2 (and level 1 maybe)
     SSTables containing the same key
 
-5) Integrate the iterators from different levels in Scan
 3) Integrate compaction in Db
 
 
@@ -14,3 +13,4 @@
 9) Add support for incrementing/decrementing reference count in SSTable -> done
 2) Delete SSTable file                                                  -> done
 4) Integrate the iterators from different levels in Get                 -> done
+5) Integrate the iterators from different levels in Scan                -> done

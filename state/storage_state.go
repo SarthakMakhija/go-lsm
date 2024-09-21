@@ -114,10 +114,10 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 		return kv.EmptyValue, false
 	}
 	enquireOtherLevelSSTables := func() (kv.Value, bool) {
-		l0SSTableIterators, ssTablesInUse := storageState.otherLevelSSTableIterators(key, func(ssTable *table.SSTable) bool {
+		otherSSTableIterators, ssTablesInUse := storageState.otherLevelSSTableIterators(key, func(ssTable *table.SSTable) bool {
 			return ssTable.ContainsInclusive(kv.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
 		})
-		boundedIterator := iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(l0SSTableIterators, func() {
+		boundedIterator := iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(otherSSTableIterators, func() {
 			table.DecrementReferenceFor(ssTablesInUse)
 		}), key)
 		defer boundedIterator.Close()
@@ -165,10 +165,9 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 
 	memtableIterators := func() []iterator.Iterator {
 		iterators := make([]iterator.Iterator, len(storageState.immutableMemtables)+1)
-
 		index := 0
-		iterators[index] = storageState.currentMemtable.Scan(inclusiveRange)
 
+		iterators[index] = storageState.currentMemtable.Scan(inclusiveRange)
 		index += 1
 		for immutableMemtableIndex := len(storageState.immutableMemtables) - 1; immutableMemtableIndex >= 0; immutableMemtableIndex-- {
 			iterators[index] = storageState.immutableMemtables[immutableMemtableIndex].Scan(inclusiveRange)
@@ -176,17 +175,20 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 		}
 		return iterators
 	}
+	ssTableIteratorsAtAllLevels := func() ([]iterator.Iterator, []*table.SSTable) {
+		l0SSTableIterators, ssTablesFromLevel0InUse := storageState.l0SSTableIterators(inclusiveRange.Start(), func(ssTable *table.SSTable) bool {
+			return ssTable.ContainsInclusive(inclusiveRange)
+		})
+		otherSSTableIterators, ssTablesFromOtherLevelsInUse := storageState.otherLevelSSTableIterators(inclusiveRange.Start(), func(ssTable *table.SSTable) bool {
+			return ssTable.ContainsInclusive(inclusiveRange)
+		})
+		return append(l0SSTableIterators, otherSSTableIterators...), append(ssTablesFromLevel0InUse, ssTablesFromOtherLevelsInUse...)
+	}
 
-	l0SSTableIterators, ssTablesInUse := storageState.l0SSTableIterators(inclusiveRange.Start(), func(ssTable *table.SSTable) bool {
-		return ssTable.ContainsInclusive(inclusiveRange)
-	})
-	allIterators := append(memtableIterators(), l0SSTableIterators...)
-	return iterator.NewInclusiveBoundedIterator(
-		iterator.NewMergeIterator(allIterators, func() {
-			table.DecrementReferenceFor(ssTablesInUse)
-		}),
-		inclusiveRange.End(),
-	)
+	ssTableIterators, ssTablesInUse := ssTableIteratorsAtAllLevels()
+	return iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(append(memtableIterators(), ssTableIterators...), func() {
+		table.DecrementReferenceFor(ssTablesInUse)
+	}), inclusiveRange.End())
 }
 
 func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) error {

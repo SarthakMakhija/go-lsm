@@ -189,9 +189,10 @@ func (iterator *MergeIterator) maybeSwapCurrent() error {
 		iterators := *iterator.iterators
 
 		if !current.IsPrioritizedOver(iterators[0]) {
-			current, iterators[0] = iterators[0], current
-			iterator.current = current
-			iterator.iterators = &iterators
+			oldCurrent := current
+			iterator.current = iterators[0]
+			heap.Pop(iterator.iterators)
+			heap.Push(iterator.iterators, oldCurrent)
 		}
 	}
 	return nil
