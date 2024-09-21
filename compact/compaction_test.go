@@ -19,10 +19,12 @@ func TestStartSimpleLeveledCompactionWithCompactionDescription(t *testing.T) {
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    8192,
-		CompactionOptions: state.SimpleLeveledCompactionOptions{
-			NumberOfSSTablesRatioPercentage: 200,
-			MaxLevels:                       3,
-			Level0FilesCompactionTrigger:    2,
+		CompactionOptions: state.CompactionOptions{
+			StrategyOptions: state.SimpleLeveledCompactionOptions{
+				NumberOfSSTablesRatioPercentage: 200,
+				MaxLevels:                       3,
+				Level0FilesCompactionTrigger:    2,
+			},
 		},
 	}
 
@@ -81,10 +83,12 @@ func TestStartSimpleLeveledCompactionBetweenL0AndL1WithSSTablesPresentOnlyInL0(t
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    8192,
-		CompactionOptions: state.SimpleLeveledCompactionOptions{
-			NumberOfSSTablesRatioPercentage: 200,
-			MaxLevels:                       3,
-			Level0FilesCompactionTrigger:    2,
+		CompactionOptions: state.CompactionOptions{
+			StrategyOptions: state.SimpleLeveledCompactionOptions{
+				NumberOfSSTablesRatioPercentage: 200,
+				MaxLevels:                       3,
+				Level0FilesCompactionTrigger:    2,
+			},
 		},
 	}
 
@@ -141,10 +145,12 @@ func TestStartSimpleLeveledCompactionBetweenL0AndL1WithNewSSTables(t *testing.T)
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
 		SSTableSizeInBytes:    8192,
-		CompactionOptions: state.SimpleLeveledCompactionOptions{
-			NumberOfSSTablesRatioPercentage: 200,
-			MaxLevels:                       3,
-			Level0FilesCompactionTrigger:    2,
+		CompactionOptions: state.CompactionOptions{
+			StrategyOptions: state.SimpleLeveledCompactionOptions{
+				NumberOfSSTablesRatioPercentage: 200,
+				MaxLevels:                       3,
+				Level0FilesCompactionTrigger:    2,
+			},
 		},
 	}
 

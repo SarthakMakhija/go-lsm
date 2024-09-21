@@ -19,10 +19,12 @@ func NewStorageState(rootPath string) (*StorageState, error) {
 		Path:                  rootPath,
 		MaximumMemtables:      5,
 		FlushMemtableDuration: 50 * time.Millisecond,
-		CompactionOptions: SimpleLeveledCompactionOptions{
-			Level0FilesCompactionTrigger:    6,
-			MaxLevels:                       totalLevels,
-			NumberOfSSTablesRatioPercentage: 200,
+		CompactionOptions: CompactionOptions{
+			StrategyOptions: SimpleLeveledCompactionOptions{
+				Level0FilesCompactionTrigger:    6,
+				MaxLevels:                       totalLevels,
+				NumberOfSSTablesRatioPercentage: 200,
+			},
 		},
 	})
 }

@@ -21,13 +21,15 @@ func testStorageStateOptionsWithMemTableSizeAndDirectory(memtableSizeInBytes int
 	}
 }
 
-func testStorageStateOptionsWithDirectoryAndCompactionOptions(directory string, compactionOptions SimpleLeveledCompactionOptions) StorageOptions {
+func testStorageStateOptionsWithDirectoryAndCompactionOptions(directory string, compactionStrategyOptions SimpleLeveledCompactionOptions) StorageOptions {
 	return StorageOptions{
 		MemTableSizeInBytes:   1 << 10,
 		Path:                  directory,
 		MaximumMemtables:      10,
 		FlushMemtableDuration: 1 * time.Minute,
-		CompactionOptions:     compactionOptions,
+		CompactionOptions: CompactionOptions{
+			StrategyOptions: compactionStrategyOptions,
+		},
 	}
 }
 

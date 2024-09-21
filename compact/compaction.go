@@ -24,7 +24,7 @@ func NewCompaction(oracle *txn.Oracle, idGenerator *state.SSTableIdGenerator, op
 }
 
 func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.StorageStateChangeEvent, error) {
-	simpleLeveledCompaction := NewSimpleLeveledCompaction(compaction.options.CompactionOptions)
+	simpleLeveledCompaction := NewSimpleLeveledCompaction(compaction.options.CompactionOptions.StrategyOptions)
 	description, ok := simpleLeveledCompaction.CompactionDescription(snapshot)
 	if !ok {
 		return state.NoStorageStateChanges, nil

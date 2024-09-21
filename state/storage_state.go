@@ -15,6 +15,11 @@ import (
 	"time"
 )
 
+type CompactionOptions struct {
+	StrategyOptions SimpleLeveledCompactionOptions
+	Duration        time.Duration
+}
+
 type SimpleLeveledCompactionOptions struct {
 	NumberOfSSTablesRatioPercentage uint
 	MaxLevels                       uint
@@ -27,7 +32,7 @@ type StorageOptions struct {
 	Path                  string
 	MaximumMemtables      uint
 	FlushMemtableDuration time.Duration
-	CompactionOptions     SimpleLeveledCompactionOptions
+	CompactionOptions     CompactionOptions
 }
 
 // StorageState TODO: Support concurrency and Close method, populate levels fields also (refer simple_leveled in compact)
@@ -53,8 +58,8 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
 	}
-	levels := make([]*Level, options.CompactionOptions.MaxLevels)
-	for level := 1; level <= int(options.CompactionOptions.MaxLevels); level++ {
+	levels := make([]*Level, options.CompactionOptions.StrategyOptions.MaxLevels)
+	for level := 1; level <= int(options.CompactionOptions.StrategyOptions.MaxLevels); level++ {
 		levels[level-1] = &Level{LevelNumber: level}
 	}
 	manifestRecorder, events, err := manifest.CreateNewOrRecoverFrom(options.Path)

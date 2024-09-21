@@ -27,10 +27,12 @@ func testStorageStateOptionsWithCompactionOptions(memtableSizeInBytes int64, dir
 		MaximumMemtables:      10,
 		FlushMemtableDuration: 1 * time.Minute,
 		SSTableSizeInBytes:    1 * 1024 * 1024 * 1024,
-		CompactionOptions: state.SimpleLeveledCompactionOptions{
-			NumberOfSSTablesRatioPercentage: 200,
-			MaxLevels:                       3,
-			Level0FilesCompactionTrigger:    2,
+		CompactionOptions: state.CompactionOptions{
+			StrategyOptions: state.SimpleLeveledCompactionOptions{
+				NumberOfSSTablesRatioPercentage: 200,
+				MaxLevels:                       3,
+				Level0FilesCompactionTrigger:    2,
+			},
 		},
 	}
 }
