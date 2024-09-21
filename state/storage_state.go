@@ -86,24 +86,37 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 	storageState.stateLock.RLock()
 	defer storageState.stateLock.RUnlock()
 
-	value, ok := storageState.currentMemtable.Get(key)
-	if ok {
-		return value, ok
-	}
-	for index := len(storageState.immutableMemtables) - 1; index >= 0; index-- {
-		memTable := storageState.immutableMemtables[index]
-		if value, ok := memTable.Get(key); ok {
+	enquireMemtables := func() (kv.Value, bool) {
+		value, ok := storageState.currentMemtable.Get(key)
+		if ok {
 			return value, ok
 		}
+		for index := len(storageState.immutableMemtables) - 1; index >= 0; index-- {
+			memTable := storageState.immutableMemtables[index]
+			if value, ok := memTable.Get(key); ok {
+				return value, ok
+			}
+		}
+		return kv.EmptyValue, false
 	}
-	l0SSTableIterators, onCloseCallback := storageState.l0SSTableIterators(key, func(ssTable *table.SSTable) bool {
-		return ssTable.ContainsInclusive(kv.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
-	})
-	boundedIterator := iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(l0SSTableIterators, onCloseCallback), key)
-	defer boundedIterator.Close()
+	enquireL0SSTables := func() (kv.Value, bool) {
+		l0SSTableIterators, onCloseCallback := storageState.l0SSTableIterators(key, func(ssTable *table.SSTable) bool {
+			return ssTable.ContainsInclusive(kv.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
+		})
+		boundedIterator := iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(l0SSTableIterators, onCloseCallback), key)
+		defer boundedIterator.Close()
 
-	if boundedIterator.IsValid() && boundedIterator.Key().IsRawKeyEqualTo(key) {
-		return boundedIterator.Value(), true
+		if boundedIterator.IsValid() && boundedIterator.Key().IsRawKeyEqualTo(key) {
+			return boundedIterator.Value(), true
+		}
+		return kv.EmptyValue, false
+	}
+
+	if value, ok := enquireMemtables(); ok {
+		return value, true
+	}
+	if value, ok := enquireL0SSTables(); ok {
+		return value, true
 	}
 	return kv.EmptyValue, false
 }
