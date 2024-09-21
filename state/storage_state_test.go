@@ -90,7 +90,7 @@ func TestStorageStateWithAMultiplePutsAndGets(t *testing.T) {
 	assert.Equal(t, kv.NewStringValue("LSM"), value)
 }
 
-func TestStorageStateWithSSTablesOnly(t *testing.T) {
+func TestStorageStateWithSSTablesOnlyAtLevel0(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	storageState, _ := NewStorageState(rootPath)
 
@@ -240,6 +240,117 @@ func TestStorageStateWithAMultiplePutsAndGetsUsingMemtablesAndSSTables3(t *testi
 	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("paxos", 10))
 	assert.False(t, ok)
 	assert.Equal(t, kv.EmptyValue, value)
+}
+
+func TestStorageStateWithAMultiplePutsAndGetsUsingOnlySSTablesAtLevel1(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := NewStorageState(rootPath)
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
+
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level1)
+
+	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("etcd", 8))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("bbolt"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("consensus", 9))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("paxos"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("distributed", 10))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("TiKV"), value)
+}
+
+func TestStorageStateWithAMultiplePutsAndGetsUsingOnlySSTablesAtLevel0andLevel1(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := NewStorageState(rootPath)
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 8), kv.NewStringValue("bbolt"))
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level0)
+
+	ssTableBuilder = table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 3), kv.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 4), kv.NewStringValue("FoundationDb"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 5), kv.NewStringValue("KV"))
+	ssTable, err = ssTableBuilder.Build(2, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level1)
+
+	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("etcd", 8))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("bbolt"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("consensus", 9))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("paxos"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("distributed", 10))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("TiKV"), value)
+}
+
+func TestStorageStateWithAMultiplePutsAndGetsUsingOnlySSTablesAtLevel1andLevel2(t *testing.T) {
+	rootPath := test_utility.SetupADirectoryWithTestName(t)
+	storageState, _ := NewStorageState(rootPath)
+
+	defer func() {
+		test_utility.CleanupDirectoryWithTestName(t)
+		storageState.Close()
+	}()
+
+	ssTableBuilder := table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 6), kv.NewStringValue("paxos"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("TiKV"))
+	ssTable, err := ssTableBuilder.Build(1, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level1)
+
+	ssTableBuilder = table.NewSSTableBuilder(4096)
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 3), kv.NewStringValue("raft"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 4), kv.NewStringValue("FoundationDb"))
+	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("etcd", 5), kv.NewStringValue("KV"))
+	ssTable, err = ssTableBuilder.Build(2, rootPath)
+	assert.Nil(t, err)
+
+	storageState.SetSSTableAtLevel(ssTable, level2)
+
+	value, ok := storageState.Get(kv.NewStringKeyWithTimestamp("etcd", 8))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("KV"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("consensus", 9))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("paxos"), value)
+
+	value, ok = storageState.Get(kv.NewStringKeyWithTimestamp("distributed", 10))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("TiKV"), value)
 }
 
 func TestStorageStateWithASinglePutAndDelete(t *testing.T) {

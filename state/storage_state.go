@@ -111,11 +111,26 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 		}
 		return kv.EmptyValue, false
 	}
+	enquireOtherLevelSSTables := func() (kv.Value, bool) {
+		l0SSTableIterators, onCloseCallback := storageState.otherLevelSSTableIterators(key, func(ssTable *table.SSTable) bool {
+			return ssTable.ContainsInclusive(kv.NewInclusiveKeyRange(key, key)) && ssTable.MayContain(key)
+		})
+		boundedIterator := iterator.NewInclusiveBoundedIterator(iterator.NewMergeIterator(l0SSTableIterators, onCloseCallback), key)
+		defer boundedIterator.Close()
+
+		if boundedIterator.IsValid() && boundedIterator.Key().IsRawKeyEqualTo(key) {
+			return boundedIterator.Value(), true
+		}
+		return kv.EmptyValue, false
+	}
 
 	if value, ok := enquireMemtables(); ok {
 		return value, true
 	}
 	if value, ok := enquireL0SSTables(); ok {
+		return value, true
+	}
+	if value, ok := enquireOtherLevelSSTables(); ok {
 		return value, true
 	}
 	return kv.EmptyValue, false
@@ -292,6 +307,28 @@ func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelec
 			ssTablesInUse = append(ssTablesInUse, ssTable)
 			iterators[index] = ssTableIterator
 			index += 1
+		}
+	}
+	return iterators, func() {
+		table.DecrementReferenceFor(ssTablesInUse)
+	}
+}
+
+func (storageState *StorageState) otherLevelSSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable *table.SSTable) bool) ([]iterator.Iterator, iterator.OnCloseCallback) {
+	var ssTablesInUse []*table.SSTable
+	var iterators []iterator.Iterator
+
+	for _, level := range storageState.levels {
+		for _, ssTableId := range level.SSTableIds {
+			ssTable := storageState.ssTables[ssTableId]
+			if ssTableSelector(ssTable) {
+				ssTableIterator, err := ssTable.SeekToKey(seekTo)
+				if err != nil {
+					return nil, iterator.NoOperationOnCloseCallback
+				}
+				ssTablesInUse = append(ssTablesInUse, ssTable)
+				iterators = append(iterators, ssTableIterator)
+			}
 		}
 	}
 	return iterators, func() {

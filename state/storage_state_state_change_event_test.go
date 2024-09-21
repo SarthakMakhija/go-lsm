@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	level0 = 0
 	level1 = 1
 	level2 = 2
 )
