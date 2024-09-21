@@ -176,4 +176,16 @@ func TestStorageStateLoadExistingStateAfterCompaction(t *testing.T) {
 	}()
 
 	assert.True(t, loadedStorageState.TotalSSTablesAtLevel(1) >= 1)
+
+	value, ok := loadedStorageState.Get(kv.NewStringKeyWithTimestamp("consensus", 11))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("raft"), value)
+
+	value, ok = loadedStorageState.Get(kv.NewStringKeyWithTimestamp("storage", 11))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("Flash SSD"), value)
+
+	value, ok = loadedStorageState.Get(kv.NewStringKeyWithTimestamp("data-structure", 11))
+	assert.True(t, ok)
+	assert.Equal(t, kv.NewStringValue("Buffered B-Tree"), value)
 }
