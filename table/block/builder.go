@@ -30,7 +30,6 @@ type Builder struct {
 }
 
 // NewBlockBuilder creates a new instance of block builder.
-// TODO: blockSize should be a multiple of 4096
 func NewBlockBuilder(blockSize uint) *Builder {
 	return &Builder{
 		blockSize: blockSize,

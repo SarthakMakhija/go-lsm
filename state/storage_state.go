@@ -35,7 +35,6 @@ type StorageOptions struct {
 	CompactionOptions     CompactionOptions
 }
 
-// StorageState TODO: Support concurrency and Close method, populate levels fields also (refer simple_leveled in compact)
 type StorageState struct {
 	currentMemtable                *memory.Memtable
 	immutableMemtables             []*memory.Memtable
@@ -53,7 +52,6 @@ type StorageState struct {
 	stateLock                      sync.RWMutex
 }
 
-// NewStorageStateWithOptions TODO: Recover from WAL
 func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
@@ -145,8 +143,6 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 	return kv.EmptyValue, false
 }
 
-// Set
-// TODO: Handle error in Set and Delete
 func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) error {
 	if err := storageState.mayBeFreezeCurrentMemtable(int64(timestampedBatch.SizeInBytes())); err != nil {
 		return err
@@ -291,8 +287,6 @@ func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	return nil
 }
 
-// TODO: Sync WAL of the old memtable (If Memtable gets a WAL)
-// TODO: When concurrency comes in, ensure mayBeFreezeCurrentMemtable is called by one goroutine only
 func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes int64) error {
 	if !storageState.currentMemtable.CanFit(requiredSizeInBytes) {
 		storageState.stateLock.Lock()
