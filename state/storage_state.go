@@ -15,17 +15,22 @@ import (
 	"time"
 )
 
+// CompactionOptions represents a combination of SimpleLeveledCompactionOptions and
+// the duration at which compaction goroutine should run.
 type CompactionOptions struct {
 	StrategyOptions SimpleLeveledCompactionOptions
 	Duration        time.Duration
 }
 
+// SimpleLeveledCompactionOptions represents the configurable options for simple-leveled compaction.
+// Read more about the logic behind simple-leveled compaction in compact.SimpleLeveledCompaction.
 type SimpleLeveledCompactionOptions struct {
 	NumberOfSSTablesRatioPercentage uint
 	MaxLevels                       uint
 	Level0FilesCompactionTrigger    uint
 }
 
+// StorageOptions represents the configuration options for StorageState.
 type StorageOptions struct {
 	MemTableSizeInBytes   int64
 	SSTableSizeInBytes    int64
@@ -35,12 +40,15 @@ type StorageOptions struct {
 	CompactionOptions     CompactionOptions
 }
 
+// StorageState represents the core abstraction to manage the in-memory state of database.
 type StorageState struct {
-	currentMemtable                *memory.Memtable
-	immutableMemtables             []*memory.Memtable
-	idGenerator                    *SSTableIdGenerator
-	manifest                       *manifest.Manifest
-	ssTableCleaner                 *table.SSTableCleaner
+	currentMemtable *memory.Memtable
+	//oldest to latest immutable memtable.
+	immutableMemtables []*memory.Memtable
+	idGenerator        *SSTableIdGenerator
+	manifest           *manifest.Manifest
+	ssTableCleaner     *table.SSTableCleaner
+	//oldest to latest level0 SStable.
 	l0SSTableIds                   []uint64
 	levels                         []*Level
 	ssTables                       map[uint64]*table.SSTable
@@ -49,9 +57,14 @@ type StorageState struct {
 	options                        StorageOptions
 	walPath                        log.WALPath
 	lastCommitTimestamp            uint64
-	stateLock                      sync.RWMutex
+	//stateLock is needed because compaction might cause a change in the StorageState (Refer to the Apply() method).
+	//Had compaction not been there, stateLock was not needed because transaction isolation is serialized-snapshot, which means
+	//all the writes are written serially, and reads are based on read-timestamp. This requires memory.Memtable to be lock-free
+	//concurrent reads can proceed from table.SSTable(s).
+	stateLock sync.RWMutex
 }
 
+// NewStorageStateWithOptions creates new instance of StorageState, or loads the existing state from manifest.Manifest.
 func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	if _, err := os.Stat(options.Path); os.IsNotExist(err) {
 		_ = os.MkdirAll(options.Path, os.ModePerm)
@@ -85,6 +98,8 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 	return storageState, nil
 }
 
+// Get gets the value of the given key from the current memtable, followed by immutable memtables,
+// level0 SSTables and then finally SSTables from different levels.
 func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 	storageState.stateLock.RLock()
 	defer storageState.stateLock.RUnlock()
@@ -143,6 +158,8 @@ func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 	return kv.EmptyValue, false
 }
 
+// Set sets the kv.TimestampedBatch in the memtable.
+// If the current memtable can not accommodate the incoming batch, it is frozen and a new memtable is created.
 func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) error {
 	if err := storageState.mayBeFreezeCurrentMemtable(int64(timestampedBatch.SizeInBytes())); err != nil {
 		return err
@@ -160,6 +177,10 @@ func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) erro
 	return nil
 }
 
+// Scan performs a forward scan for the kv.InclusiveKeyRange.
+// It involves creating iterators from the current memtable, followed by immutable memtables,
+// level0 SSTables and then finally SSTables from different levels.
+// It finally returns an instance of iterator.NewInclusiveBoundedIterator which returns the latest version (/timestamp) of any key.
 func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Key]) iterator.Iterator {
 	storageState.stateLock.RLock()
 	defer storageState.stateLock.RUnlock()
@@ -192,6 +213,11 @@ func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Ke
 	}), inclusiveRange.End())
 }
 
+// Apply applies the StorageStateChangeEvent to the StorageState.
+// It is called if compaction runs between two adjacent levels.
+// Applying StorageStateChangeEvent is exclusive, as it requires a write-lock.
+// As a part of applying the StorageStateChangeEvent, all the table.SSTable(s) which are to be removed are submitted to
+// table.SSTableCleaner.
 func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery bool) error {
 	ssTablesToRemove := storageState.apply(event)
 	if !recovery {
@@ -203,22 +229,27 @@ func (storageState *StorageState) Apply(event StorageStateChangeEvent, recovery 
 	return nil
 }
 
+// SSTableIdGenerator returns the SSTableIdGenerator.
 func (storageState *StorageState) SSTableIdGenerator() *SSTableIdGenerator {
 	return storageState.idGenerator
 }
 
+// Options returns the StorageOptions.
 func (storageState *StorageState) Options() StorageOptions {
 	return storageState.options
 }
 
+// WALDirectoryPath returns the directory path of WAL.
 func (storageState *StorageState) WALDirectoryPath() string {
 	return storageState.walPath.DirectoryPath
 }
 
+// LastCommitTimestamp returns the last commit-timestamp which is recovered from WAL.
 func (storageState *StorageState) LastCommitTimestamp() uint64 {
 	return storageState.lastCommitTimestamp
 }
 
+// Snapshot returns the point-in-time state of StorageState.
 func (storageState *StorageState) Snapshot() StorageStateSnapshot {
 	storageState.stateLock.RLock()
 	defer storageState.stateLock.RUnlock()
@@ -230,6 +261,7 @@ func (storageState *StorageState) Snapshot() StorageStateSnapshot {
 	}
 }
 
+// Close closes the StorageState.
 func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
 	//Wait for flush immutable tables goroutine to return
@@ -238,6 +270,9 @@ func (storageState *StorageState) Close() {
 	<-storageState.ssTableCleaner.Stop()
 }
 
+// forceFlushNextImmutableMemtable flushes the next immutable memtable to level0 table.SSTable.
+// It picks the oldest memtable from immutableMemtables fields to be flushed and records the manifest.SSTableFlushedEventType
+// event in manifest.Manifest.
 func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	flushEligibleMemtable := func() *memory.Memtable {
 		storageState.stateLock.Lock()
@@ -286,6 +321,8 @@ func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	return nil
 }
 
+// mayBeFreezeCurrentMemtable may freeze the current memtable if the current memtable does not have required size.
+// It may result in creation of a new memtable which is then recorded as manifest.MemtableCreatedEventType in manifest.Manifest.
 func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes int64) error {
 	if !storageState.currentMemtable.CanFit(requiredSizeInBytes) {
 		storageState.stateLock.Lock()
@@ -301,6 +338,9 @@ func (storageState *StorageState) mayBeFreezeCurrentMemtable(requiredSizeInBytes
 	return nil
 }
 
+// l0SSTableIterators returns all a slice of iterator.Iterator from level0 table.SSTable(s), along with a slice of
+// all the table.SSTable(s) in use.
+// Iterators are created from the latest memtable to the oldest (from index = len(storageState.l0SSTableIds) to index = 0).
 func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable *table.SSTable) bool) ([]iterator.Iterator, []*table.SSTable) {
 	iterators := make([]iterator.Iterator, len(storageState.l0SSTableIds))
 	index := 0
@@ -321,6 +361,8 @@ func (storageState *StorageState) l0SSTableIterators(seekTo kv.Key, ssTableSelec
 	return iterators, ssTablesInUse
 }
 
+// otherLevelSSTableIterators returns all a slice of iterator.Iterator from table.SSTable(s) present in every level other than level0,
+// along with a slice of all the table.SSTable(s) in use.
 func (storageState *StorageState) otherLevelSSTableIterators(seekTo kv.Key, ssTableSelector func(ssTable *table.SSTable) bool) ([]iterator.Iterator, []*table.SSTable) {
 	var ssTablesInUse []*table.SSTable
 	var iterators []iterator.Iterator
@@ -341,6 +383,8 @@ func (storageState *StorageState) otherLevelSSTableIterators(seekTo kv.Key, ssTa
 	return iterators, ssTablesInUse
 }
 
+// spawnMemtableFlush creates a goroutine which flushes the oldest immutable to level0 table.SSTable, if the number of
+// immutable memtables is greater or equal to the MaximumMemtables.
 func (storageState *StorageState) spawnMemtableFlush() {
 	hasImmutableMemtablesGoneBeyondMaximumAllowed := func() bool {
 		storageState.stateLock.RLock()
@@ -369,6 +413,11 @@ func (storageState *StorageState) spawnMemtableFlush() {
 	}()
 }
 
+// mayBeLoadExisting loads the existing StorageState from manifest.Manifest.
+// It loads all the events.
+// If the event is manifest.MemtableCreatedEventType -> it collects the id of the memtable.
+// If the event is manifest.SSTableFlushedEventType -> it removes the id from the collection of memtable, stores the id in l0SSTableIds field.
+// If the event is manifest.CompactionDoneEventType -> it creates StorageStateChangeEvent and applies it to the StorageState.
 func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) error {
 	if len(events) > 0 {
 		memtableIds := make(map[uint64]struct{})
@@ -426,6 +475,7 @@ func (storageState *StorageState) mayBeLoadExisting(events []manifest.Event) err
 	return nil
 }
 
+// recoverMemtables recovers all the immutable memtables identified by memtableIds from WAL.
 func (storageState *StorageState) recoverMemtables(memtableIds map[uint64]struct{}) error {
 	var immutableMemtables []*memory.Memtable
 	var maxTimestamp uint64
@@ -452,6 +502,9 @@ func (storageState *StorageState) recoverMemtables(memtableIds map[uint64]struct
 	return nil
 }
 
+// recoverL0SSTables recovers all the level0 SSTables.
+// Loading an instance of table.SSTable is all about creating an in-memory representation of table.SSTable with a pointer to the
+// actual file which contains the data.
 func (storageState *StorageState) recoverL0SSTables() error {
 	for _, ssTableId := range storageState.l0SSTableIds {
 		ssTable, err := table.Load(ssTableId, storageState.options.Path, block.DefaultBlockSize)
@@ -463,6 +516,13 @@ func (storageState *StorageState) recoverL0SSTables() error {
 	return nil
 }
 
+// apply applies the StorageStateChangeEvent to the StorageState.
+// It involves the following:
+// 1) Getting an exclusive lock.
+// 2) Setting the mapping between ssTableId and the corresponding ssTable.
+// 3) Identifying all the ssTableIds to be removed.
+// 4) Updating either l0SSTableIds or the level field.
+// 5) Deleting the mapping from ssTables fields for the ssTableIds to be removed.
 func (storageState *StorageState) apply(event StorageStateChangeEvent) []*table.SSTable {
 	storageState.stateLock.Lock()
 	defer storageState.stateLock.Unlock()
@@ -502,6 +562,7 @@ func (storageState *StorageState) apply(event StorageStateChangeEvent) []*table.
 	return unsetSSTableMapping(updateLevels())
 }
 
+// orderedLevel0SSTableIds returns a slice of level0 SSTableIds from latest to the oldest level0 SSTable.
 func (storageState *StorageState) orderedLevel0SSTableIds() []uint64 {
 	ids := make([]uint64, 0, len(storageState.l0SSTableIds))
 	for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
