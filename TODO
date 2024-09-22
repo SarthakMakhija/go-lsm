@@ -1,4 +1,4 @@
-7) Finish the documentation of state and compact package + SSTableCleaner
+7) Finish the documentation of state and compact package +
 
 
 
@@ -11,3 +11,4 @@
 8) Improve the test: TestStorageStateLoadExistingStateAfterCompaction after point 4 and 5 -> done
 3) Integrate compaction in Db                                           -> done
 6) Finish TODOs                                                         -> done
+7) Finish the documentation of SSTableCleaner                           -> done
