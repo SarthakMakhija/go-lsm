@@ -9,12 +9,14 @@ import (
 	"go-lsm/txn"
 )
 
+// Compaction represents core logic to compact table.SSTable files.
 type Compaction struct {
 	oracle      *txn.Oracle
 	idGenerator *state.SSTableIdGenerator
 	options     state.StorageOptions
 }
 
+// NewCompaction creates a new instance of Compaction.
 func NewCompaction(oracle *txn.Oracle, idGenerator *state.SSTableIdGenerator, options state.StorageOptions) *Compaction {
 	return &Compaction{
 		oracle:      oracle,
@@ -23,6 +25,9 @@ func NewCompaction(oracle *txn.Oracle, idGenerator *state.SSTableIdGenerator, op
 	}
 }
 
+// Start performs compaction given an instance of state.StorageStateSnapshot.
+// It is called from compaction goroutine at fixed intervals.
+// It returns an instance of state.StorageStateChangeEvent if any two levels are eligible for compaction.
 func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.StorageStateChangeEvent, error) {
 	simpleLeveledCompaction := NewSimpleLeveledCompaction(compaction.options.CompactionOptions.StrategyOptions)
 	description, ok := simpleLeveledCompaction.CompactionDescription(snapshot)
@@ -37,6 +42,8 @@ func (compaction *Compaction) Start(snapshot state.StorageStateSnapshot) (state.
 	return event, nil
 }
 
+// compact performs compaction by creating an instance of iterator.MergeIterator using the iterators present in adjacent levels
+// defined in meta.SimpleLeveledCompactionDescription.
 func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDescription, snapshot state.StorageStateSnapshot) ([]*table.SSTable, error) {
 	upperLevelSSTableIterator := make([]iterator.Iterator, 0, len(description.UpperLevelSSTableIds))
 	for _, ssTableId := range description.UpperLevelSSTableIds {
@@ -61,6 +68,10 @@ func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDe
 	return compaction.ssTablesFromIterator(iterator.NewMergeIterator(iterators, iterator.NoOperationOnCloseCallback))
 }
 
+// ssTablesFromIterator creates a slice of table.SSTable (/new SSTables) from the given iterator.
+// It skips all the keys with commit-timestamp <= maximum read-timestamp.
+// If the maximum read-timestamp in the system is 9, there is no point in storing any key with commit-timestamp < 9,
+// because all the read operations will be getting read-timestamp > 9 from txn.Oracle.
 func (compaction *Compaction) ssTablesFromIterator(iterator iterator.Iterator) ([]*table.SSTable, error) {
 	var ssTableBuilder *table.SSTableBuilder
 	var newSSTables []*table.SSTable
@@ -120,6 +131,7 @@ func (compaction *Compaction) ssTablesFromIterator(iterator iterator.Iterator) (
 	return newSSTables, nil
 }
 
+// buildNewSStable creates a new instance of table.SSTable.
 func (compaction *Compaction) buildNewSStable(ssTableBuilder *table.SSTableBuilder) (*table.SSTable, error) {
 	ssTableId := compaction.idGenerator.NextId()
 	ssTable, err := ssTableBuilder.Build(ssTableId, compaction.options.Path)
