@@ -15,10 +15,10 @@ The [Skiplist](https://github.com/SarthakMakhija/go-lsm/blob/main/memory/externa
 It is a lock-free implementation of Skiplist. It is important to have a lock-free implementation, otherwise scan operation will take lock(s) (/read-locks) and it will start interfering with write operations.
 Check [Memtable](https://github.com/SarthakMakhija/go-lsm/blob/main/memory/memtable.go).
 
-3. **WAL** stands for write-ahead log. Every transactional write gets stored in a Memtable which is backed by a WAL. Every write to Memtable (typically a [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go)) involves writing every key/value pair from the batch to WAL.
+2. **WAL** stands for write-ahead log. Every transactional write gets stored in a Memtable which is backed by a WAL. Every write to Memtable (typically a [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go)) involves writing every key/value pair from the batch to WAL.
 The implementation in this repository writes every key/value pair from the batch to WAL individually. An alternate would be to serialize the entire [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) and write to WAL. Check [WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go).
 
-4. **Recovery of Memtable from WAL** involves the following:
+3. **Recovery of Memtable from WAL** involves the following:
     1) Opening the WAL file in READONLY mode.
     2) Reading the whole file in one go.
     3) Iterating through the file buffer (/bytes) and decoding each the bytes to get [key](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/key.go) and [value](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/value.go) pairs.
@@ -26,14 +26,14 @@ The implementation in this repository writes every key/value pair from the batch
     
     Check [recovery of Memtable from WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go#L41).
    
-5. **Manifest** records different events in the system. This implementation supports `MemtableCreatedEventType`, `SSTableFlushedEventType` and `CompactionDoneEventType` event types. This concept is used in recovering the state of the
+4. **Manifest** records different events in the system. This implementation supports `MemtableCreatedEventType`, `SSTableFlushedEventType` and `CompactionDoneEventType` event types. This concept is used in recovering the state of the
 LSM ([StorageState](https://github.com/SarthakMakhija/go-lsm/blob/main/state/storage_state.go)) when it restarts. Check [Manifest](https://github.com/SarthakMakhija/go-lsm/blob/main/manifest/manifest.go).
 
-6. **SSTable** stands for sorted string table. It is the on-disk representation of the data. An [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go) contains the data sorted by key. SSTables can be created by flushing an immutable Memtable or by merging SSTables (/compaction). An SSTable needs to be encoded, the encoding of SSTable in this repository is available [here](https://github.com/SarthakMakhija/go-lsm/blob/main/table/builder.go#L70). Check [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go).
+5. **SSTable** stands for sorted string table. It is the on-disk representation of the data. An [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go) contains the data sorted by key. SSTables can be created by flushing an immutable Memtable or by merging SSTables (/compaction). An SSTable needs to be encoded, the encoding of SSTable in this repository is available [here](https://github.com/SarthakMakhija/go-lsm/blob/main/table/builder.go#L70). Check [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go).
 
-8. **Bloom filter** is a probabilistic data structure used to test whether an element maybe present in the dataset. A bloom filter can query against large amounts of data and return either “possibly in the set” or “definitely not in the set”. It depends on M-sized bit vector and K-hash functions. It is used to check if the application should read an [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go#L173) during a get operation. The Bloom filter acts as a first check for a key. If it says the key might be present (returns "maybe"), then the system checks the SSTable for confirmation. Check [Bloom filter](https://github.com/SarthakMakhija/go-lsm/blob/main/table/bloom/filter.go).
+6. **Bloom filter** is a probabilistic data structure used to test whether an element maybe present in the dataset. A bloom filter can query against large amounts of data and return either “possibly in the set” or “definitely not in the set”. It depends on M-sized bit vector and K-hash functions. It is used to check if the application should read an [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go#L173) during a get operation. The Bloom filter acts as a first check for a key. If it says the key might be present (returns "maybe"), then the system checks the SSTable for confirmation. Check [Bloom filter](https://github.com/SarthakMakhija/go-lsm/blob/main/table/bloom/filter.go).
    
-9. **Transaction** represents an atomic unit of work. This repository implements various concepts to implement ACID properties:
+7. **Transaction** represents an atomic unit of work. This repository implements various concepts to implement ACID properties:
  - [Batch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/batch.go) and [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) for atomicity.
  - [Serialized-snapshot-isolation](https://github.com/SarthakMakhija/go-lsm/blob/main/txn/transaction.go) for isolation
  - [WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go) for durability.
@@ -52,7 +52,7 @@ A brief over of serialized-snapshot-isolation:
 
 More details are available [here](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/). Start understanding [Transaction](https://github.com/SarthakMakhija/go-lsm/blob/main/txn/transaction.go).
 
-7. **Compaction** implementation in this repository is a simpled-leveled compaction. Simple-leveled compaction considers two options for deciding if compaction needs to run.
+8. **Compaction** implementation in this repository is a simpled-leveled compaction. Simple-leveled compaction considers two options for deciding if compaction needs to run.
 
     - **Option1**: `Level0FilesCompactionTrigger`. This defines the number of SSTable files at level0 which should trigger compaction. Consider `Level0FilesCompactionTrigger` = 2, and number of SSTable files at level0 = 3. This means all SSTable files present at level0 are eligible for undergoing compaction with all the SSTable files at level1.
     
@@ -61,7 +61,7 @@ More details are available [here](https://tech-lessons.in/en/blog/serializable_s
 
 The actual implementation of simple-leveled compaction considers file size instead of number of files. Check [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go).
 
-8. **Iterators** form one of the core building blocks of LSM based key/value storage engine. Iterators are used in operations like [Scan](https://github.com/SarthakMakhija/go-lsm/blob/main/state/storage_state.go#L184) and [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go#L75). This repository provides various iterators, (listing a few here): [MergeIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/merge_iterator.go), [SSTableIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/table/iterator.go) and [InclusiveBoundedIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/iterator.go).
+9. **Iterators** form one of the core building blocks of LSM based key/value storage engine. Iterators are used in operations like [Scan](https://github.com/SarthakMakhija/go-lsm/blob/main/state/storage_state.go#L184) and [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go#L75). This repository provides various iterators, (listing a few here): [MergeIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/merge_iterator.go), [SSTableIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/table/iterator.go) and [InclusiveBoundedIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/iterator.go).
 
 _Please note: this repository does not implement block-cache and CRC._
 
