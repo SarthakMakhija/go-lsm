@@ -67,6 +67,13 @@ func (key Key) IsEqualTo(other Key) bool {
 // 1) It returns 0, if the timestamps of the two keys are same.
 // 2) It returns -1, if the timestamp of key is greater than the timestamp of the other key.
 // 3) It returns 1, if the timestamp of key is less than the timestamp of the other key.
+// Timestamp plays an important role in ordering of keys. Consider a key "consensus" with timestamps 15 and 13 in memtable,
+// and user wants to perform a scan between "consensus" to "decimal" with timestamp as 16. This means we would like to return
+// all the keys falling between the two, such that: timestamp of the keys in system <= 16.
+// However, "consensus" is present with 15 and 13 timestamps. We would only return "consensus" with timestamp 15. If the key
+// "consensus" with timestamp 15 is placed before the key "consensus" with timestamp 13, range iteration becomes easier because
+// the first key will always have the latest timestamp.
+// Look at the test: TestKeyComparisonLessThanBasedOnTimestamp to understand key comparison.
 func (key Key) CompareKeysWithDescendingTimestamp(other Key) int {
 	comparison := bytes.Compare(key.key, other.key)
 	if comparison != 0 {
