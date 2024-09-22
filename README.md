@@ -58,7 +58,7 @@ More details are available [here](https://tech-lessons.in/en/blog/serializable_s
     - **Option1**: `Level0FilesCompactionTrigger`. Consider `Level0FilesCompactionTrigger` = 2, and number of SSTable files at level0 = 3. This means all SSTable files present at level0 are eligible for undergoing compaction with all the SSTable files at level1.
     
     - **Option2:** `NumberOfSSTablesRatioPercentage`. This defines the ratio between the number of SSTable files present in two adjacent levels: number of files at lower level / number of files at upper level.
-    Consider `NumberOfSSTablesRatioPercentage` = 200, and number of SSTable files at level1 = 2, and at level2 = 1. Ratio = (1/2)*100 = 50%. This is less than the configured NumberOfSSTablesRatioPercentage. Hence, table.SSTable files will undergo compaction betweenlevel1 and level2.
+    Consider `NumberOfSSTablesRatioPercentage` = 200, and number of SSTable files at level1 = 2, and at level2 = 1. Ratio = (1/2)*100 = 50%. This is less than the configured `NumberOfSSTablesRatioPercentage`. Hence, SSTable files will undergo compaction between level1 and level2.
 
 In the actual Simple-leveled compaction, we consider the file size instead of number of files. Check [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go).
 
