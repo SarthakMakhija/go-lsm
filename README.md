@@ -67,5 +67,5 @@ The actual implementation of simple-leveled compaction considers file size inste
 
 _Please note: this repository does not implement block-cache and CRC._
 
-### Development plan
+### Development items
 ![LSM development items](https://github.com/user-attachments/assets/47731c33-a642-432e-8a02-1d3146d88e8d)
