@@ -8,9 +8,9 @@ import (
 )
 
 // Memtable is an in-memory data structure which holds versioned key kv.Key and kv.Value pairs.
-// Memtable uses [Skiplist](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/#skiplist-and-mvcc) as its storage
+// Memtable uses [Skiplist](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/#skiplist-and-mvcc) as its
 // data structure.
-// The Skiplist (external.SkipList) is shamelessly take from [Badger](https://github.com/dgraph-io/badger).
+// The Skiplist (external.SkipList) is shamelessly taken from [Badger](https://github.com/dgraph-io/badger).
 // It is a lock-free implementation of Skiplist.
 // It is important to have a lock-free implementation,
 // otherwise scan operation will take lock(s) (/read-locks) and it will start interfering with write operations.
