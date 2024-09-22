@@ -27,7 +27,7 @@ func NewWALForId(id uint64, walDirectoryPath string) (*WAL, error) {
 
 // Recover recovers from WAL.
 // Recovery involves the following:
-// 1) Reading the file in READONLY & APPEND mode.
+// 1) Opening the file in READONLY & APPEND mode.
 // 2) Reading the whole file.
 // 3) Iterating through the file buffer (/bytes) and decoding each the bytes to get kv.Key and kv.Value.
 // 4) Invoking the provided callback with kv.Key and kv.Value.

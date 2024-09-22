@@ -8,6 +8,7 @@ import (
 // SimpleLeveledCompaction represents a leveled compaction strategy which compacts all the table.SSTable files between two levels.
 // It considers two options for deciding if compaction needs to run.
 // Option1: Level0FilesCompactionTrigger.
+// This defines the number of table.SSTable files at level0 which should trigger compaction.
 // Consider Level0FilesCompactionTrigger = 2, and number of table.SSTable files at level0 = 3.
 // This means all table.SSTable files present at level0 are eligible for undergoing compaction with all the table.SSTable files at
 // level1.
@@ -17,7 +18,7 @@ import (
 // Consider NumberOfSSTablesRatioPercentage = 200, and number of table.SSTable files at level1 = 2, and at level2 = 1.
 // Ratio = (1/2)*100 = 50%.
 // This is less than the configured NumberOfSSTablesRatioPercentage. Hence, table.SSTable files will undergo compaction between
-// level1 and level2.
+// level1 and level2.  This typically means that the number of files in lower level(s) should be more than the number of files in upper level(s).
 // In the actual SimpleLeveledCompaction, we consider the file size instead of number of files.
 type SimpleLeveledCompaction struct {
 	options state.SimpleLeveledCompactionOptions
