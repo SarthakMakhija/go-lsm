@@ -21,7 +21,7 @@ The implementation in this repository writes every key/value pair from the batch
 3. **Recovery of Memtable from WAL** involves the following:
     1) Opening the WAL file in READONLY mode.
     2) Reading the whole file in one go.
-    3) Iterating through the file buffer (/bytes) and decoding each the bytes to get [key](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/key.go) and [value](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/value.go) pairs.
+    3) Iterating through the file buffer (/bytes) and decoding the bytes to get [key](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/key.go) and [value](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/value.go) pairs.
     4) Storing the key/value pairs in the Memtable.
     
     Check [recovery of Memtable from WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go#L41).
