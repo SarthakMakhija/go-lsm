@@ -29,10 +29,12 @@ This implementation writes every key/value pair from the batch to WAL individual
 5. **Manifest** records different events in the system. This implementation supports `MemtableCreatedEventType`, `SSTableFlushedEventType` and `CompactionDoneEventType` event types. This concept is used in recovering the state of the
 LSM ([StorageState](https://github.com/SarthakMakhija/go-lsm/blob/main/state/storage_state.go)) when it restarts. Check [Manifest](https://github.com/SarthakMakhija/go-lsm/blob/main/manifest/manifest.go).
 
-6. **Bloom filter** is a probabilistic data structure used to test whether an element maybe present in the dataset. A bloom filter can query against large amounts of data and return either “possibly in the add” or “definitely not in the add”. It depends on M-sized bit vector and K-hash functions. It is used to check if the application should read an [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go#L173) during a get operation.
+6. **SSTable** is the sorted string table. It is the on-disk representation of the data. An [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go) contains the data sorted by key. SSTables can be created by flushing an immutable Memtable or by merging SSTables (/compaction). An SSTable needs to be encoded, the encoding of SSTable in this repository is available [here](https://github.com/SarthakMakhija/go-lsm/blob/main/table/builder.go#L70). Check [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go).
+
+8. **Bloom filter** is a probabilistic data structure used to test whether an element maybe present in the dataset. A bloom filter can query against large amounts of data and return either “possibly in the add” or “definitely not in the add”. It depends on M-sized bit vector and K-hash functions. It is used to check if the application should read an [SSTable](https://github.com/SarthakMakhija/go-lsm/blob/main/table/table.go#L173) during a get operation.
 Check [Bloom filter](https://github.com/SarthakMakhija/go-lsm/blob/main/table/bloom/filter.go).
    
-8. **Transaction** represents an atomic unit of work. This repository implements concepts to implement ACID properties:
+9. **Transaction** represents an atomic unit of work. This repository implements concepts to implement ACID properties:
  - [Batch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) and [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) for atomicity.
  - [Serialized-snapshot-isolation](https://github.com/SarthakMakhija/go-lsm/blob/main/txn/transaction.go) for isolation
  - [WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go) for durability.
