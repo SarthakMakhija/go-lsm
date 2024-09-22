@@ -35,7 +35,7 @@ LSM ([StorageState](https://github.com/SarthakMakhija/go-lsm/blob/main/state/sto
 Check [Bloom filter](https://github.com/SarthakMakhija/go-lsm/blob/main/table/bloom/filter.go).
    
 9. **Transaction** represents an atomic unit of work. This repository implements concepts to implement ACID properties:
- - [Batch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) and [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) for atomicity.
+ - [Batch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/batch.go) and [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) for atomicity.
  - [Serialized-snapshot-isolation](https://github.com/SarthakMakhija/go-lsm/blob/main/txn/transaction.go) for isolation
  - [WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go) for durability.
  
