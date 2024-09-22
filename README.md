@@ -63,6 +63,8 @@ The actual implementation of simple-leveled compaction considers file size inste
 
 9. **Iterators** form one of the core building blocks of LSM based key/value storage engine. Iterators are used in operations like [Scan](https://github.com/SarthakMakhija/go-lsm/blob/main/state/storage_state.go#L184) and [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go#L75). This repository provides various iterators, (listing a few here): [MergeIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/merge_iterator.go), [SSTableIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/table/iterator.go) and [InclusiveBoundedIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/iterator.go).
 
+11. **Client API** provides a user interface for interacting with the key/value storage engine. It's important to note that the API itself isn't considered a fundamental building block of the engine. However, it functions as the primary access point for clients to perform various operations on the stored key/value data. Check [Db](https://github.com/SarthakMakhija/go-lsm/blob/main/db.go).
+
 _Please note: this repository does not implement block-cache and CRC._
 
 ### Development plan
