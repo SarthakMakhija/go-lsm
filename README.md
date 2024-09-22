@@ -10,13 +10,13 @@ Inspired by [LSM in a Week](https://skyzh.github.io/mini-lsm/00-preface.html)
 ### Building blocks of LSM-based key-value storage engine
 
 1. **Memtable** is an in-memory data structure which holds versioned [key](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/key.go) and [value](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/value.go) pairs.
-Memtable uses [Skiplist](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/#skiplist-and-mvcc) as its storage data structure.
-The [Skiplist](https://github.com/SarthakMakhija/go-lsm/blob/main/memory/external/skiplist.go) implementation in this repository is shamelessly take from [Badger](https://github.com/dgraph-io/badger).
+Every transactional write gets stored in a Memtable. Memtable uses [Skiplist](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/#skiplist-and-mvcc) as its data structure. 
+The [Skiplist](https://github.com/SarthakMakhija/go-lsm/blob/main/memory/external/skiplist.go) implementation in this repository is shamelessly taken from [Badger](https://github.com/dgraph-io/badger).
 It is a lock-free implementation of Skiplist. It is important to have a lock-free implementation, otherwise scan operation will take lock(s) (/read-locks) and it will start interfering with write operations.
 Check [Memtable](https://github.com/SarthakMakhija/go-lsm/blob/main/memory/memtable.go).
 
-3. **WAL** is a write-ahead log. Every transactional write is stored in a memtable which is backed by a WAL. Every write to memtable (typically a [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go)) involves writing every key/value pair from the batch to WAL.
-This implementation writes every key/value pair from the batch to WAL individually. An alternate would be to serialize the entire [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) and write to WAL. Check [WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go).
+3. **WAL** is a write-ahead log. Every transactional write gets stored in a Memtable which is backed by a WAL. Every write to Memtable (typically a [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go)) involves writing every key/value pair from the batch to WAL.
+The implementation in this repository writes every key/value pair from the batch to WAL individually. An alternate would be to serialize the entire [TimestampedBatch](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/timestamped_batch.go) and write to WAL. Check [WAL](https://github.com/SarthakMakhija/go-lsm/blob/main/log/wal.go).
 
 4. **Recovery of Memtable from WAL** involves the following:
     1) Reading the file in READONLY mode.
@@ -60,7 +60,7 @@ More details are available [here](https://tech-lessons.in/en/blog/serializable_s
     - **Option2:** `NumberOfSSTablesRatioPercentage`. This defines the ratio between the number of SSTable files present in two adjacent levels: number of files at lower level / number of files at upper level.
     Consider `NumberOfSSTablesRatioPercentage` = 200, and number of SSTable files at level1 = 2, and at level2 = 1. Ratio = (1/2)*100 = 50%. This is less than the configured `NumberOfSSTablesRatioPercentage`. Hence, SSTable files will undergo compaction between level1 and level2.
 
-In the actual Simple-leveled compaction, we consider the file size instead of number of files. Check [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go).
+The actual implementation of simple-leveled compaction considers file size instead of number of files. Check [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go).
 
 8. **Iterators** form one of the core building blocks of LSM based key/value storage operations. Iterators are used in operations like [Scan](https://github.com/SarthakMakhija/go-lsm/blob/main/state/storage_state.go#L184) and [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go#L75). This repository provides various iterators, (listing a few here): [MergeIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/merge_iterator.go), [SSTableIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/table/iterator.go) and [InclusiveBoundedIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/iterator.go).
 
