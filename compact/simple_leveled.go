@@ -41,8 +41,8 @@ func (compaction SimpleLeveledCompaction) CompactionDescription(stateSnapshot st
 			return meta.SimpleLeveledCompactionDescription{
 				UpperLevel:           upperLevel,
 				LowerLevel:           lowerLevel,
-				UpperLevelSSTableIds: stateSnapshot.OrderedSSTableIds(level),
-				LowerLevelSSTableIds: stateSnapshot.OrderedSSTableIds(lowerLevel),
+				UpperLevelSSTableIds: stateSnapshot.SSTableIdsAt(level),
+				LowerLevelSSTableIds: stateSnapshot.SSTableIdsAt(lowerLevel),
 			}, true
 		}
 	}

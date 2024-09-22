@@ -89,6 +89,11 @@ func (storageState *StorageState) SetSSTableAtLevel(ssTable *table.SSTable, leve
 	storageState.ssTables[ssTable.Id()] = ssTable
 }
 
+// ForceFlushNextImmutableMemtable flushes the next immutable memtable to Level 0, it is only for testing.
+func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
+	return storageState.forceFlushNextImmutableMemtable()
+}
+
 // forceFreezeCurrentMemtable freezes the current memtable, it is only for testing.
 func (storageState *StorageState) forceFreezeCurrentMemtable() {
 	storageState.immutableMemtables = append(storageState.immutableMemtables, storageState.currentMemtable)

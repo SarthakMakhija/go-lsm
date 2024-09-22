@@ -938,7 +938,7 @@ func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtabl
 
 	assert.False(t, storageState.HasImmutableMemtables())
 	assert.Panics(t, func() {
-		_ = storageState.ForceFlushNextImmutableMemtable()
+		_ = storageState.forceFlushNextImmutableMemtable()
 	})
 }
 
@@ -974,7 +974,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	walPathOfSecondImmutableMemtable, _ := storageState.immutableMemtables[1].WalPath()
 	assert.Equal(t, expected, walPathOfSecondImmutableMemtable)
 
-	err := storageState.ForceFlushNextImmutableMemtable()
+	err := storageState.forceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
 
 	_, err = os.Stat(walPathOfFirstImmutableMemtable)
@@ -1003,7 +1003,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *te
 	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
 	assert.Nil(t, storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10)))
 
-	err := storageState.ForceFlushNextImmutableMemtable()
+	err := storageState.forceFlushNextImmutableMemtable()
 	assert.Nil(t, err)
 
 	ssTable, err := table.Load(1, rootPath, 4096)

@@ -3,7 +3,6 @@
 10) A storage state test with more than one SSTable at level 1 and more than one SSTable at level 2. Level 2 (and level 1 maybe)
     SSTables containing the same key
 
-3) Integrate compaction in Db
 
 
 
@@ -14,3 +13,4 @@
 4) Integrate the iterators from different levels in Get                 -> done
 5) Integrate the iterators from different levels in Scan                -> done
 8) Improve the test: TestStorageStateLoadExistingStateAfterCompaction after point 4 and 5 -> done
+3) Integrate compaction in Db                                           -> done

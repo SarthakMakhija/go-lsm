@@ -193,3 +193,65 @@ func TestScanAndValidateReferencesOfSSTables(t *testing.T) {
 	}
 	assert.Equal(t, expected, referenceCounts)
 }
+
+func TestGetAfterCompaction(t *testing.T) {
+	directory := test_utility.SetupADirectoryWithTestName(t)
+	storageOptions := state.StorageOptions{
+		MemTableSizeInBytes:   250,
+		Path:                  directory,
+		MaximumMemtables:      2,
+		FlushMemtableDuration: 1 * time.Millisecond,
+		SSTableSizeInBytes:    1 * 1024 * 1024,
+		CompactionOptions: state.CompactionOptions{
+			StrategyOptions: state.SimpleLeveledCompactionOptions{
+				NumberOfSSTablesRatioPercentage: 200,
+				MaxLevels:                       3,
+				Level0FilesCompactionTrigger:    2,
+			},
+			Duration: 10 * time.Millisecond,
+		},
+	}
+	db, _ := go_lsm.Open(storageOptions)
+	defer func() {
+		db.Close()
+		test_utility.CleanupDirectoryWithTestName(t)
+	}()
+
+	runInTransaction := func(key, value []byte) {
+		resultingFuture, err := db.Write(func(transaction *txn.Transaction) {
+			assert.NoError(t, transaction.Set(key, value))
+		})
+		assert.NoError(t, err)
+
+		resultingFuture.Wait()
+		assert.True(t, resultingFuture.Status().IsOk())
+	}
+
+	runInTransaction([]byte("raft"), []byte("consensus algorithm"))
+	runInTransaction([]byte("storage"), []byte("Flash SSD"))
+	runInTransaction([]byte("disk type"), []byte("NVMe"))
+	runInTransaction([]byte("data-structure"), []byte("Buffered BTree"))
+
+	time.Sleep(2 * time.Second)
+
+	assert.Nil(t, db.Read(func(transaction *txn.Transaction) {
+		value, ok := transaction.Get([]byte("raft"))
+		assert.True(t, ok)
+		assert.Equal(t, "consensus algorithm", value.String())
+	}))
+	assert.Nil(t, db.Read(func(transaction *txn.Transaction) {
+		value, ok := transaction.Get([]byte("storage"))
+		assert.True(t, ok)
+		assert.Equal(t, "Flash SSD", value.String())
+	}))
+	assert.Nil(t, db.Read(func(transaction *txn.Transaction) {
+		value, ok := transaction.Get([]byte("disk type"))
+		assert.True(t, ok)
+		assert.Equal(t, "NVMe", value.String())
+	}))
+	assert.Nil(t, db.Read(func(transaction *txn.Transaction) {
+		value, ok := transaction.Get([]byte("data-structure"))
+		assert.True(t, ok)
+		assert.Equal(t, "Buffered BTree", value.String())
+	}))
+}

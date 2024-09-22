@@ -228,7 +228,7 @@ func (storageState *StorageState) Snapshot() StorageStateSnapshot {
 	defer storageState.stateLock.RUnlock()
 
 	return StorageStateSnapshot{
-		L0SSTableIds: storageState.l0SSTableIds, //TODO: order it?
+		L0SSTableIds: storageState.orderedLevel0SSTableIds(),
 		Levels:       storageState.levels,
 		SSTables:     storageState.ssTables,
 	}
@@ -243,7 +243,7 @@ func (storageState *StorageState) Close() {
 	<-storageState.ssTableCleaner.Stop()
 }
 
-func (storageState *StorageState) ForceFlushNextImmutableMemtable() error {
+func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 	flushEligibleMemtable := func() *memory.Memtable {
 		storageState.stateLock.Lock()
 		defer storageState.stateLock.Unlock()
@@ -362,7 +362,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			select {
 			case <-timer.C:
 				if hasImmutableMemtablesGoneBeyondMaximumAllowed() {
-					if err := storageState.ForceFlushNextImmutableMemtable(); err != nil {
+					if err := storageState.forceFlushNextImmutableMemtable(); err != nil {
 						slog.Error("could not flush memtable, error: %v", err)
 					}
 				}
@@ -507,4 +507,12 @@ func (storageState *StorageState) apply(event StorageStateChangeEvent) []*table.
 	}
 	setSSTableMapping()
 	return unsetSSTableMapping(updateLevels())
+}
+
+func (storageState *StorageState) orderedLevel0SSTableIds() []uint64 {
+	ids := make([]uint64, 0, len(storageState.l0SSTableIds))
+	for l0SSTableIndex := len(storageState.l0SSTableIds) - 1; l0SSTableIndex >= 0; l0SSTableIndex-- {
+		ids = append(ids, storageState.l0SSTableIds[l0SSTableIndex])
+	}
+	return ids
 }
