@@ -64,5 +64,7 @@ In the actual Simple-leveled compaction, we consider the file size instead of nu
 
 8. **Iterators** form one of the core building blocks of LSM based key/value storage operations. Iterators are used in operations like [Scan](https://github.com/SarthakMakhija/go-lsm/blob/main/state/storage_state.go#L184) and [Compaction](https://github.com/SarthakMakhija/go-lsm/blob/main/compact/compaction.go#L75). This repository provides various iterators, (listing a few here): [MergeIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/merge_iterator.go), [SSTableIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/table/iterator.go) and [InclusiveBoundedIterator](https://github.com/SarthakMakhija/go-lsm/blob/main/iterator/iterator.go).
 
+_Please note: this repository does not implement block-cache and CRC._
+
 ### Development plan
 ![LSM development items](https://github.com/user-attachments/assets/47731c33-a642-432e-8a02-1d3146d88e8d)
