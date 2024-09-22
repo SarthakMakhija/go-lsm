@@ -1,4 +1,3 @@
-6) Finish TODOs
 7) Finish the documentation of state and compact package + SSTableCleaner
 
 
@@ -11,3 +10,4 @@
 5) Integrate the iterators from different levels in Scan                -> done
 8) Improve the test: TestStorageStateLoadExistingStateAfterCompaction after point 4 and 5 -> done
 3) Integrate compaction in Db                                           -> done
+6) Finish TODOs                                                         -> done

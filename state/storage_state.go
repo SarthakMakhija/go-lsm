@@ -230,7 +230,6 @@ func (storageState *StorageState) Snapshot() StorageStateSnapshot {
 	}
 }
 
-// Close TODO: Complete the implementation
 func (storageState *StorageState) Close() {
 	close(storageState.closeChannel)
 	//Wait for flush immutable tables goroutine to return
@@ -275,7 +274,7 @@ func (storageState *StorageState) forceFlushNextImmutableMemtable() error {
 
 	storageState.stateLock.Lock()
 	storageState.immutableMemtables = storageState.immutableMemtables[1:]
-	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id()) //TODO: Either use l0SSTables or Levels
+	storageState.l0SSTableIds = append(storageState.l0SSTableIds, memtableToFlush.Id())
 	storageState.ssTables[memtableToFlush.Id()] = ssTable
 	storageState.stateLock.Unlock()
 
