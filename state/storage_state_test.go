@@ -1048,7 +1048,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 	_ = batch.Put([]byte("data-structure"), []byte("LSM"))
 	assert.Nil(t, storageState.Set(kv.NewTimestampedBatchFrom(*batch, 10)))
 
-	time.Sleep(30 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	ssTable, err := table.Load(1, rootPath, 4096)
 	assert.Nil(t, err)
