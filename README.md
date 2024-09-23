@@ -11,7 +11,7 @@ Inspired by [LSM in a Week](https://skyzh.github.io/mini-lsm/00-preface.html).
 
 - **Learn LSM from the ground up**: Dive deep into the core concepts of Log-Structured Merge-Trees (LSM) through a practical, well-documented implementation.
 - **Benefit from clean code**: Analyze a meticulously crafted codebase that prioritizes simplicity and readability.
-- **Gain confidence with robust tests**: Verify the correctness and reliability of the storage engine through comprehensive testing.
+- **Gain confidence with robust tests**: Verify the correctness and reliability of the storage engine through comprehensive tests.
 - **Experiment and extend**: Customize the code to explore different LSM variations or integrate it into your own projects.
 
 ### Building blocks of LSM-based key-value storage engine
