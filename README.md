@@ -1,7 +1,7 @@
 # go-lsm
 [![Build](https://github.com/SarthakMakhija/go-lsm/actions/workflows/build.yml/badge.svg)](https://github.com/SarthakMakhija/go-lsm/actions/workflows/build.yml)
 
-Implementation of LSM tree in Golang for educational purposes.
+Key/Value storage engine implementation using LSM in Golang for educational purposes. 
 
 Rewrite of the existing [workshop](https://github.com/SarthakMakhija/storage-engine-workshop) code.
 
