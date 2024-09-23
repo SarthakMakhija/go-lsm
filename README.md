@@ -7,6 +7,13 @@ Rewrite of the existing [workshop](https://github.com/SarthakMakhija/storage-eng
 
 Inspired by [LSM in a Week](https://skyzh.github.io/mini-lsm/00-preface.html).
 
+### Exploring LSM with go-lsm
+
+- **Learn LSM from the ground up**: Dive deep into the core concepts of Log-Structured Merge-Trees (LSM) through a practical, well-documented implementation.
+- **Benefit from clean code**: Analyze a meticulously crafted codebase that prioritizes simplicity and readability.
+- **Gain confidence with robust tests**: Verify the correctness and reliability of the storage engine through comprehensive testing.
+- **Experiment and extend**: Customize the code to explore different LSM variations or integrate it into your own projects.
+
 ### Building blocks of LSM-based key-value storage engine
 
 1. **Memtable** is an in-memory data structure which holds versioned [key](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/key.go) and [value](https://github.com/SarthakMakhija/go-lsm/blob/main/kv/value.go) pairs.
