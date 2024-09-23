@@ -10,7 +10,8 @@ import (
 	"sync/atomic"
 )
 
-// SSTable represents SSTable on disk.
+// SSTable is an in-memory representation of the file on disk. An SSTable contains the data sorted by key.
+// SSTables can be created by flushing an immutable Memtable or by merging SSTables (/compaction).
 type SSTable struct {
 	id                    uint64
 	blockMetaList         *block.MetaList
