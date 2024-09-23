@@ -40,7 +40,7 @@ type StorageOptions struct {
 	CompactionOptions     CompactionOptions
 }
 
-// StorageState represents the core abstraction to manage the in-memory state of database.
+// StorageState represents the core abstraction to manage the in-memory state of the key/value storage engine.
 type StorageState struct {
 	currentMemtable *memory.Memtable
 	//oldest to latest immutable memtable.
@@ -48,7 +48,7 @@ type StorageState struct {
 	idGenerator        *SSTableIdGenerator
 	manifest           *manifest.Manifest
 	ssTableCleaner     *table.SSTableCleaner
-	//oldest to latest level0 SStable.
+	//oldest to latest level0 SStable ids.
 	l0SSTableIds                   []uint64
 	levels                         []*Level
 	ssTables                       map[uint64]*table.SSTable
@@ -58,9 +58,9 @@ type StorageState struct {
 	walPath                        log.WALPath
 	lastCommitTimestamp            uint64
 	//stateLock is needed because compaction might cause a change in the StorageState (Refer to the Apply() method).
-	//Had compaction not been there, stateLock was not needed because transaction isolation is serialized-snapshot, which means
-	//all the writes are written serially, and reads are based on read-timestamp. This requires memory.Memtable to be lock-free
-	//concurrent reads can proceed from table.SSTable(s).
+	//Had compaction not been there, stateLock was not needed because the transaction isolation is serialized-snapshot, which means
+	//all the writes are written serially, and reads are based on read-timestamp, which means both these operations can run
+	//concurrently.
 	stateLock sync.RWMutex
 }
 
@@ -100,6 +100,12 @@ func NewStorageStateWithOptions(options StorageOptions) (*StorageState, error) {
 
 // Get gets the value of the given key from the current memtable, followed by immutable memtables,
 // level0 SSTables and then finally SSTables from different levels.
+// An important point in Get and Scan is decrementing the references for the SSTables in use.
+// It is quite possible that at time T1 SSTables A and B are used for performing a Scan operation.
+// At time T2 (T2 > T1), compaction runs and the outcome of compaction is to clean SSTable A and B.
+// However, SSTables A and B are still being referred by some transaction which involves Scan operation.
+// Unless the reference count of SSTables A and B drops to zero, these tables can not be cleaned.
+// Refer to: table.SSTable, table.SSTableCleaner.
 func (storageState *StorageState) Get(key kv.Key) (kv.Value, bool) {
 	storageState.stateLock.RLock()
 	defer storageState.stateLock.RUnlock()
@@ -181,6 +187,12 @@ func (storageState *StorageState) Set(timestampedBatch kv.TimestampedBatch) erro
 // It involves creating iterators from the current memtable, followed by immutable memtables,
 // level0 SSTables and then finally SSTables from different levels.
 // It finally returns an instance of iterator.NewInclusiveBoundedIterator which returns the latest version (/timestamp) of any key.
+// An important point in Get and Scan is decrementing the references for the SSTables in use.
+// It is quite possible that at time T1 SSTables A and B are used for performing a Scan operation.
+// At time T2 (T2 > T1), compaction runs and the outcome of compaction is to clean SSTable A and B.
+// However, SSTables A and B are still being referred by some transaction which involves Scan operation.
+// Unless the reference count of SSTables A and B drops to zero, these tables can not be cleaned.
+// Refer to: table.SSTable, table.SSTableCleaner.
 func (storageState *StorageState) Scan(inclusiveRange kv.InclusiveKeyRange[kv.Key]) iterator.Iterator {
 	storageState.stateLock.RLock()
 	defer storageState.stateLock.RUnlock()
