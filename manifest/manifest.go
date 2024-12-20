@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -49,11 +50,11 @@ func (manifest *Manifest) Add(event Event) error {
 
 	buf, err := event.encode()
 	if err != nil {
-		slog.Warn("error while serializing event: %s", err)
+		slog.Warn(fmt.Sprintf("error while serializing event: %v", err))
 		return err
 	}
 	if _, err = manifest.file.Write(buf); err != nil {
-		slog.Warn("error while writing event: %s", err)
+		slog.Warn(fmt.Sprintf("error while writing event: %v", err))
 		return err
 	}
 	return manifest.file.Sync()

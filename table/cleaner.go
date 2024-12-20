@@ -1,6 +1,7 @@
 package table
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 )
@@ -93,7 +94,7 @@ func (cleaner *SSTableCleaner) mayBeCleanPending() {
 func (cleaner *SSTableCleaner) mayBeCleanAnSSTable(ssTable *SSTable) bool {
 	if ssTable.TotalReferences() <= 0 {
 		if err := ssTable.Remove(); err != nil {
-			slog.Error("error in removing ssTable", err)
+			slog.Error(fmt.Sprintf("error in removing ssTable %v", err))
 			return false
 		}
 		return true

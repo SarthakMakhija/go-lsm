@@ -1,6 +1,7 @@
 package state
 
 import (
+	"fmt"
 	"go-lsm/iterator"
 	"go-lsm/kv"
 	"go-lsm/log"
@@ -412,7 +413,7 @@ func (storageState *StorageState) spawnMemtableFlush() {
 			case <-timer.C:
 				if hasImmutableMemtablesGoneBeyondMaximumAllowed() {
 					if err := storageState.forceFlushNextImmutableMemtable(); err != nil {
-						slog.Error("could not flush memtable, error: %v", err)
+						slog.Error(fmt.Sprintf("could not flush memtable, error: %v", err))
 					}
 				}
 				timer.Reset(storageState.options.FlushMemtableDuration)

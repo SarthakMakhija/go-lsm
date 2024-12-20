@@ -2,6 +2,7 @@ package go_lsm
 
 import (
 	"errors"
+	"fmt"
 	"go-lsm/compact"
 	"go-lsm/future"
 	"go-lsm/kv"
@@ -127,12 +128,12 @@ func (db *Db) startCompaction() {
 			case <-compactionTimer.C:
 				storageStateChangeEvent, err := compaction.Start(db.storageState.Snapshot())
 				if err != nil {
-					slog.Error("error in starting compaction", err)
+					slog.Error(fmt.Sprintf("error in starting compaction %v", err))
 					return
 				}
 				if storageStateChangeEvent.HasAnyChanges() {
 					if err := db.storageState.Apply(storageStateChangeEvent, false); err != nil {
-						slog.Error("error in apply state change event", err)
+						slog.Error(fmt.Sprintf("error in apply state change event %v", err))
 						return
 					}
 				}

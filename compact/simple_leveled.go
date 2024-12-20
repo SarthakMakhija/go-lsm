@@ -19,7 +19,7 @@ import (
 // Ratio = (1/2)*100 = 50%.
 // This is less than the configured NumberOfSSTablesRatioPercentage. Hence, table.SSTable files will undergo compaction between
 // level1 and level2.  This typically means that the number of files in lower level(s) should be more than the number of files in upper level(s).
-// In the actual SimpleLeveledCompaction, we consider the file size instead of number of files.
+// In the actual SimpleLeveledCompaction, we consider the file count instead of file size.
 type SimpleLeveledCompaction struct {
 	options state.SimpleLeveledCompactionOptions
 }
@@ -49,8 +49,8 @@ func (compaction SimpleLeveledCompaction) CompactionDescription(stateSnapshot st
 			}
 		}
 		lowerLevel := level + 1
-		sizeRatioPercentage := (float64(ssTableCountByLevel[lowerLevel]) / float64(ssTableCountByLevel[level])) * 100
-		if sizeRatioPercentage < float64(compaction.options.NumberOfSSTablesRatioPercentage) {
+		countRatioPercentage := (float64(ssTableCountByLevel[lowerLevel]) / float64(ssTableCountByLevel[level])) * 100
+		if countRatioPercentage < float64(compaction.options.NumberOfSSTablesRatioPercentage) {
 			println("Triggering simple leveled compaction between levels ", level, lowerLevel)
 			var upperLevel int
 			if level == 0 {
