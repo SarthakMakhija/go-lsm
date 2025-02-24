@@ -7,4 +7,7 @@ build:
 test:
 	go test -tags test -v ./...
 
+lint:
+	golangci-lint run --build-tags test ./...
+
 all: clean build test
