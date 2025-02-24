@@ -2,9 +2,10 @@ package block
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
@@ -24,7 +25,7 @@ func TestBlockMetaListWithASingleBlockMeta(t *testing.T) {
 	assert.Equal(t, "accurate", meta.StartingKey.RawString())
 }
 
-func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
+func TestBlockMetaListWithThreeBlockMeta(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
 	blockMetaList.Add(Meta{
 		BlockStartingOffset: 0,
@@ -57,7 +58,7 @@ func TestBlockMetaListWithAThreeBlockMeta(t *testing.T) {
 	assert.Equal(t, "consensus", meta.StartingKey.RawString())
 }
 
-func TestBlockMetaListWithAThreeBlockMetaWithEndingKeyOfEachBlock(t *testing.T) {
+func TestBlockMetaListWithThreeBlockMetaWithEndingKeyOfEachBlock(t *testing.T) {
 	blockMetaList := NewBlockMetaList()
 	blockMetaList.Add(Meta{
 		BlockStartingOffset: 0,
