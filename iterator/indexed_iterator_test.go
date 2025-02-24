@@ -1,12 +1,13 @@
 package iterator
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestAnIndexedIteratorBasedOnKey(t *testing.T) {
+func TestThePriorityOfIndexedIteratorBasedOnKey(t *testing.T) {
 	indexedIteratorOne := NewIndexedIterator(0, newTestIteratorNoEndKey(
 		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 10)},
 		[]kv.Value{kv.NewStringValue("raft")},
@@ -19,7 +20,7 @@ func TestAnIndexedIteratorBasedOnKey(t *testing.T) {
 	assert.True(t, indexedIteratorOne.IsPrioritizedOver(indexedIteratorOther))
 }
 
-func TestAnIndexedIteratorBasedOnSameKeyWithDifferentIteratorIndex(t *testing.T) {
+func TestThePriorityOfIndexedIteratorBasedOnSameKeyWithDifferentIteratorIndex(t *testing.T) {
 	indexedIteratorOne := NewIndexedIterator(0, newTestIteratorNoEndKey(
 		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 5)},
 		[]kv.Value{kv.NewStringValue("raft")},
@@ -32,7 +33,7 @@ func TestAnIndexedIteratorBasedOnSameKeyWithDifferentIteratorIndex(t *testing.T)
 	assert.True(t, indexedIteratorOne.IsPrioritizedOver(indexedIteratorOther))
 }
 
-func TestAnIndexedIteratorBasedOnSameKeyWithDifferentTimestamp(t *testing.T) {
+func TestThePriorityOfIndexedIteratorBasedOnSameKeyWithDifferentTimestamp(t *testing.T) {
 	indexedIteratorOne := NewIndexedIterator(0, newTestIteratorNoEndKey(
 		[]kv.Key{kv.NewStringKeyWithTimestamp("consensus", 5)},
 		[]kv.Value{kv.NewStringValue("raft")},
