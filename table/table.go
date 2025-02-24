@@ -51,7 +51,7 @@ func Load(id uint64, rootPath string, blockSize uint) (*SSTable, error) {
 
 		bloomOffset := binary.LittleEndian.Uint32(offsetBuffer[:n])
 		bloomBuffer := make([]byte, fileSize-int64(bloomOffset)-int64(block.Uint32Size))
-		n, err = file.Read(int64(bloomOffset), bloomBuffer)
+		_, err = file.Read(int64(bloomOffset), bloomBuffer)
 		if err != nil {
 			return bloom.Filter{}, 0, err
 		}
@@ -77,7 +77,7 @@ func Load(id uint64, rootPath string, blockSize uint) (*SSTable, error) {
 
 		blockMetaOffset := binary.LittleEndian.Uint32(blockMetaOffsetBuffer[:n])
 		blockMetaListBuffer := make([]byte, int64(bloomOffset)-int64(block.Uint32Size))
-		n, err = file.Read(int64(blockMetaOffset), blockMetaListBuffer)
+		_, err = file.Read(int64(blockMetaOffset), blockMetaListBuffer)
 		if err != nil {
 			return nil, 0, err
 		}
