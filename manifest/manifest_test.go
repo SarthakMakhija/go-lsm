@@ -1,11 +1,12 @@
 package manifest
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/compact/meta"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateANewManifestWithNewMemtableCreatedEvent(t *testing.T) {
@@ -61,7 +62,7 @@ func TestRecoversAnExistingManifest(t *testing.T) {
 	})
 	assert.Nil(t, manifest.Add(compactionDone))
 
-	manifest, events, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
+	_, events, err := CreateNewOrRecoverFrom(manifestDirectoryPath)
 	assert.Nil(t, err)
 
 	assert.Equal(t, 4, len(events))

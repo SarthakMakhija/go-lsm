@@ -63,8 +63,8 @@ func (compaction *Compaction) compact(description meta.SimpleLeveledCompactionDe
 		}
 		lowerLevelSSTableIterator = append(lowerLevelSSTableIterator, ssTableIterator)
 	}
-	var iterators []iterator.Iterator
-	iterators = append(upperLevelSSTableIterator, lowerLevelSSTableIterator...)
+
+	iterators := append(upperLevelSSTableIterator, lowerLevelSSTableIterator...)
 	return compaction.ssTablesFromIterator(iterator.NewMergeIterator(iterators, iterator.NoOperationOnCloseCallback))
 }
 
