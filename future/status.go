@@ -27,3 +27,8 @@ func ErrorStatus(err error) Status {
 func (status Status) IsOk() bool {
 	return status.StatusType == Ok
 }
+
+// IsOk returns true if the StatusType is Error.
+func (status Status) IsErr() bool {
+	return status.StatusType == Error
+}
