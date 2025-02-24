@@ -1011,9 +1011,9 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *te
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
-	defer iterator.Close()
-
 	assert.Nil(t, err)
+
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
@@ -1055,9 +1055,9 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixe
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
-	defer iterator.Close()
-
 	assert.Nil(t, err)
+
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
