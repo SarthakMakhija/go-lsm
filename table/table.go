@@ -13,15 +13,15 @@ import (
 // SSTable is an in-memory representation of the file on disk. An SSTable contains the data sorted by key.
 // SSTables can be created by flushing an immutable Memtable or by merging SSTables (/compaction).
 type SSTable struct {
-	id                    uint64
-	blockMetaList         *block.MetaList
-	bloomFilter           bloom.Filter
-	file                  *File
-	blockMetaOffsetMarker uint32
-	blockSize             uint
-	startingKey           kv.Key
-	endingKey             kv.Key
-	references            atomic.Int64
+	id                      uint64
+	blockMetaList           *block.MetaList
+	bloomFilter             bloom.Filter
+	file                    *File
+	blockMetaStartingOffset uint32
+	blockSize               uint
+	startingKey             kv.Key
+	endingKey               kv.Key
+	references              atomic.Int64
 }
 
 // Load loads the entire SSTable from the given rootPath.
@@ -95,14 +95,14 @@ func Load(id uint64, rootPath string, blockSize uint) (*SSTable, error) {
 	startingKey, _ := metaList.StartingKeyOfFirstBlock()
 	endingKey, _ := metaList.EndingKeyOfLastBlock()
 	return &SSTable{
-		id:                    id,
-		blockMetaList:         metaList,
-		bloomFilter:           filter,
-		blockMetaOffsetMarker: metaOffset,
-		file:                  file,
-		blockSize:             blockSize,
-		startingKey:           startingKey,
-		endingKey:             endingKey,
+		id:                      id,
+		blockMetaList:           metaList,
+		bloomFilter:             filter,
+		blockMetaStartingOffset: metaOffset,
+		file:                    file,
+		blockSize:               blockSize,
+		startingKey:             startingKey,
+		endingKey:               endingKey,
 	}, nil
 }
 
@@ -224,7 +224,7 @@ func (table *SSTable) noOfBlocks() int {
 // If the block.Meta is available at the next index, it returns the BlockStartingOffset of block.Meta at the given index,
 // and block.Meta at index + 1.
 // If the block.Meta is not available at the next index, it returns the BlockStartingOffset of block.Meta at the given index,
-// and table.blockMetaOffsetMarker, which is essentially the offset of the 4-bytes which denote the meta starting offset.
+// and table.blockMetaBeginOffset, which is essentially the offset of the 4-bytes which denote the meta starting offset.
 // Please take a look at the table.SSTableBuilder for encoding of SSTable.
 func (table *SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
 	blockMeta, blockPresent := table.blockMetaList.GetAt(blockIndex)
@@ -237,7 +237,7 @@ func (table *SSTable) offsetRangeOfBlockAt(blockIndex int) (uint32, uint32) {
 	if nextBlockPresent {
 		endOffset = nextBlockMeta.BlockStartingOffset
 	} else {
-		endOffset = table.blockMetaOffsetMarker
+		endOffset = table.blockMetaStartingOffset
 	}
 	return blockMeta.BlockStartingOffset, endOffset
 }

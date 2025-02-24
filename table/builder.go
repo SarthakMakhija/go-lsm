@@ -68,31 +68,31 @@ func (builder *SSTableBuilder) Add(key kv.Key, value kv.Value) {
  ----------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 func (builder *SSTableBuilder) Build(id uint64, rootPath string) (*SSTable, error) {
-	blockMetaBeginOffset := func() []byte {
-		blockMetaBeginOffset := make([]byte, block.Uint32Size)
-		binary.LittleEndian.PutUint32(blockMetaBeginOffset, uint32(len(builder.allBlocksData)))
-		return blockMetaBeginOffset
+	blockMetaStartingOffset := func() []byte {
+		blockMetaStartingOffset := make([]byte, block.Uint32Size)
+		binary.LittleEndian.PutUint32(blockMetaStartingOffset, uint32(len(builder.allBlocksData)))
+		return blockMetaStartingOffset
 	}
-	bloomOffset := func(buffer *bytes.Buffer) []byte {
-		bloomOffset := make([]byte, block.Uint32Size)
-		binary.LittleEndian.PutUint32(bloomOffset, uint32(buffer.Len()))
-		return bloomOffset
+	bloomStartingOffset := func(buffer *bytes.Buffer) []byte {
+		bloomStartingOffset := make([]byte, block.Uint32Size)
+		binary.LittleEndian.PutUint32(bloomStartingOffset, uint32(buffer.Len()))
+		return bloomStartingOffset
 	}
 
 	builder.finishBlock()
 	buffer := new(bytes.Buffer)
 	buffer.Write(builder.allBlocksData)          //data blocks
 	buffer.Write(builder.blockMetaList.Encode()) //metadata section block.MetaList.Encode()
-	buffer.Write(blockMetaBeginOffset())         //4 bytes to indicate where the meta section starts from
+	buffer.Write(blockMetaStartingOffset())      //4 bytes to indicate where the meta section starts from
 	filter := builder.bloomFilterBuilder.Build(bloom.FalsePositiveRate)
 	encodedFilter, err := filter.Encode()
 	if err != nil {
 		return nil, err
 	}
 
-	bloomFilterOffset := bloomOffset(buffer)
-	buffer.Write(encodedFilter)     //bloom filter section bloom.Filter.Encode()
-	buffer.Write(bloomFilterOffset) //4 bytes to indicate where the bloom filter section starts from
+	bloomFilterStartingOffset := bloomStartingOffset(buffer)
+	buffer.Write(encodedFilter)             //bloom filter section bloom.Filter.Encode()
+	buffer.Write(bloomFilterStartingOffset) //4 bytes to indicate where the bloom filter section starts from
 
 	file, err := CreateAndWrite(SSTableFilePath(id, rootPath), buffer.Bytes())
 	if err != nil {
@@ -102,14 +102,14 @@ func (builder *SSTableBuilder) Build(id uint64, rootPath string) (*SSTable, erro
 	startingKey, _ := builder.blockMetaList.StartingKeyOfFirstBlock()
 	endingKey, _ := builder.blockMetaList.EndingKeyOfLastBlock()
 	return &SSTable{
-		id:                    id,
-		file:                  file,
-		blockMetaList:         builder.blockMetaList,
-		bloomFilter:           filter,
-		blockMetaOffsetMarker: uint32(len(builder.allBlocksData)),
-		blockSize:             builder.blockSize,
-		startingKey:           startingKey,
-		endingKey:             endingKey,
+		id:                      id,
+		file:                    file,
+		blockMetaList:           builder.blockMetaList,
+		bloomFilter:             filter,
+		blockMetaStartingOffset: uint32(len(builder.allBlocksData)),
+		blockSize:               builder.blockSize,
+		startingKey:             startingKey,
+		endingKey:               endingKey,
 	}, nil
 }
 
