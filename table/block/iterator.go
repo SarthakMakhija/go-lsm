@@ -50,6 +50,7 @@ func (iterator *Iterator) seekToOffsetIndex(index uint16) {
 		return
 	}
 	keyValueBeginOffset := iterator.block.keyValueBeginOffsets[index]
+
 	iterator.offsetIndex = index
 	iterator.seekToOffset(keyValueBeginOffset)
 }

@@ -1,10 +1,11 @@
 package table
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/test_utility"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
@@ -103,7 +104,7 @@ func TestBuildAnSSTableWithASingleBlockContainingMultipleKeyValuesWithStartingAn
 }
 
 func TestBuildAnSSTableWithTwoBlocks(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 10), kv.NewStringValue("TiKV"))
 

@@ -8,6 +8,8 @@ import (
 
 var ReservedKeySize = int(unsafe.Sizeof(uint16(0)))
 var ReservedValueSize = int(unsafe.Sizeof(uint16(0)))
+var KeyValueOffsetSize = int(unsafe.Sizeof(uint16(0)))
+
 var Uint16Size = int(unsafe.Sizeof(uint16(0)))
 var Uint32Size = int(unsafe.Sizeof(uint32(0)))
 
@@ -27,13 +29,15 @@ type Builder struct {
 	firstKey             kv.Key
 	blockSize            uint
 	data                 []byte
+	latestDataIndex      int
 }
 
 // NewBlockBuilder creates a new instance of block builder.
 func NewBlockBuilder(blockSize uint) *Builder {
 	return &Builder{
-		blockSize: blockSize,
-		data:      make([]byte, 0, blockSize),
+		blockSize:       blockSize,
+		data:            make([]byte, blockSize),
+		latestDataIndex: 0,
 	}
 }
 
@@ -43,14 +47,15 @@ func NewBlockBuilder(blockSize uint) *Builder {
 // 2) Storing the begin-offset of the key/value pair in keyValueBeginOffsets.
 // 3) Storing the key/value pair.
 func (builder *Builder) Add(key kv.Key, value kv.Value) bool {
-	if uint(builder.size()+key.EncodedSizeInBytes()+value.SizeInBytes()+ReservedKeySize+ReservedValueSize) > builder.blockSize {
+	if uint(builder.size()+key.EncodedSizeInBytes()+value.SizeInBytes()+ReservedKeySize+ReservedValueSize+KeyValueOffsetSize) > builder.blockSize {
 		return false
 	}
 
 	if builder.firstKey.IsRawKeyEmpty() {
 		builder.firstKey = key
 	}
-	builder.keyValueBeginOffsets = append(builder.keyValueBeginOffsets, uint16(len(builder.data)))
+
+	builder.keyValueBeginOffsets = append(builder.keyValueBeginOffsets, uint16(builder.latestDataIndex))
 	keyValueBuffer := make([]byte, ReservedKeySize+ReservedValueSize+key.EncodedSizeInBytes()+value.SizeInBytes())
 
 	binary.LittleEndian.PutUint16(keyValueBuffer[:], uint16(key.EncodedSizeInBytes()))
@@ -59,7 +64,9 @@ func (builder *Builder) Add(key kv.Key, value kv.Value) bool {
 	binary.LittleEndian.PutUint16(keyValueBuffer[ReservedKeySize+key.EncodedSizeInBytes():], uint16(value.SizeInBytes()))
 	copy(keyValueBuffer[ReservedKeySize+key.EncodedSizeInBytes()+ReservedValueSize:], value.Bytes())
 
-	builder.data = append(builder.data, keyValueBuffer...)
+	n := copy(builder.data[builder.latestDataIndex:], keyValueBuffer)
+	builder.latestDataIndex += n
+
 	return true
 }
 
@@ -73,13 +80,14 @@ func (builder *Builder) Build() Block {
 	if builder.isEmpty() {
 		panic("cannot build an empty Block")
 	}
-	return newBlock(builder.data, builder.keyValueBeginOffsets)
+	return newBlock(builder.data, builder.latestDataIndex, builder.keyValueBeginOffsets)
 }
 
 // size returns the size of the builder.
-// The size includes: the size of encoded key/values (builder.data) + size of N keyValueBeginOffsets.
+// The size includes: the size of encoded key/values (builder.data) + size of N keyValueBeginOffsets + Reserved bytes.
 func (builder *Builder) size() int {
-	return len(builder.data) +
+	return len(builder.data[:builder.latestDataIndex]) +
 		len(builder.keyValueBeginOffsets)*Uint16Size +
-		Uint16Size //block uses last 2 bytes for the number of begin offsets
+		Uint16Size + //block uses last 2 bytes for the number of begin offsets
+		Uint16Size //block uses 2 bytes before the last 2 bytes for the start offset of begin offsets
 }

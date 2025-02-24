@@ -1,10 +1,11 @@
 package table
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/test_utility"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
@@ -68,7 +69,7 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValues(t *test
 }
 
 func TestIterateOverAnSSTableWithTwoBlocks(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 8), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 9), kv.NewStringValue("TiKV"))
 
@@ -228,7 +229,7 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 }
 
 func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKey(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("cart", 5), kv.NewStringValue("draft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 
@@ -253,7 +254,7 @@ func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKey(t *testing.T) {
 }
 
 func TestIterateOverAnSSTableWithTwoBlocksUsingSeekToKeyWithTheKeyLessThanTheFirstKeyOfTheFirstBlock(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("cart", 9), kv.NewStringValue("draft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 10), kv.NewStringValue("TiKV"))
 

@@ -1,10 +1,11 @@
 package table
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/test_utility"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
@@ -31,8 +32,8 @@ func TestSSTableWithASingleBlockContainingSingleKeyValue(t *testing.T) {
 	assert.False(t, blockIterator.IsValid())
 }
 
-func TestSSTableWithATwoBlocks(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+func TestSSTableWithTwoBlocks(t *testing.T) {
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 20), kv.NewStringValue("TiKV"))
 
@@ -105,7 +106,7 @@ func TestLoadSSTableWithSingleBlockContainingMultipleKeyValuePairsWithStartingAn
 }
 
 func TestLoadAnSSTableWithTwoBlocks(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 30), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 40), kv.NewStringValue("TiKV"))
 
@@ -136,7 +137,7 @@ func TestLoadAnSSTableWithTwoBlocks(t *testing.T) {
 }
 
 func TestLoadAnSSTableWithTwoBlocksWithStartingAndEndingKey(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 30), kv.NewStringValue("TiKV"))
 

@@ -1,10 +1,11 @@
 package table
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/test_utility"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadSSTableWithSingleBlockAndCheckKeysForExistenceUsingBloom(t *testing.T) {
@@ -51,7 +52,7 @@ func TestLoadSSTableWithSingleBlockAndCheckKeysForNonExistenceUsingBloom(t *test
 }
 
 func TestLoadAnSSTableWithTwoBlocksAndCheckKeysForExistenceUsingBloom(t *testing.T) {
-	ssTableBuilder := NewSSTableBuilder(30)
+	ssTableBuilder := NewSSTableBuilder(50)
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	ssTableBuilder.Add(kv.NewStringKeyWithTimestamp("distributed", 6), kv.NewStringValue("TiKV"))
 
