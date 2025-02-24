@@ -1,6 +1,6 @@
 module go-lsm
 
-go 1.22
+go 1.24
 
 require (
 	github.com/bits-and-blooms/bitset v1.13.0
