@@ -2,7 +2,6 @@ package state
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"go-lsm/table"
 	"go-lsm/test_utility"
@@ -10,6 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func testStorageStateOptionsWithMemTableSizeAndDirectory(memtableSizeInBytes int64, directory string) StorageOptions {
