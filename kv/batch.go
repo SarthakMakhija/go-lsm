@@ -62,7 +62,7 @@ func (batch *Batch) Delete(key []byte) {
 // Get returns the Value for the given key if found.
 func (batch *Batch) Get(key []byte) (Value, bool) {
 	for _, pair := range batch.pairs {
-		if bytes.Compare(pair.key, key) == 0 {
+		if bytes.Equal(pair.key, key) {
 			return pair.value, true
 		}
 	}
@@ -88,8 +88,6 @@ func (batch *Batch) Length() int {
 // CloneKeyValuePairs clones the RawKeyValuePair(s) present in the Batch.
 func (batch *Batch) CloneKeyValuePairs() []RawKeyValuePair {
 	keyValuePairs := make([]RawKeyValuePair, 0, batch.Length())
-	for _, pair := range batch.pairs {
-		keyValuePairs = append(keyValuePairs, pair)
-	}
+	keyValuePairs = append(keyValuePairs, batch.pairs...)
 	return keyValuePairs
 }

@@ -101,5 +101,4 @@ func (iterator *Iterator) seekToOffset(keyValueBeginOffset uint16) {
 func (iterator *Iterator) markInvalid() {
 	iterator.value = kv.EmptyValue
 	iterator.key = kv.EmptyKey
-	return
 }
