@@ -2,18 +2,19 @@ package log
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestAppendToWALForId(t *testing.T) {
+func TestAppendToWALWithAnId(t *testing.T) {
 	walDirectoryPath := filepath.Join(".", "wal")
 	assert.Nil(t, os.MkdirAll(walDirectoryPath, os.ModePerm))
 
-	wal, err := NewWALForId(10, walDirectoryPath)
+	wal, err := NewWAL(10, walDirectoryPath)
 
 	assert.Nil(t, err)
 	defer func() {

@@ -38,7 +38,7 @@ func NewMemtableWithoutWAL(id uint64, memTableSizeInBytes int64) *Memtable {
 
 // newMemtableWithWAL creates a new instance of Memtable with WAL.
 func newMemtableWithWAL(id uint64, memTableSizeInBytes int64, walDirectoryPath string) *Memtable {
-	wal, err := log.NewWALForId(id, walDirectoryPath)
+	wal, err := log.NewWAL(id, walDirectoryPath)
 	if err != nil {
 		panic(fmt.Errorf("error creating new WAL: %v", err))
 	}

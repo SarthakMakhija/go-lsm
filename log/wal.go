@@ -16,12 +16,12 @@ type WAL struct {
 	file *os.File
 }
 
-// NewWALForId creates a new instance of WAL for the specified memtable id and a directory path.
+// NewWAL creates a new instance of WAL for the specified memtable id and a directory path.
 // This implementation has WAL for each memtable.
 // Every write to memtable (typically a kv.TimestampedBatch) involves writing every key/value pair from the batch to WAL.
 // This implementation writes every key/value pair from the batch to WAL individually.
 // An alternate would be to serialize the entire kv.TimestampedBatch and write to WAL.
-func NewWALForId(id uint64, walDirectoryPath string) (*WAL, error) {
+func NewWAL(id uint64, walDirectoryPath string) (*WAL, error) {
 	return newWAL(CreateWalPathFor(id, walDirectoryPath))
 }
 

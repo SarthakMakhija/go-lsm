@@ -1,9 +1,10 @@
 package log
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWALDirectoryPath(t *testing.T) {
@@ -15,7 +16,7 @@ func TestWALDirectoryPath(t *testing.T) {
 	assert.Equal(t, "wal", walPath.DirectoryPath)
 }
 
-func TestWALDirectoryPathWithANewDirectoryCreatedForWAL(t *testing.T) {
+func TestWALDirectoryPathAssertANewDirectoryIsCreatedForWAL(t *testing.T) {
 	walPath := NewWALPath(".")
 	defer func() {
 		_ = os.RemoveAll(walPath.DirectoryPath)
