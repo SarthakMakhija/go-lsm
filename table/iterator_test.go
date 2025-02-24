@@ -111,6 +111,7 @@ func TestSeekToAKeyInSSTableAndCheckTheReferences(t *testing.T) {
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 6))
+	assert.Nil(t, err)
 	defer iterator.Close()
 
 	assert.Equal(t, int64(1), ssTable.TotalReferences())
@@ -129,6 +130,7 @@ func TestSeekToAKeyInSSTableAndCheckTheReferencesAfterDecrementing(t *testing.T)
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 6))
+	assert.Nil(t, err)
 	defer iterator.Close()
 
 	assert.Equal(t, int64(1), ssTable.TotalReferences())

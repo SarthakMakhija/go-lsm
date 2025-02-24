@@ -88,5 +88,4 @@ func (iterator *PendingWritesIterator) seek(key []byte) {
 			high = mid - 1
 		}
 	}
-	return
 }
