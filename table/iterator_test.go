@@ -21,9 +21,9 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValue(t *testing
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToFirst()
-	defer iterator.Close()
-
 	assert.Nil(t, err)
+
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
@@ -152,9 +152,9 @@ func TestIterateOverAnSSTableWithASingleBlockContainingSingleKeyValueUsingSeekTo
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 6))
-	defer iterator.Close()
-
 	assert.Nil(t, err)
+
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
@@ -178,9 +178,9 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("contribute", 9))
-	defer iterator.Close()
-
 	assert.Nil(t, err)
+
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, kv.NewStringValue("TiKV"), iterator.Value())
@@ -209,9 +209,9 @@ func TestIterateOverAnSSTableWithASingleBlockContainingMultipleKeyValuesUsingSee
 	assert.Nil(t, err)
 
 	iterator, err := ssTable.SeekToKey(kv.NewStringKeyWithTimestamp("consensus", 6))
-	defer iterator.Close()
-
 	assert.Nil(t, err)
+
+	defer iterator.Close()
 
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, kv.NewStringValue("raft"), iterator.Value())
