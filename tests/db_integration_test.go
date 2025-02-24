@@ -1,17 +1,18 @@
 package tests
 
 import (
-	"github.com/stretchr/testify/assert"
-	"go-lsm"
+	go_lsm "go-lsm"
 	"go-lsm/kv"
 	"go-lsm/state"
 	"go-lsm/test_utility"
 	"go-lsm/txn"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestReadInEmptyDb(t *testing.T) {
+func TestReadWithEmptyDb(t *testing.T) {
 	directory := test_utility.SetupADirectoryWithTestName(t)
 	storageOptions := state.StorageOptions{
 		MemTableSizeInBytes:   1 * 1024,

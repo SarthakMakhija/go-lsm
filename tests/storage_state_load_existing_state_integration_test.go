@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/compact"
 	"go-lsm/kv"
 	"go-lsm/state"
@@ -9,6 +8,8 @@ import (
 	"go-lsm/txn"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func testStorageStateOptionsWithMemTableSizeAndDirectory(memtableSizeInBytes int64, directory string) state.StorageOptions {
