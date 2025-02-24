@@ -1,16 +1,17 @@
 package kv
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestRawKeyIsEqualTo(t *testing.T) {
+func TestEqualityOfRawKey(t *testing.T) {
 	key := NewStringKeyWithTimestamp("consensus", 10)
 	assert.True(t, key.IsRawKeyEqualTo(NewStringKeyWithTimestamp("consensus", 20)))
 }
 
-func TestRawKeyIsNotEqualTo(t *testing.T) {
+func TestNonEqualityOfRawKey(t *testing.T) {
 	key := NewStringKeyWithTimestamp("consensus", 10)
 	assert.False(t, key.IsRawKeyEqualTo(NewStringKeyWithTimestamp("raft", 10)))
 }

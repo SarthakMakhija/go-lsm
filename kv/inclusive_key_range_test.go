@@ -1,8 +1,9 @@
 package kv
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInvalidInclusiveRangeGivenEndKeyIsSmallerThanTheStartKey(t *testing.T) {
@@ -11,7 +12,7 @@ func TestInvalidInclusiveRangeGivenEndKeyIsSmallerThanTheStartKey(t *testing.T) 
 	})
 }
 
-func TestInvalidInclusiveRangeEndKeyIsSmallerThanTheStartKeyBasedOnTimestamp(t *testing.T) {
+func TestInvalidInclusiveRangeGivenEndKeyIsSmallerThanTheStartKeyBasedOnTimestamp(t *testing.T) {
 	assert.Panics(t, func() {
 		NewInclusiveKeyRange(NewStringKeyWithTimestamp("consensus", 10), NewStringKeyWithTimestamp("consensus", 5))
 	})

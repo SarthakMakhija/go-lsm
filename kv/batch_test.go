@@ -1,8 +1,9 @@
 package kv
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEmptyBatch(t *testing.T) {
@@ -16,7 +17,7 @@ func TestNonEmptyBatch(t *testing.T) {
 	assert.Equal(t, false, batch.IsEmpty())
 }
 
-func TestAddsDuplicateKeyInBatch(t *testing.T) {
+func TestAddDuplicateKeyInBatch(t *testing.T) {
 	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 	err := batch.Put([]byte("HDD"), []byte("Hard disk"))
@@ -58,7 +59,7 @@ func TestDoesNotContainTheKey(t *testing.T) {
 	assert.Equal(t, false, contains)
 }
 
-func TestGetsTheTimestampedBatch(t *testing.T) {
+func TestGetTheTimestampedBatch(t *testing.T) {
 	batch := NewBatch()
 	_ = batch.Put([]byte("HDD"), []byte("Hard disk"))
 
