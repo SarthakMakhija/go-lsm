@@ -20,19 +20,13 @@ func NewFuture() *Future {
 
 // MarkDoneAsOk marks the Future as done with Status Ok.
 func (future *Future) MarkDoneAsOk() {
-	if !future.isDone {
-		close(future.responseChannel)
-		future.isDone = true
-	}
+	future.markDone()
 	future.status = OkStatus()
 }
 
 // MarkDoneAsError marks the Future as done with Status Error.
 func (future *Future) MarkDoneAsError(err error) {
-	if !future.isDone {
-		close(future.responseChannel)
-		future.isDone = true
-	}
+	future.markDone()
 	future.status = ErrorStatus(err)
 }
 
@@ -44,4 +38,12 @@ func (future *Future) Wait() {
 // Status returns the status.
 func (future *Future) Status() Status {
 	return future.status
+}
+
+// markDone marks the future as done and closes the responseChannel.
+func (future *Future) markDone() {
+	if !future.isDone {
+		close(future.responseChannel)
+		future.isDone = true
+	}
 }
