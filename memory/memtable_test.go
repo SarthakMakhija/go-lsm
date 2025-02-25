@@ -1,20 +1,21 @@
 package memory
 
 import (
-	"github.com/stretchr/testify/assert"
 	"go-lsm/kv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const testMemtableSize = 1 << 10
 
 func TestEmptyMemtable(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	assert.True(t, memTable.IsEmpty())
 }
 
 func TestMemtableWithASingleKey(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
 	value, ok := memTable.Get(kv.NewStringKeyWithTimestamp("consensus", 5))
@@ -23,7 +24,7 @@ func TestMemtableWithASingleKey(t *testing.T) {
 }
 
 func TestMemtableWithASingleKeyIncludingTimestampWhichReturnsTheValueOfTheKeyWithTimestampLessThanOrEqualToTheGiven(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 4), kv.NewStringValue("raft"))
 
 	value, ok := memTable.Get(kv.NewStringKeyWithTimestamp("consensus", 5))
@@ -32,7 +33,7 @@ func TestMemtableWithASingleKeyIncludingTimestampWhichReturnsTheValueOfTheKeyWit
 }
 
 func TestMemtableWithASingleKeyIncludingTimestampDoesNotReturnTheValueOfTheKeyWithTimestampLessThanOrEqualToTheGiven(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 4), kv.NewStringValue("raft"))
 
 	_, ok := memTable.Get(kv.NewStringKeyWithTimestamp("consensus", 2))
@@ -40,7 +41,7 @@ func TestMemtableWithASingleKeyIncludingTimestampDoesNotReturnTheValueOfTheKeyWi
 }
 
 func TestMemtableWithNonExistingKey(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 
 	value, ok := memTable.Get(kv.NewStringKeyWithTimestamp("storage", 4))
@@ -49,7 +50,7 @@ func TestMemtableWithNonExistingKey(t *testing.T) {
 }
 
 func TestMemtableWithMultipleKeys(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("storage", 5), kv.NewStringValue("NVMe"))
 
@@ -63,7 +64,7 @@ func TestMemtableWithMultipleKeys(t *testing.T) {
 }
 
 func TestMemtableWithADelete(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Delete(kv.NewStringKeyWithTimestamp("consensus", 6))
 
@@ -73,7 +74,7 @@ func TestMemtableWithADelete(t *testing.T) {
 }
 
 func TestMemtableWithADeleteAndAGetWithTimestampHigherThanThatOfTheKeyInMemtable(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Delete(kv.NewStringKeyWithTimestamp("consensus", 6))
 
@@ -83,7 +84,7 @@ func TestMemtableWithADeleteAndAGetWithTimestampHigherThanThatOfTheKeyInMemtable
 }
 
 func TestMemtableScanInclusive1(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("epoch", 6), kv.NewStringValue("time"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("Db"))
@@ -97,7 +98,7 @@ func TestMemtableScanInclusive1(t *testing.T) {
 }
 
 func TestMemtableScanInclusive2(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("epoch", 6), kv.NewStringValue("time"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("Db"))
@@ -117,7 +118,7 @@ func TestMemtableScanInclusive2(t *testing.T) {
 }
 
 func TestMemtableScanInclusive3(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 5), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("epoch", 6), kv.NewStringValue("time"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("distributed", 7), kv.NewStringValue("Db"))
@@ -137,7 +138,7 @@ func TestMemtableScanInclusive3(t *testing.T) {
 }
 
 func TestMemtableScanInclusive4(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 1), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 2), kv.NewStringValue("paxos"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("epoch", 2), kv.NewStringValue("time"))
@@ -158,7 +159,7 @@ func TestMemtableScanInclusive4(t *testing.T) {
 }
 
 func TestMemtableScanInclusive5(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 10), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 20), kv.NewStringValue("paxos"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("epoch", 20), kv.NewStringValue("time"))
@@ -175,7 +176,7 @@ func TestMemtableScanInclusive5(t *testing.T) {
 }
 
 func TestMemtableAllEntriesWithSameRawKeyWithDifferentTimestamps(t *testing.T) {
-	memTable := NewMemtableWithoutWAL(1, testMemtableSize)
+	memTable := newMemtableWithoutWAL(1, testMemtableSize)
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 1), kv.NewStringValue("raft"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("consensus", 2), kv.NewStringValue("paxos"))
 	_ = memTable.Set(kv.NewStringKeyWithTimestamp("bolt", 3), kv.NewStringValue("kv"))

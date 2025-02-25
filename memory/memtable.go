@@ -13,7 +13,7 @@ import (
 // The Skiplist (external.SkipList) is shamelessly taken from [Badger](https://github.com/dgraph-io/badger).
 // It is a lock-free implementation of Skiplist.
 // It is important to have a lock-free implementation,
-// otherwise scan operation will take lock(s) (/read-locks) and it will start interfering with write operations.
+// otherwise scan operation will take lock(s) (/read-locks) which will start interfering with write operations.
 type Memtable struct {
 	id                  uint64
 	memTableSizeInBytes int64
@@ -26,8 +26,9 @@ func NewMemtable(id uint64, memTableSizeInBytes int64, walPath log.WALPath) *Mem
 	return newMemtableWithWAL(id, memTableSizeInBytes, walPath.DirectoryPath)
 }
 
-// NewMemtableWithoutWAL creates a new instance of Memtable without WAL.
-func NewMemtableWithoutWAL(id uint64, memTableSizeInBytes int64) *Memtable {
+// newMemtableWithoutWAL creates a new instance of Memtable without WAL.
+// It is mainly used for testing.
+func newMemtableWithoutWAL(id uint64, memTableSizeInBytes int64) *Memtable {
 	return &Memtable{
 		id:                  id,
 		memTableSizeInBytes: memTableSizeInBytes,
