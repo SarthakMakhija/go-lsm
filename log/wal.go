@@ -25,7 +25,7 @@ func NewWAL(id uint64, walDirectoryPath string) (*WAL, error) {
 	return newWAL(CreateWalPathFor(id, walDirectoryPath))
 }
 
-// Recover recovers from WAL.
+// Recover recovers memtable from WAL.
 // Recovery involves the following:
 // 1) Opening the file in READONLY & APPEND mode.
 // 2) Reading the whole file.
