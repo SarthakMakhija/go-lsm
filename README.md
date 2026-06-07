@@ -1,7 +1,7 @@
 # go-lsm
 [![Build](https://github.com/SarthakMakhija/go-lsm/actions/workflows/build.yml/badge.svg)](https://github.com/SarthakMakhija/go-lsm/actions/workflows/build.yml)
 
-LSM-based key-value store in Go for educational purpose.
+LSM-based key-value store in Go for educational purpose. 
 
 Rewrite of the existing [workshop](https://github.com/SarthakMakhija/storage-engine-workshop) code.
 
