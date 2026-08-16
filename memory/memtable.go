@@ -61,7 +61,9 @@ func RecoverFromWAL(id uint64, memTableSizeInBytes int64, walDirectoryPath strin
 	}
 	var maxTimestamp uint64
 	wal, err := log.Recover(log.CreateWalPathFor(id, walDirectoryPath), func(key kv.Key, value kv.Value) {
-		memtable.entries.Put(key, value)
+		if err := memtable.entries.Put(key, value); err != nil {
+			panic(err)
+		}
 		maxTimestamp = max(maxTimestamp, key.Timestamp())
 	})
 	if err != nil {
