@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -21,20 +22,20 @@ const (
 	nullOffset uint32 = 0
 
 	// Field Sizes in Bytes
-	keyLengthSize  = uint32(unsafe.Sizeof(uint16(0))) // 2 bytes: supports keys up to 65,535 bytes
-	valLengthSize  = uint32(unsafe.Sizeof(uint32(0))) // 4 bytes: supports values up to 4 GB
-	nextOffsetSize = uint32(unsafe.Sizeof(uint32(0))) // 4 bytes: points to next node offset in arena
+	keyLengthSize   = uint32(unsafe.Sizeof(uint16(0))) // 2 bytes: supports keys up to 65,535 bytes
+	valueLengthSize = uint32(unsafe.Sizeof(uint32(0))) // 4 bytes: supports values up to 4 GB
+	nextOffsetSize  = uint32(unsafe.Sizeof(uint32(0))) // 4 bytes: points to next node offset in arena
 
 	// Relative Field Offsets within a single Node
 	// [0..2)   -> Key Length
 	// [2..6)   -> Value Length
 	// [6..10)  -> Next Node Offset
 	// [10..End)-> Key & Value Payload
-	keyLenOffset     = uint32(0)
-	valLenOffset     = keyLenOffset + keyLengthSize // Offset 2
-	nextOffsetOffset = valLenOffset + valLengthSize // Offset 6
+	keyLengthOffset   = uint32(0)
+	valueLengthOffset = keyLengthOffset + keyLengthSize     // Offset 2
+	nextOffsetOffset  = valueLengthOffset + valueLengthSize // Offset 6
 
-	nodeHeaderSize = keyLengthSize + valLengthSize + nextOffsetSize // 10 bytes
+	nodeHeaderSize = keyLengthSize + valueLengthSize + nextOffsetSize // 10 bytes
 )
 
 var (
@@ -45,25 +46,29 @@ var (
 // Arena provides monotonic bump allocation within a fixed byte buffer.
 type Arena struct {
 	buffer     []byte
-	nextOffset uint32
+	nextOffset atomic.Uint32
 }
 
 // NewArena allocates the backing byte slice and reserves offset 0 for null.
 func NewArena(size int64) *Arena {
-	return &Arena{
-		buffer:     make([]byte, size),
-		nextOffset: 1, // Offset 0 is reserved for nullOffset
+	arena := &Arena{
+		buffer: make([]byte, size),
 	}
+	arena.nextOffset.Store(1) // Offset 0 is reserved for nullOffset
+	return arena
 }
 
 // allocate reserves a contiguous block of 'size' bytes and returns its starting nextOffset.
 func (arena *Arena) allocate(size uint32) (uint32, error) {
-	if int64(arena.nextOffset+size) > int64(len(arena.buffer)) {
-		return nullOffset, ErrArenaFull
+	for {
+		currentOffset := arena.nextOffset.Load()
+		if int64(currentOffset+size) > int64(len(arena.buffer)) {
+			return nullOffset, ErrArenaFull
+		}
+		if arena.nextOffset.CompareAndSwap(currentOffset, currentOffset+size) {
+			return currentOffset, nil
+		}
 	}
-	offsetOfAllocation := arena.nextOffset
-	arena.nextOffset += size
-	return offsetOfAllocation, nil
 }
 
 // bytes returns a slice referencing [offset, nextOffset+size] within the arena.
@@ -72,4 +77,9 @@ func (arena *Arena) bytes(offset, size uint32) []byte {
 		return nil
 	}
 	return arena.buffer[offset : offset+size]
+}
+
+// MemSize returns the current memory allocated inside the arena in bytes.
+func (arena *Arena) MemSize() int64 {
+	return int64(arena.nextOffset.Load())
 }

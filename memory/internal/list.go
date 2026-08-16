@@ -79,7 +79,7 @@ func (list *SortedList) Get(searchKey kv.Key) (kv.Value, bool) {
 
 // MemSize returns the current memory allocated inside the arena in bytes.
 func (list *SortedList) MemSize() int64 {
-	return int64(list.arena.nextOffset)
+	return list.arena.MemSize()
 }
 
 // Empty returns true if the list contains no elements.

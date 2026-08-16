@@ -3,6 +3,8 @@ package internal
 import (
 	"encoding/binary"
 	"go-lsm/kv"
+	"sync/atomic"
+	"unsafe"
 )
 
 /**
@@ -38,8 +40,8 @@ func newNode(arena *Arena, key kv.Key, value kv.Value) (Node, error) {
 	}
 
 	// 1. Serialize fixed header fields
-	binary.LittleEndian.PutUint16(arena.buffer[offset+keyLenOffset:], keyLength)
-	binary.LittleEndian.PutUint32(arena.buffer[offset+valLenOffset:], valueLength)
+	binary.LittleEndian.PutUint16(arena.buffer[offset+keyLengthOffset:], keyLength)
+	binary.LittleEndian.PutUint32(arena.buffer[offset+valueLengthOffset:], valueLength)
 	binary.LittleEndian.PutUint32(arena.buffer[offset+nextOffsetOffset:], nullOffset)
 
 	// 2. Serialize variable payload fields (Key bytes followed by Value bytes)
@@ -68,7 +70,7 @@ func (node Node) Key() kv.Key {
 	if node.IsNull() {
 		return kv.EmptyKey
 	}
-	keyLength := binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLenOffset : node.offset+keyLenOffset+keyLengthSize])
+	keyLength := binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLengthOffset : node.offset+keyLengthOffset+keyLengthSize])
 	keyBytes := node.arena.bytes(node.offset+nodeHeaderSize, uint32(keyLength))
 	return kv.DecodeFrom(keyBytes)
 }
@@ -78,8 +80,8 @@ func (node Node) Value() kv.Value {
 	if node.IsNull() {
 		return kv.EmptyValue
 	}
-	keyLen := uint32(binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLenOffset : node.offset+keyLenOffset+keyLengthSize]))
-	valueLength := binary.LittleEndian.Uint32(node.arena.buffer[node.offset+valLenOffset : node.offset+valLenOffset+valLengthSize])
+	keyLen := uint32(binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLengthOffset : node.offset+keyLengthOffset+keyLengthSize]))
+	valueLength := binary.LittleEndian.Uint32(node.arena.buffer[node.offset+valueLengthOffset : node.offset+valueLengthOffset+valueLengthSize])
 	valueStart := node.offset + nodeHeaderSize + keyLen
 	valueBytes := node.arena.bytes(valueStart, valueLength)
 	return kv.NewValue(valueBytes)
@@ -94,11 +96,10 @@ func (node Node) Next() Node {
 	return nodeAt(node.arena, nextOffset)
 }
 
-// SetNext updates the next pointer offset stored in this node's header.
+// SetNext atomically updates the next pointer offset stored in this node's header.
 func (node Node) SetNext(next Node) {
 	if !node.IsNull() {
-		binary.LittleEndian.PutUint32(
-			node.arena.buffer[node.offset+nextOffsetOffset:node.offset+nextOffsetOffset+nextOffsetSize], next.offset,
-		)
+		ptr := (*uint32)(unsafe.Pointer(&node.arena.buffer[node.offset+nextOffsetOffset]))
+		atomic.StoreUint32(ptr, next.offset)
 	}
 }
