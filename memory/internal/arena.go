@@ -23,19 +23,19 @@ const (
 
 	// Field Sizes in Bytes
 	keyLengthSize   = uint32(unsafe.Sizeof(uint16(0))) // 2 bytes: supports keys up to 65,535 bytes
-	valueLengthSize = uint32(unsafe.Sizeof(uint32(0))) // 4 bytes: supports values up to 4 GB
+	valueLengthSize = uint32(unsafe.Sizeof(uint16(0))) // 2 bytes: supports values up to 65,535 bytes
 	nextOffsetSize  = uint32(unsafe.Sizeof(uint32(0))) // 4 bytes: points to next node offset in arena
 
 	// Relative Field Offsets within a single Node
-	// [0..2)   -> Key Length
-	// [2..6)   -> Value Length
-	// [6..10)  -> Next Node Offset
-	// [10..End)-> Key & Value Payload
+	// [0..2)  -> Key Length (2 Bytes)
+	// [2..4)  -> Value Length (2 Bytes)
+	// [4..8)  -> Next Node Offset (4 Bytes)
+	// [8..End)-> Key & Value Payload
 	keyLengthOffset   = uint32(0)
 	valueLengthOffset = keyLengthOffset + keyLengthSize     // Offset 2
-	nextOffsetOffset  = valueLengthOffset + valueLengthSize // Offset 6
+	nextOffsetOffset  = valueLengthOffset + valueLengthSize // Offset 4
 
-	nodeHeaderSize = keyLengthSize + valueLengthSize + nextOffsetSize // 10 bytes
+	nodeHeaderSize = keyLengthSize + valueLengthSize + nextOffsetSize // 8 bytes
 )
 
 var (
@@ -54,18 +54,21 @@ func NewArena(size int64) *Arena {
 	arena := &Arena{
 		buffer: make([]byte, size),
 	}
-	arena.nextOffset.Store(1) // Offset 0 is reserved for nullOffset
+	arena.nextOffset.Store(4)
 	return arena
 }
 
 // allocate reserves a contiguous block of 'size' bytes and returns its starting nextOffset.
 func (arena *Arena) allocate(size uint32) (uint32, error) {
+	// Round up size to nearest multiple of 4 to guarantee 4-byte alignment for atomics
+	alignedSize := (size + 3) &^ 3
+
 	for {
 		possibleNextOffset := arena.nextOffset.Load()
-		if int64(possibleNextOffset+size) > int64(len(arena.buffer)) {
+		if int64(possibleNextOffset+alignedSize) > int64(len(arena.buffer)) {
 			return nullOffset, ErrArenaFull
 		}
-		if arena.nextOffset.CompareAndSwap(possibleNextOffset, possibleNextOffset+size) {
+		if arena.nextOffset.CompareAndSwap(possibleNextOffset, possibleNextOffset+alignedSize) {
 			return possibleNextOffset, nil
 		}
 	}

@@ -10,13 +10,13 @@ import (
 /**
  * Binary Layout of a Node at 'nodeOffset' in Arena:
  *
- *  0             2             6                   10                10 + KeyLen        Total Size
+ *  0             2             4                   8                8 + KeyLen         Total Size
  * +-------------+-------------+-------------------+-----------------+------------------+
  * | Key Length  | Val Length  | Next Node Offset  | Key Payload     | Value Payload    |
- * | (uint16)    | (uint32)    | (uint32)          | (KeyLen bytes)  | (ValLen bytes)   |
- * | [ 2 Bytes ] | [ 4 Bytes ] | [ 4 Bytes ]       |                 |                  |
+ * | (uint16)    | (uint16)    | (uint32)          | (KeyLen bytes)  | (ValLen bytes)   |
+ * | [ 2 Bytes ] | [ 2 Bytes ] | [ 4 Bytes ]       |                 |                  |
  * +-------------+-------------+-------------------+-----------------+------------------+
- * |<-------- Fixed Header (10 Bytes) ------------>|
+ * |<-------- Fixed Header (8 Bytes) ------------->|
  */
 
 // Node represents a handle to a record stored at 'offset' inside an Arena.
@@ -31,8 +31,8 @@ func newNode(arena *Arena, key kv.Key, value kv.Value) (Node, error) {
 	valueBytes := value.Bytes()
 
 	keyLength := uint16(len(encodedKey))
-	valueLength := uint32(len(valueBytes))
-	nodeSize := nodeHeaderSize + uint32(keyLength) + valueLength
+	valueLength := uint16(len(valueBytes))
+	nodeSize := nodeHeaderSize + uint32(keyLength) + uint32(valueLength)
 
 	offset, err := arena.allocate(nodeSize)
 	if err != nil {
@@ -41,13 +41,13 @@ func newNode(arena *Arena, key kv.Key, value kv.Value) (Node, error) {
 
 	// 1. Serialize fixed header fields
 	binary.LittleEndian.PutUint16(arena.buffer[offset+keyLengthOffset:], keyLength)
-	binary.LittleEndian.PutUint32(arena.buffer[offset+valueLengthOffset:], valueLength)
+	binary.LittleEndian.PutUint16(arena.buffer[offset+valueLengthOffset:], valueLength)
 	binary.LittleEndian.PutUint32(arena.buffer[offset+nextOffsetOffset:], nullOffset)
 
 	// 2. Serialize variable payload fields (Key bytes followed by Value bytes)
 	keyStart := offset + nodeHeaderSize
 	keyEnd := keyStart + uint32(keyLength)
-	valueEnd := keyEnd + valueLength
+	valueEnd := keyEnd + uint32(valueLength)
 
 	copy(arena.buffer[keyStart:keyEnd], encodedKey)
 	copy(arena.buffer[keyEnd:valueEnd], valueBytes)
@@ -81,7 +81,7 @@ func (node Node) Value() kv.Value {
 		return kv.EmptyValue
 	}
 	keyLen := uint32(binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLengthOffset : node.offset+keyLengthOffset+keyLengthSize]))
-	valueLength := binary.LittleEndian.Uint32(node.arena.buffer[node.offset+valueLengthOffset : node.offset+valueLengthOffset+valueLengthSize])
+	valueLength := uint32(binary.LittleEndian.Uint16(node.arena.buffer[node.offset+valueLengthOffset : node.offset+valueLengthOffset+valueLengthSize]))
 	valueStart := node.offset + nodeHeaderSize + keyLen
 	valueBytes := node.arena.bytes(valueStart, valueLength)
 	return kv.NewValue(valueBytes)
