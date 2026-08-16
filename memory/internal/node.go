@@ -68,8 +68,8 @@ func (node Node) Key() kv.Key {
 	if node.IsNull() {
 		return kv.EmptyKey
 	}
-	keyLen := binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLenOffset : node.offset+keyLenOffset+keyLengthSize])
-	keyBytes := node.arena.bytes(node.offset+nodeHeaderSize, uint32(keyLen))
+	keyLength := binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLenOffset : node.offset+keyLenOffset+keyLengthSize])
+	keyBytes := node.arena.bytes(node.offset+nodeHeaderSize, uint32(keyLength))
 	return kv.DecodeFrom(keyBytes)
 }
 
@@ -79,10 +79,10 @@ func (node Node) Value() kv.Value {
 		return kv.EmptyValue
 	}
 	keyLen := uint32(binary.LittleEndian.Uint16(node.arena.buffer[node.offset+keyLenOffset : node.offset+keyLenOffset+keyLengthSize]))
-	valLen := binary.LittleEndian.Uint32(node.arena.buffer[node.offset+valLenOffset : node.offset+valLenOffset+valLengthSize])
-	valStart := node.offset + nodeHeaderSize + keyLen
-	valBytes := node.arena.bytes(valStart, valLen)
-	return kv.NewValue(valBytes)
+	valueLength := binary.LittleEndian.Uint32(node.arena.buffer[node.offset+valLenOffset : node.offset+valLenOffset+valLengthSize])
+	valueStart := node.offset + nodeHeaderSize + keyLen
+	valueBytes := node.arena.bytes(valueStart, valueLength)
+	return kv.NewValue(valueBytes)
 }
 
 // Next returns the handle of the next connected Node in the linked list.
@@ -90,13 +90,15 @@ func (node Node) Next() Node {
 	if node.IsNull() {
 		return Node{offset: nullOffset, arena: node.arena}
 	}
-	nextOff := binary.LittleEndian.Uint32(node.arena.buffer[node.offset+nextOffsetOffset : node.offset+nextOffsetOffset+nextOffsetSize])
-	return nodeAt(node.arena, nextOff)
+	nextOffset := binary.LittleEndian.Uint32(node.arena.buffer[node.offset+nextOffsetOffset : node.offset+nextOffsetOffset+nextOffsetSize])
+	return nodeAt(node.arena, nextOffset)
 }
 
 // SetNext updates the next pointer offset stored in this node's header.
 func (node Node) SetNext(next Node) {
 	if !node.IsNull() {
-		binary.LittleEndian.PutUint32(node.arena.buffer[node.offset+nextOffsetOffset:node.offset+nextOffsetOffset+nextOffsetSize], next.offset)
+		binary.LittleEndian.PutUint32(
+			node.arena.buffer[node.offset+nextOffsetOffset:node.offset+nextOffsetOffset+nextOffsetSize], next.offset,
+		)
 	}
 }
