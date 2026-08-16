@@ -61,7 +61,14 @@ func NewArena(size int64) *Arena {
 // allocate reserves a contiguous block of 'size' bytes and returns its starting nextOffset.
 func (arena *Arena) allocate(size uint32) (uint32, error) {
 	// Round up size to nearest multiple of 4 to guarantee 4-byte alignment for atomics
-	alignedSize := (size + 3) &^ 3
+	align4 := func(size uint32) uint32 {
+		if remainder := size % 4; remainder != 0 {
+			return size + (4 - remainder)
+		}
+		return size
+	}
+
+	alignedSize := align4(size)
 
 	for {
 		possibleNextOffset := arena.nextOffset.Load()
