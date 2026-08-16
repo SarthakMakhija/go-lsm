@@ -61,12 +61,12 @@ func NewArena(size int64) *Arena {
 // allocate reserves a contiguous block of 'size' bytes and returns its starting nextOffset.
 func (arena *Arena) allocate(size uint32) (uint32, error) {
 	for {
-		currentOffset := arena.nextOffset.Load()
-		if int64(currentOffset+size) > int64(len(arena.buffer)) {
+		possibleNextOffset := arena.nextOffset.Load()
+		if int64(possibleNextOffset+size) > int64(len(arena.buffer)) {
 			return nullOffset, ErrArenaFull
 		}
-		if arena.nextOffset.CompareAndSwap(currentOffset, currentOffset+size) {
-			return currentOffset, nil
+		if arena.nextOffset.CompareAndSwap(possibleNextOffset, possibleNextOffset+size) {
+			return possibleNextOffset, nil
 		}
 	}
 }
