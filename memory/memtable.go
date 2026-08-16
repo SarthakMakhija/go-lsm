@@ -91,7 +91,10 @@ func (memtable *Memtable) Set(key kv.Key, value kv.Value) error {
 			return err
 		}
 	}
-	memtable.entries.Put(key, value)
+	err := memtable.entries.Put(key, value)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
