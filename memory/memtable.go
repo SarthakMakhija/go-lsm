@@ -8,10 +8,9 @@ import (
 )
 
 // Memtable is an in-memory data structure which holds versioned key kv.Key and kv.Value pairs.
-// Memtable uses [Skiplist](https://tech-lessons.in/en/blog/serializable_snapshot_isolation/#skiplist-and-mvcc) as its
-// data structure.
-// The Skiplist (external.SkipList) is shamelessly taken from [Badger](https://github.com/dgraph-io/badger).
-// It is a lock-free implementation of Skiplist.
+// Memtable uses [SortedList] as its data structure.
+// The external package contains Skiplist (external.SkipList), which is shamelessly taken
+// from [Badger](https://github.com/dgraph-io/badger). It is a lock-free implementation of Skiplist.
 // It is important to have a lock-free implementation,
 // otherwise scan operation will take lock(s) (/read-locks) which will start interfering with write operations.
 type Memtable struct {
@@ -86,7 +85,7 @@ func (memtable *Memtable) Get(key kv.Key) (kv.Value, bool) {
 
 // Set sets the key/value pair in the system. It involves the following:
 // 1) Appending the key/value pair in the WAL, if WAL is present.
-// 2) Writing the key/value pair in the Skiplist.
+// 2) Writing the key/value pair in the entries.
 func (memtable *Memtable) Set(key kv.Key, value kv.Value) error {
 	if memtable.wal != nil {
 		if err := memtable.wal.Append(key, value); err != nil {
@@ -102,7 +101,7 @@ func (memtable *Memtable) Set(key kv.Key, value kv.Value) error {
 
 // Delete is an append operation. It involves the following:
 // 1) Appending the key/value pair in the WAL, if WAL is present.
-// 2) Writing the key/value pair in the Skiplist.
+// 2) Writing the key/value pair in the entries.
 func (memtable *Memtable) Delete(key kv.Key) error {
 	return memtable.Set(key, kv.EmptyValue)
 }
