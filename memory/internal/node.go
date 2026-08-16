@@ -26,11 +26,11 @@ type Node struct {
 // newNode allocates space in the arena and serializes the header, key, and value.
 func newNode(arena *Arena, key kv.Key, value kv.Value) (Node, error) {
 	encodedKey := key.EncodedBytes()
-	valBytes := value.Bytes()
+	valueBytes := value.Bytes()
 
 	keyLength := uint16(len(encodedKey))
-	valLength := uint32(len(valBytes))
-	nodeSize := nodeHeaderSize + uint32(keyLength) + valLength
+	valueLength := uint32(len(valueBytes))
+	nodeSize := nodeHeaderSize + uint32(keyLength) + valueLength
 
 	offset, err := arena.allocate(nodeSize)
 	if err != nil {
@@ -38,17 +38,17 @@ func newNode(arena *Arena, key kv.Key, value kv.Value) (Node, error) {
 	}
 
 	// 1. Serialize fixed header fields
-	binary.LittleEndian.PutUint16(arena.buffer[offset+keyLenOffset:offset+keyLenOffset+keyLengthSize], keyLength)
-	binary.LittleEndian.PutUint32(arena.buffer[offset+valLenOffset:offset+valLenOffset+valLengthSize], valLength)
-	binary.LittleEndian.PutUint32(arena.buffer[offset+nextOffsetOffset:offset+nextOffsetOffset+nextOffsetSize], nullOffset)
+	binary.LittleEndian.PutUint16(arena.buffer[offset+keyLenOffset:], keyLength)
+	binary.LittleEndian.PutUint32(arena.buffer[offset+valLenOffset:], valueLength)
+	binary.LittleEndian.PutUint32(arena.buffer[offset+nextOffsetOffset:], nullOffset)
 
 	// 2. Serialize variable payload fields (Key bytes followed by Value bytes)
 	keyStart := offset + nodeHeaderSize
 	keyEnd := keyStart + uint32(keyLength)
-	valEnd := keyEnd + valLength
+	valueEnd := keyEnd + valueLength
 
 	copy(arena.buffer[keyStart:keyEnd], encodedKey)
-	copy(arena.buffer[keyEnd:valEnd], valBytes)
+	copy(arena.buffer[keyEnd:valueEnd], valueBytes)
 
 	return Node{offset: offset, arena: arena}, nil
 }
