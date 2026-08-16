@@ -391,7 +391,7 @@ func TestStorageStateWithASinglePutAndDelete(t *testing.T) {
 
 func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(200, rootPath))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(20, rootPath))
 
 	defer func() {
 		test_utility.CleanupDirectoryWithTestName(t)
@@ -417,7 +417,7 @@ func TestStorageStateWithAMultiplePutsInvolvingFreezeOfCurrentMemtable(t *testin
 
 func TestStorageStateWithAMultiplePutsAndGetsInvolvingFreezeOfCurrentMemtable(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(200, rootPath))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(50, rootPath))
 
 	defer func() {
 		test_utility.CleanupDirectoryWithTestName(t)
@@ -530,7 +530,10 @@ func TestStorageStateScanWithMultipleIteratorsAndMemtableOnly(t *testing.T) {
 
 func TestStorageStateScanWithImmutableMemtablesAndSSTables1(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(200, rootPath))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(
+		50,
+		rootPath,
+	))
 
 	defer func() {
 		test_utility.CleanupDirectoryWithTestName(t)
@@ -945,7 +948,7 @@ func TestStorageStateWithZeroImmutableMemtablesAndForceFlushNextImmutableMemtabl
 
 func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(250, rootPath))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(50, rootPath))
 
 	defer func() {
 		test_utility.CleanupDirectoryWithTestName(t)
@@ -985,7 +988,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtable(t *testing.T) {
 
 func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(250, rootPath))
+	storageState, _ := NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(50, rootPath))
 
 	defer func() {
 		test_utility.CleanupDirectoryWithTestName(t)
@@ -1025,7 +1028,7 @@ func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTable(t *te
 func TestStorageStateWithForceFlushNextImmutableMemtableAndReadFromSSTableAtFixedInterval(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
 	storageOptions := StorageOptions{
-		MemTableSizeInBytes:   250,
+		MemTableSizeInBytes:   50,
 		Path:                  rootPath,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,

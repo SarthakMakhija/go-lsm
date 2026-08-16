@@ -40,7 +40,10 @@ func testStorageStateOptionsWithCompactionOptions(memtableSizeInBytes int64, dir
 
 func TestStorageStateLoadExistingStateWithMultipleImmutableMemtables(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := state.NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(200, rootPath))
+	storageState, _ := state.NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(
+		50,
+		rootPath,
+	))
 
 	defer func() {
 		test_utility.CleanupDirectoryWithTestName(t)
@@ -85,7 +88,10 @@ func TestStorageStateLoadExistingStateWithMultipleImmutableMemtables(t *testing.
 
 func TestStorageStateLoadExistingStateWithSSTable(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := state.NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(250, rootPath))
+	storageState, _ := state.NewStorageStateWithOptions(testStorageStateOptionsWithMemTableSizeAndDirectory(
+		50,
+		rootPath,
+	))
 
 	defer func() {
 		test_utility.CleanupDirectoryWithTestName(t)
@@ -131,7 +137,10 @@ func TestStorageStateLoadExistingStateWithSSTable(t *testing.T) {
 
 func TestStorageStateLoadExistingStateAfterCompaction(t *testing.T) {
 	rootPath := test_utility.SetupADirectoryWithTestName(t)
-	storageState, _ := state.NewStorageStateWithOptions(testStorageStateOptionsWithCompactionOptions(250, rootPath))
+	storageState, _ := state.NewStorageStateWithOptions(testStorageStateOptionsWithCompactionOptions(
+		50,
+		rootPath,
+	))
 
 	oracle := txn.NewOracle(txn.NewExecutor(storageState))
 	compaction := compact.NewCompaction(oracle, storageState.SSTableIdGenerator(), storageState.Options())

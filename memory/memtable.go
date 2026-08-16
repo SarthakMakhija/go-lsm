@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go-lsm/kv"
 	"go-lsm/log"
-	"go-lsm/memory/external"
+	"go-lsm/memory/internal"
 )
 
 // Memtable is an in-memory data structure which holds versioned key kv.Key and kv.Value pairs.
@@ -17,7 +17,7 @@ import (
 type Memtable struct {
 	id                  uint64
 	memTableSizeInBytes int64
-	entries             *external.SkipList
+	entries             *internal.SortedList
 	wal                 *log.WAL
 }
 
@@ -32,7 +32,7 @@ func newMemtableWithoutWAL(id uint64, memTableSizeInBytes int64) *Memtable {
 	return &Memtable{
 		id:                  id,
 		memTableSizeInBytes: memTableSizeInBytes,
-		entries:             external.NewSkipList(memTableSizeInBytes),
+		entries:             internal.NewSortedList(memTableSizeInBytes),
 		wal:                 nil,
 	}
 }
@@ -46,7 +46,7 @@ func newMemtableWithWAL(id uint64, memTableSizeInBytes int64, walDirectoryPath s
 	return &Memtable{
 		id:                  id,
 		memTableSizeInBytes: memTableSizeInBytes,
-		entries:             external.NewSkipList(memTableSizeInBytes),
+		entries:             internal.NewSortedList(memTableSizeInBytes),
 		wal:                 wal,
 	}
 }
@@ -57,7 +57,7 @@ func RecoverFromWAL(id uint64, memTableSizeInBytes int64, walDirectoryPath strin
 	memtable := &Memtable{
 		id:                  id,
 		memTableSizeInBytes: memTableSizeInBytes,
-		entries:             external.NewSkipList(memTableSizeInBytes),
+		entries:             internal.NewSortedList(memTableSizeInBytes),
 	}
 	var maxTimestamp uint64
 	wal, err := log.Recover(log.CreateWalPathFor(id, walDirectoryPath), func(key kv.Key, value kv.Value) {
@@ -157,7 +157,7 @@ func (memtable *Memtable) SizeInBytes() int64 {
 
 // CanFit returns true if the Memtable has the size enough for the requiredSizeInBytes.
 func (memtable *Memtable) CanFit(requiredSizeInBytes int64) bool {
-	return memtable.SizeInBytes()+requiredSizeInBytes+int64(external.MaxNodeSize) < memtable.memTableSizeInBytes
+	return memtable.SizeInBytes()+requiredSizeInBytes+int64(memtable.entries.NodeHeaderSize()) <= memtable.memTableSizeInBytes
 }
 
 // Id returns the id of Memtable.
@@ -176,12 +176,12 @@ func (memtable *Memtable) WalPath() (string, error) {
 // MemtableIterator represents an iterator over Memtable.
 // It is a wrapper over the iterator provided by external.SkipList.
 type MemtableIterator struct {
-	internalIterator *external.Iterator
+	internalIterator *internal.SortedListIterator
 	endKey           kv.Key
 }
 
 // NewMemtableIterator creates a new instance of MemtableIterator, seeks to the key start of the keyRange.
-func NewMemtableIterator(internalIterator *external.Iterator, keyRange kv.InclusiveKeyRange[kv.Key]) *MemtableIterator {
+func NewMemtableIterator(internalIterator *internal.SortedListIterator, keyRange kv.InclusiveKeyRange[kv.Key]) *MemtableIterator {
 	internalIterator.Seek(keyRange.Start())
 	return &MemtableIterator{
 		internalIterator: internalIterator,

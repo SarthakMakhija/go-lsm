@@ -150,7 +150,7 @@ func TestScanKeyValues2(t *testing.T) {
 func TestScanAndValidateReferencesOfSSTables(t *testing.T) {
 	directory := test_utility.SetupADirectoryWithTestName(t)
 	storageOptions := state.StorageOptions{
-		MemTableSizeInBytes:   250,
+		MemTableSizeInBytes:   50,
 		Path:                  directory,
 		MaximumMemtables:      2,
 		FlushMemtableDuration: 1 * time.Millisecond,
