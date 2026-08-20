@@ -1,7 +1,6 @@
 package log
 
 import (
-	"encoding/binary"
 	"fmt"
 	"go-lsm/kv"
 	"go-lsm/table/block"
@@ -47,15 +46,15 @@ func Recover(path string, callback func(key kv.Key, value kv.Value)) (*WAL, erro
 	if err != nil {
 		return nil, err
 	}
-	for len(bytes) > 0 {
-		keySize := binary.LittleEndian.Uint16(bytes)
-		key := bytes[block.ReservedKeySize : uint16(block.ReservedKeySize)+keySize]
+	reader := newByteReader(bytes)
+	for reader.remaining() > 0 {
+		keySize := reader.uint16()
+		key := reader.take(int(keySize))
 
-		valueSize := binary.LittleEndian.Uint16(bytes[uint16(block.ReservedKeySize)+keySize:])
-		value := bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize) : uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize]
+		valueSize := reader.uint16()
+		value := reader.take(int(valueSize))
 
 		callback(kv.DecodeFrom(key), kv.NewValue(value))
-		bytes = bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize:]
 	}
 	return &WAL{file: file}, nil
 }
@@ -71,11 +70,11 @@ func Recover(path string, callback func(key kv.Key, value kv.Value)) (*WAL, erro
 func (wal *WAL) Append(key kv.Key, value kv.Value) error {
 	buffer := make([]byte, key.EncodedSizeInBytes()+value.SizeInBytes()+block.ReservedKeySize+block.ReservedValueSize)
 
-	binary.LittleEndian.PutUint16(buffer, uint16(key.EncodedSizeInBytes()))
-	copy(buffer[block.ReservedKeySize:], key.EncodedBytes())
-
-	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.EncodedSizeInBytes():], uint16(value.SizeInBytes()))
-	copy(buffer[block.ReservedKeySize+key.EncodedSizeInBytes()+block.ReservedValueSize:], value.Bytes())
+	writer := newByteWriter(buffer)
+	writer.uint16(uint16(key.EncodedSizeInBytes()))
+	writer.bytes(key.EncodedBytes())
+	writer.uint16(uint16(value.SizeInBytes()))
+	writer.bytes(value.Bytes())
 
 	_, err := wal.file.Write(buffer)
 	return err

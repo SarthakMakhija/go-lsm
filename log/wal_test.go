@@ -5,6 +5,7 @@ import (
 	"go-lsm/kv"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -75,6 +76,37 @@ func TestAppendToWALAndRecoverFromWALPath(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "distributed", value)
 	assert.Equal(t, keyTimestamps["kv"], uint64(5))
+}
+
+// TestAppendToWALAndRecoverFromWALPathWithRecordCrossingUint16Boundary is a regression test.
+// A record whose encoded key size plus value size sums past 65535 previously caused Recover
+// to compute the value's end offset in uint16 arithmetic, wrapping around and producing an
+// invalid slice range (start > end), which panics.
+func TestAppendToWALAndRecoverFromWALPathWithRecordCrossingUint16Boundary(t *testing.T) {
+	walPath := filepath.Join(".", "TestAppendToWALAndRecoverFromWALPathWithRecordCrossingUint16Boundary.log")
+	wal, err := newWAL(walPath)
+
+	assert.Nil(t, err)
+	defer func() {
+		_ = os.Remove(walPath)
+	}()
+
+	largeKey := strings.Repeat("k", 40000)
+	largeValue := strings.Repeat("v", 30000)
+	assert.Nil(t, wal.Append(kv.NewStringKeyWithTimestamp(largeKey, 7), kv.NewStringValue(largeValue)))
+
+	_ = wal.Sync()
+	wal.Close()
+
+	keyValues := make(map[string]string)
+	_, err = Recover(walPath, func(key kv.Key, value kv.Value) {
+		keyValues[key.RawString()] = value.String()
+	})
+	assert.Nil(t, err)
+
+	value, ok := keyValues[largeKey]
+	assert.True(t, ok)
+	assert.Equal(t, largeValue, value)
 }
 
 func TestDeleteWALFile(t *testing.T) {
