@@ -47,15 +47,15 @@ func Recover(path string, callback func(key kv.Key, value kv.Value)) (*WAL, erro
 	if err != nil {
 		return nil, err
 	}
-	for len(bytes) > 0 {
-		keySize := binary.LittleEndian.Uint16(bytes)
-		key := bytes[block.ReservedKeySize : uint16(block.ReservedKeySize)+keySize]
+	reader := newByteReader(bytes)
+	for reader.remaining() > 0 {
+		keySize := reader.uint16()
+		key := reader.take(int(keySize))
 
-		valueSize := binary.LittleEndian.Uint16(bytes[uint16(block.ReservedKeySize)+keySize:])
-		value := bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize) : uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize]
+		valueSize := reader.uint16()
+		value := reader.take(int(valueSize))
 
 		callback(kv.DecodeFrom(key), kv.NewValue(value))
-		bytes = bytes[uint16(block.ReservedKeySize)+keySize+uint16(block.ReservedValueSize)+valueSize:]
 	}
 	return &WAL{file: file}, nil
 }
