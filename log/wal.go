@@ -1,7 +1,6 @@
 package log
 
 import (
-	"encoding/binary"
 	"fmt"
 	"go-lsm/kv"
 	"go-lsm/table/block"
@@ -71,11 +70,11 @@ func Recover(path string, callback func(key kv.Key, value kv.Value)) (*WAL, erro
 func (wal *WAL) Append(key kv.Key, value kv.Value) error {
 	buffer := make([]byte, key.EncodedSizeInBytes()+value.SizeInBytes()+block.ReservedKeySize+block.ReservedValueSize)
 
-	binary.LittleEndian.PutUint16(buffer, uint16(key.EncodedSizeInBytes()))
-	copy(buffer[block.ReservedKeySize:], key.EncodedBytes())
-
-	binary.LittleEndian.PutUint16(buffer[block.ReservedKeySize+key.EncodedSizeInBytes():], uint16(value.SizeInBytes()))
-	copy(buffer[block.ReservedKeySize+key.EncodedSizeInBytes()+block.ReservedValueSize:], value.Bytes())
+	writer := newByteWriter(buffer)
+	writer.uint16(uint16(key.EncodedSizeInBytes()))
+	writer.bytes(key.EncodedBytes())
+	writer.uint16(uint16(value.SizeInBytes()))
+	writer.bytes(value.Bytes())
 
 	_, err := wal.file.Write(buffer)
 	return err
