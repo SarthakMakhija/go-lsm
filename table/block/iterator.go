@@ -60,6 +60,7 @@ func (iterator *Iterator) seekToOffsetIndex(index uint16) {
 func (iterator *Iterator) seekToGreaterOrEqual(key kv.Key) {
 	low := 0
 	high := len(iterator.block.keyValueBeginOffsets) - 1
+	possibleIndex := low
 
 	for low <= high {
 		mid := (low + high) / 2
@@ -68,16 +69,18 @@ func (iterator *Iterator) seekToGreaterOrEqual(key kv.Key) {
 		if !iterator.IsValid() {
 			panic("invalid iterator")
 		}
-		switch iterator.key.CompareKeysWithDescendingTimestamp(key) {
+		switch key.CompareKeysWithDescendingTimestamp(iterator.key) {
 		case -1:
-			low = mid + 1
+			high = mid - 1
 		case 0:
+			iterator.seekToOffsetIndex(uint16(possibleIndex))
 			return
 		case 1:
-			high = mid - 1
+			low = mid + 1
+			possibleIndex = low
 		}
 	}
-	iterator.seekToOffsetIndex(uint16(low))
+	iterator.seekToOffsetIndex(uint16(possibleIndex))
 }
 
 // seekToOffset sets the key and value from the offset identified by keyValueBeginOffset.
